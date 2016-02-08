@@ -6,7 +6,7 @@ Term::Choose - Choose items from a list interactively.
 VERSION
 =======
 
-Version 0.006
+Version 0.007
 
 SYNOPSIS
 ========
@@ -38,9 +38,9 @@ Choose interactively from a list of items.
 
 For `choose`, `choose_multi` and `pause` the first argument (Array) holds the list of the available choices.
 
-With the optional second argument (Hash) it can be passed the different options. See [OPTIONS](OPTIONS).
+With the optional second argument (Hash) it can be passed the different options. See [#OPTIONS](#OPTIONS).
 
-The return values are described in [Routines](Routines)
+The return values are described in [#Routines](#Routines)
 
 USAGE
 =====

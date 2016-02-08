@@ -1,7 +1,7 @@
 use v6;
 unit class Term::Choose;
 
-my $VERSION = '0.006';
+my $VERSION = '0.007';
 
 use Term::termios;
 
@@ -980,7 +980,7 @@ Term::Choose - Choose items from a list interactively.
 
 =head1 VERSION
 
-Version 0.006
+Version 0.007
 
 =head1 SYNOPSIS
 
@@ -1010,9 +1010,9 @@ Choose interactively from a list of items.
 
 For C<choose>, C<choose_multi> and C<pause> the first argument (Array) holds the list of the available choices.
 
-With the optional second argument (Hash) it can be passed the different options. See L<OPTIONS>.
+With the optional second argument (Hash) it can be passed the different options. See L<#OPTIONS>.
 
-The return values are described in L<Routines>
+The return values are described in L<#Routines>
 
 =head1 USAGE
 

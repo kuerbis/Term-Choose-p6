@@ -1,7 +1,7 @@
 use v6;
 unit class Term::Choose::Linux;
 
-my $VERSION = '0.006';
+my $VERSION = '0.007';
 
 use Term::termios;
 

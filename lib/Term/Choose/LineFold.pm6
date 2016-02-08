@@ -1,7 +1,7 @@
 use v6;
 unit class Term::Choose::LineFold;
 
-my $VERSION = '0.006';
+my $VERSION = '0.007';
 
 use Terminal::WCWidth;
 
@@ -78,61 +78,52 @@ sub line_fold ( Str $str, Int $avail_w, Str $init_tab is copy, Str $subseq_tab i
             $_ = '';
         }
     }
-    my $string = $str.subst( /<:Other-:Line_Feed>/, '' , :g );
+    my $string = $str.subst( /<:White_Space-:Line_Feed>/, ' ', :g );
+    $string.=subst( /<:Other-:Line_Feed>/, '' , :g );
     if $string !~~ /\n/ && wcswidth( $init_tab ~ $string ) <= $avail_w {
         return $init_tab ~ $string;
     }
-    my Str @para;
+    my Str @paragraph;
 
     ROW: for $string.lines -> $row {
         my Str @lines;
-        my Str $pr_line = $init_tab;
-        my Str @words = $row.words;
+        my Str @words = $row.trim-trailing.split( /<?after \S><?before \s>/ );
+        my Str $line = $init_tab;
 
         WORD: for 0 .. @words.end -> $i {
             my $tab = $i == 0 ?? $init_tab !! $subseq_tab;
             if wcswidth( $tab ~ @words[$i] ) > $avail_w {
                 if $i != 0 {
-                    @lines.push( $pr_line );
+                    @lines.push( $line );
                 }
-                my ( Str $substr_a_line, Str $rest ) = cut_to_printwidth( $tab ~ @words[$i], $avail_w, 1 );
-                @lines.push( $substr_a_line );
+                my ( Str $tab_and_cut_word, Str $rest ) = cut_to_printwidth( $tab ~ @words[$i], $avail_w, 1 );
+                @lines.push( $tab_and_cut_word );
                 loop {
-                    ( $substr_a_line, $rest ) = cut_to_printwidth( $subseq_tab ~ $rest, $avail_w, 1 );
+                    ( $tab_and_cut_word, $rest ) = cut_to_printwidth( $subseq_tab ~ $rest, $avail_w, 1 );
                     if ! $rest.chars {
-                        $pr_line = $substr_a_line;
-                        if wcswidth( $pr_line ~ ' ' ) < $avail_w {
-                            $pr_line ~= ' ';
-                        }
-                        @lines.push( $pr_line ) if $i == @words.end;
+                        $line = $tab_and_cut_word;
+                        @lines.push( $line ) if $i == @words.end;
                         next WORD;
                     }
-                    @lines.push( $substr_a_line );
+                    @lines.push( $tab_and_cut_word );
                 }
             }
             else {
-                if wcswidth( $pr_line ~ @words[$i] ) <= $avail_w {
-                    $pr_line ~= @words[$i];
-                    if wcswidth( $pr_line ~ ' ' ) < $avail_w {
-                        $pr_line ~= ' ';
-                    }
-                    else {
-                        @lines.push( $pr_line );
-                        $pr_line = $subseq_tab;
-                    }
+                if wcswidth( $line ~ @words[$i] ) <= $avail_w {
+                    $line ~= @words[$i];
                 }
                 else {
-                    @lines.push( $pr_line );
-                    $pr_line = $subseq_tab ~ @words[$i];
+                    @lines.push( $line );
+                    $line = $subseq_tab ~ @words[$i];
                 }
                 if $i == @words.end {
-                    @lines.push( $pr_line );
+                    @lines.push( $line );
                 }
             }
         }
-        @para.push( @lines.join( "\n" ) );
+        @paragraph.push( @lines.join( "\n" ) );
     }
-    return @para.join( "\n" ) ~ ( $str.ends-with( "\n" ) ?? "\n" !! '' );
+    return @paragraph.join( "\n" ) ~ ( $str.ends-with( "\n" ) ?? "\n" !! '' );
 }
 
 
