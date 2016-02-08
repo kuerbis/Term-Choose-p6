@@ -1,6 +1,9 @@
 Revision history for Term::Choose
 
 
+0.008   2016-02-08
+        - choose_multi returns an array
+
 0.007   2016-02-08
         - line_fold -> word-separator
 

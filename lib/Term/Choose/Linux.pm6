@@ -1,7 +1,7 @@
 use v6;
 unit class Term::Choose::Linux;
 
-my $VERSION = '0.007';
+my $VERSION = '0.008';
 
 use Term::termios;
 
@@ -180,8 +180,6 @@ method _reset_mode ( Int $mouse, Int $hide_cursor ) {
 
 
 #$_ = qx[stty -a </dev/tty 2>&1];
-#my $rows = +m/'rows '    <(\d+)>/;
-#my $cols = +m/'columns ' <(\d+)>/;
 method _term_size {
     my Str $stty = qx[stty -a]; # #
     my Int $height = $stty.match( / 'rows '    <( \d+ )>/ ).Int;

@@ -6,7 +6,7 @@ Term::Choose - Choose items from a list interactively.
 VERSION
 =======
 
-Version 0.007
+Version 0.008
 
 SYNOPSIS
 ========
@@ -83,7 +83,7 @@ choose_multi
 
 The user can choose many items.
 
-To choose more than one item mark an item with the `SpaceBar`. `choose_multi` then returns the list of marked items including the highlighted item as an array.
+To choose more than one item mark an item with the `SpaceBar`. `choose_multi` then returns the marked items including the highlighted item.
 
 `Ctrl-SpaceBar` (or `Ctrl-@`) inverts the choices: marked items are unmarked and unmarked items are marked. If the cursor is on the first row, `Ctrl-SpaceBar` inverts the choices for the whole list else `Ctrl-SpaceBar` inverts the choices for the current page.
 

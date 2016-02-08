@@ -1,7 +1,7 @@
 use v6;
 use Test;
 
-plan 5; # 7;
+plan 7;
 
 
 
@@ -35,26 +35,26 @@ for %hash.kv -> $k, $v {
 }
 
 
-#my $version_in_changelog = --$c;
-#my $release_date = --$c;
-#for '../Changes'.IO.lines ->$line {
-#    if $line ~~ /^\s*(\d+\.\d\d\d[_\d\d]?)\s+(\d\d\d\d\-\d\d\-\d\d)\s*$/ {
-#        $version_in_changelog = $1;
-#        $release_date = $2;
-#        last;
-#    }
-#}
+my $version_in_changelog = --$c;
+my $release_date = --$c;
+for 'Changes'.IO.lines -> $line {
+    if $line ~~ / ^ \s* ( \d+ \. \d\d\d [_\d\d]? ) \s+ ( \d\d\d\d '-' \d\d '-' \d\d) \s* $/ {
+        $version_in_changelog = $0;
+        $release_date = $1;
+        last;
+    }
+}
 
 
 
 my Date $today = Date.today;
 
-ok( %version<choose> > 0, 'Version > 0  OK' );
+ok( %version<choose> > 0, 'Version greater than 0  OK' );
 
 is( %podversion<choose>,        %version<choose>, 'Version in POD Term::Choose  OK' );
 is( %version<choose_linefold>,  %version<choose>, 'Version in Term::Choose::LineFold  OK' );
 is(  %version<choose_linux>,    %version<choose>, 'Version in Term::Choose::Linux  OK' );
 #is( %version<choose_win32>,   %version<choose>,   'Version in Term::Choose::Win32 OK' );
 is( %version<choose_constants>, %version<choose>, 'Version in Term::Choose::Constants  OK' );
-#is( $version_in_changelog,    %version<choose>,   'Version in "Changes"  OK' );
-#is( $release_date,            $today,             'Release date in Changes is date from today  OK' );
+is( $version_in_changelog,      %version<choose>, 'Version in "Changes"  OK' );
+is( $release_date,              $today,           'Release date in Changes is date from today  OK' );

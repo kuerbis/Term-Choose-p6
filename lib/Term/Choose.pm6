@@ -1,7 +1,7 @@
 use v6;
 unit class Term::Choose;
 
-my $VERSION = '0.007';
+my $VERSION = '0.008';
 
 use Term::termios;
 
@@ -485,25 +485,16 @@ method !_choose ( @!orig_list, %!o, Int $!multiselect ) { #
             when KEY_ENTER {
                 self!_reset_term( 1 );
                 if ! $!multiselect.defined {
-                    #self!_reset_term( 1 );
                     return;
                 }
                 elsif $!multiselect == 0 {
                     my Int $i = $!rc2idx[$!pos[R]][$!pos[C]];
-                    #my $chosen = %!o<index> ?? $i !! @!orig_list[$i];
-                    #self!_reset_term( 1 );
-                    #return $chosen;
                     return %!o<index> ?? $i !! @!orig_list[$i];
                 }
                 else {
                     $!marked[$!pos[R]][$!pos[C]] = 1;
-                    #my Int @chosen = self!_marked_to_idx;
-                    #my Int $index = %!o<index>;
-                    #self!_reset_term( 1 );
-                    #return %!o<index> ?? @chosen !! @chosen.map( { @!orig_list[$_] } ).list;
-                    return %!o<index> ?? self!_marked_to_idx !! self!_marked_to_idx().map( { @!orig_list[$_] } ).list;
+                    return %!o<index> ?? self!_marked_to_idx !! [ @!orig_list[self!_marked_to_idx()] ]; # doku
                 }
-
             }
             when KEY_SPACE {
                 if $!multiselect {
@@ -980,7 +971,7 @@ Term::Choose - Choose items from a list interactively.
 
 =head1 VERSION
 
-Version 0.007
+Version 0.008
 
 =head1 SYNOPSIS
 
@@ -1055,8 +1046,8 @@ C<choose> returns nothing if the C<q> key or C<Ctrl-D> is pressed.
 
 The user can choose many items.
 
-To choose more than one item mark an item with the C<SpaceBar>. C<choose_multi> then returns the list of marked items
-including the highlighted item as an array.
+To choose more than one item mark an item with the C<SpaceBar>. C<choose_multi> then returns the marked items including
+the highlighted item.
 
 C<Ctrl-SpaceBar> (or C<Ctrl-@>) inverts the choices: marked items are unmarked and unmarked items are marked. If the
 cursor is on the first row, C<Ctrl-SpaceBar> inverts the choices for the whole list else C<Ctrl-SpaceBar> inverts the

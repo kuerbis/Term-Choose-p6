@@ -2,7 +2,7 @@ use v6;
 
 unit module Term::Choose::Constants;
 
-my $VERSION = '0.007';
+my $VERSION = '0.008';
 
 
 
