@@ -6,7 +6,7 @@ Term::Choose - Choose items from a list interactively.
 VERSION
 =======
 
-Version 0.008
+Version 0.009
 
 SYNOPSIS
 ========
@@ -83,7 +83,7 @@ choose_multi
 
 The user can choose many items.
 
-To choose more than one item mark an item with the `SpaceBar`. `choose_multi` then returns the marked items including the highlighted item.
+To choose more than one item mark an item with the `SpaceBar`. `choose_multi` then returns the list of the marked items including the highlighted item.
 
 `Ctrl-SpaceBar` (or `Ctrl-@`) inverts the choices: marked items are unmarked and unmarked items are marked. If the cursor is on the first row, `Ctrl-SpaceBar` inverts the choices for the whole list else `Ctrl-SpaceBar` inverts the choices for the current page.
 
@@ -410,7 +410,7 @@ Matthäus Kiem <cuer2s@gmail.com>
 CREDITS
 =======
 
-Based on and inspired by the `choose` function from the [Term::Clui](https://metacpan.org/pod/distribution/Term-Clui) module.
+Based on the `choose` function from the [Term::Clui](https://metacpan.org/pod/distribution/Term-Clui) module.
 
 Thanks to the people from [Perl-Community.de](http://www.perl-community.de), from [stackoverflow](http://stackoverflow.com) and from [#perl6 on irc.freenode.net](irc://irc.freenode.net/#perl6) for the help.
 

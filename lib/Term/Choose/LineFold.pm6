@@ -1,7 +1,7 @@
 use v6;
 unit class Term::Choose::LineFold;
 
-my $VERSION = '0.008';
+my $VERSION = '0.009';
 
 use Terminal::WCWidth;
 
@@ -91,21 +91,27 @@ sub line_fold ( Str $str, Int $avail_w, Str $init_tab is copy, Str $subseq_tab i
         my Str $line = $init_tab;
 
         WORD: for 0 .. @words.end -> $i {
-            my $tab = $i == 0 ?? $init_tab !! $subseq_tab;
-            if wcswidth( $tab ~ @words[$i] ) > $avail_w {
+            my Str $tab_and_word;
+            if $i == 0 {
+                $tab_and_word = $init_tab ~ @words[$i];
+            }
+            else {
+                $tab_and_word = $subseq_tab ~ @words[$i].subst( / ^ \s /, '' );
+            }
+            if wcswidth( $tab_and_word ) > $avail_w {
                 if $i != 0 {
                     @lines.push( $line );
                 }
-                my ( Str $tab_and_cut_word, Str $rest ) = cut_to_printwidth( $tab ~ @words[$i], $avail_w, 1 );
-                @lines.push( $tab_and_cut_word );
-                loop {
-                    ( $tab_and_cut_word, $rest ) = cut_to_printwidth( $subseq_tab ~ $rest, $avail_w, 1 );
-                    if ! $rest.chars {
-                        $line = $tab_and_cut_word;
-                        @lines.push( $line ) if $i == @words.end;
-                        next WORD;
-                    }
+                my ( Str $tab_and_cut_word, Str $rest ) = cut_to_printwidth( $tab_and_word, $avail_w, 1 );
+                while ( $rest.chars ) {
                     @lines.push( $tab_and_cut_word );
+                    ( $tab_and_cut_word, $rest ) = cut_to_printwidth( $subseq_tab ~ $rest, $avail_w, 1 );
+                }
+                if $i == @words.end {
+                    @lines.push( $tab_and_cut_word );
+                }
+                else {
+                    $line = $tab_and_cut_word;
                 }
             }
             else {
@@ -114,7 +120,7 @@ sub line_fold ( Str $str, Int $avail_w, Str $init_tab is copy, Str $subseq_tab i
                 }
                 else {
                     @lines.push( $line );
-                    $line = $subseq_tab ~ @words[$i];
+                    $line = $subseq_tab ~ @words[$i].subst( / ^ \s /, '' );
                 }
                 if $i == @words.end {
                     @lines.push( $line );

@@ -1,7 +1,7 @@
 use v6;
 unit class Term::Choose;
 
-my $VERSION = '0.008';
+my $VERSION = '0.009';
 
 use Term::termios;
 
@@ -210,20 +210,20 @@ method !_prepare_new_copy_of_list {
 }
 
 
-sub choose       ( @list, %opt? ) is export { return Term::Choose.new().choose(         @list, %opt ) }
-sub choose_multi ( @list, %opt? ) is export { return Term::Choose.new().choose_multi(   @list, %opt ) }
-sub pause        ( @list, %opt? ) is export { return Term::Choose.new().pause(          @list, %opt ) }
+sub choose       ( @list, %opt? ) is export { return Term::Choose.new().choose(       @list, %opt ) }
+sub choose_multi ( @list, %opt? ) is export { return Term::Choose.new().choose_multi( @list, %opt ) }
+sub pause        ( @list, %opt? ) is export { return Term::Choose.new().pause(        @list, %opt ) }
 
 method choose       ( @list, %opt? ) { return self!_choose( @list, %opt, 0   ) }
 method choose_multi ( @list, %opt? ) { return self!_choose( @list, %opt, 1   ) }
 method pause        ( @list, %opt? ) { return self!_choose( @list, %opt, Int ) }
 
 
-method !_choose ( @!orig_list, %!o, Int $!multiselect ) { # 
+method !_choose ( @!orig_list, %!o, Int $!multiselect ) {
     if ! @!orig_list.elems {
         return;
     }
-    _validate_options( %!o, @!orig_list.end ); #
+    _validate_options( %!o, @!orig_list.end );
     for %!o_global.kv -> $key, $value {
         %!o{$key} //= $value;
     }
@@ -493,7 +493,7 @@ method !_choose ( @!orig_list, %!o, Int $!multiselect ) { #
                 }
                 else {
                     $!marked[$!pos[R]][$!pos[C]] = 1;
-                    return %!o<index> ?? self!_marked_to_idx !! [ @!orig_list[self!_marked_to_idx()] ]; # doku
+                    return %!o<index> ?? self!_marked_to_idx.List !! @!orig_list[self!_marked_to_idx()];
                 }
             }
             when KEY_SPACE {
@@ -602,7 +602,7 @@ method !_wr_first_screen {
         $!avail_w += WIDTH_CURSOR;
     }
     if %!o<max_width> && $!avail_w > %!o<max_width> {
-        $!avail_w = %!o<max_width>; #
+        $!avail_w = %!o<max_width>;
     }
     self!_prepare_new_copy_of_list;
     if $!avail_w - WIDTH_CURSOR >= $!col_w && ! $*DISTRO.is-win {
@@ -661,7 +661,7 @@ method !_set_page_nr_print_fmt {
         $!avail_h -= $!pp_row;
         my $last_p_nr = $!rc2idx.end div $!avail_h + 1;
         my $p_nr_w = $last_p_nr.chars;
-        $!pp_line_fmt = '--- Page %0' ~ $p_nr_w ~ 'd/' ~ $last_p_nr ~ ' ---'; # n
+        $!pp_line_fmt = '--- Page %0' ~ $p_nr_w ~ 'd/' ~ $last_p_nr ~ ' ---';
         if sprintf( $!pp_line_fmt, $last_p_nr ).chars > $!avail_w {
             $!pp_line_fmt = '%0' ~ $p_nr_w ~ 'd/' ~ $last_p_nr;
             if sprintf( $!pp_line_fmt, $last_p_nr ).chars > $!avail_w {
@@ -695,7 +695,7 @@ method !_wr_screen {
 method !_wr_cell ( Int $row, Int $col ) {
     my Bool $is_current_pos = $row == $!pos[R] && $col == $!pos[C];
     my Int $idx = $!rc2idx[$row][$col];
-    if $!rc2idx.elems == 1 && $!rc2idx[0].elems > 1 {
+    if $!rc2idx.end == 0 && $!rc2idx[0].end > 0 {
         my Int $lngth = 0;
         if $col > 0 {
             for ^$col -> $cl {
@@ -711,7 +711,7 @@ method !_wr_cell ( Int $row, Int $col ) {
         $!i_col += print_columns( @!list[$idx] );
     }
     else {
-        self!_goto( $row - $!row_on_top, $col * ( $!col_w + %!o<pad> ) );
+        self!_goto( $row - $!row_on_top, ( $!col_w + %!o<pad> ) * $col );
         $!plugin._bold_underline if $!marked[$row][$col];
         $!plugin._reverse        if $is_current_pos;
         print self!_pad_str_to_colwidth( $idx );
@@ -750,9 +750,9 @@ method !_pad_str_to_colwidth ( Int $idx ) {
             return " " x ( $!col_w - $str_length ) ~ @!list[$idx];
         }
         elsif %!o<justify> == 2 {
-            my Int $all = $!col_w - $str_length;
-            my Int $half = $all div 2;
-            return " " x $half ~ @!list[$idx] ~ " " x ( $all - $half );
+            my Int $fill = $!col_w - $str_length;
+            my Int $half_fill = $fill div 2;
+            return " " x $half_fill ~ @!list[$idx] ~ " " x ( $fill - $half_fill );
         }
     }
     else {
@@ -763,8 +763,7 @@ method !_pad_str_to_colwidth ( Int $idx ) {
 
 method !_index_to_rowcol {
     $!rc2idx = [];
-    my $col_p_w = $!col_w + %!o<pad>;
-    if $col_p_w >= $!avail_w {
+    if $!col_w + %!o<pad> >= $!avail_w {
         $!layout = 2;
     }
     my Str $all_in_first_row;
@@ -787,20 +786,21 @@ method !_index_to_rowcol {
         }
     }
     else {
+        my Int $col_with_pad_w = $!col_w + %!o<pad>;
         my Int $tmp_avail_w = $!avail_w + %!o<pad>;
         # auto_format
         if $!layout == 1 {
             my Int $tmc = @!list.elems div $!avail_h;
             $tmc++ if @!list.elems % $!avail_h;
-            $tmc *= $col_p_w;
+            $tmc *= $col_with_pad_w;
             if $tmc < $tmp_avail_w {
                 $tmc += ( ( $tmp_avail_w - $tmc ) / 1.5 ).Int;
                 $tmp_avail_w = $tmc;
             }
         }
         # order
-        my Int $cols_per_row = $tmp_avail_w div $col_p_w || 1;
-        $!rest = @!list.elems % $cols_per_row;
+        my Int $cols_per_row = $tmp_avail_w div $col_with_pad_w || 1;
+        $!rest = @!list.elems % $cols_per_row; #
         if %!o<order> == 1 {
             my Int $nr_of_rows = ( @!list.elems - 1 + $cols_per_row ) div $cols_per_row;
             my Array @rearranged_idx;
@@ -971,7 +971,7 @@ Term::Choose - Choose items from a list interactively.
 
 =head1 VERSION
 
-Version 0.008
+Version 0.009
 
 =head1 SYNOPSIS
 
@@ -1046,8 +1046,8 @@ C<choose> returns nothing if the C<q> key or C<Ctrl-D> is pressed.
 
 The user can choose many items.
 
-To choose more than one item mark an item with the C<SpaceBar>. C<choose_multi> then returns the marked items including
-the highlighted item.
+To choose more than one item mark an item with the C<SpaceBar>. C<choose_multi> then returns the list of the marked
+items including the highlighted item.
 
 C<Ctrl-SpaceBar> (or C<Ctrl-@>) inverts the choices: marked items are unmarked and unmarked items are marked. If the
 cursor is on the first row, C<Ctrl-SpaceBar> inverts the choices for the whole list else C<Ctrl-SpaceBar> inverts the
@@ -1392,8 +1392,7 @@ Matthäus Kiem <cuer2s@gmail.com>
 
 =head1 CREDITS
 
-Based on and inspired by the C<choose> function from the L<Term::Clui|https://metacpan.org/pod/distribution/Term-Clui>
-module.
+Based on the C<choose> function from the L<Term::Clui|https://metacpan.org/pod/distribution/Term-Clui> module.
 
 Thanks to the people from L<Perl-Community.de|http://www.perl-community.de>, from
 L<stackoverflow|http://stackoverflow.com> and from L<#perl6 on irc.freenode.net|irc://irc.freenode.net/#perl6> for the
