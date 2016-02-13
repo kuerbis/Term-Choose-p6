@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/kuerbis/Term-Choose-p6.svg?branch=master)](https://travis-ci.org/kuerbis/Term-Choose-p6)
+
 NAME
 ====
 
@@ -6,7 +8,7 @@ Term::Choose - Choose items from a list interactively.
 VERSION
 =======
 
-Version 0.009
+Version 0.010
 
 SYNOPSIS
 ========
@@ -410,7 +412,7 @@ Matthäus Kiem <cuer2s@gmail.com>
 CREDITS
 =======
 
-Based on the `choose` function from the [Term::Clui](https://metacpan.org/pod/distribution/Term-Clui) module.
+Based on the `choose` function from the [Term::Clui](https://metacpan.org/pod/Term::Clui) module.
 
 Thanks to the people from [Perl-Community.de](http://www.perl-community.de), from [stackoverflow](http://stackoverflow.com) and from [#perl6 on irc.freenode.net](irc://irc.freenode.net/#perl6) for the help.
 

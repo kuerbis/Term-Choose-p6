@@ -1,13 +1,13 @@
 use v6;
 unit class Term::Choose::LineFold;
 
-my $VERSION = '0.009';
+my $VERSION = '0.010';
 
 use Terminal::WCWidth;
 
 
 
-sub cut_to_printwidth ( Str $str, Int $avail_w, Int $rest = 0 ) is export( :printwidth_func ) { #
+sub cut_to_printwidth ( $str, Int $avail_w, Int $rest = 0 ) is export( :printwidth_func ) { # Str $str
     #my $str_w = wcswidth( $str );
     #die "String with control charakter!" if $str_w == -1;
     #if $str_w <= $avail_w {
@@ -65,7 +65,7 @@ sub cut_to_printwidth ( Str $str, Int $avail_w, Int $rest = 0 ) is export( :prin
 }
 
 
-sub line_fold ( Str $str, Int $avail_w, Str $init_tab is copy, Str $subseq_tab is copy ) returns Str is export( :printwidth_func ) { #
+sub line_fold ( $str, Int $avail_w, Str $init_tab is copy, Str $subseq_tab is copy ) returns Str is export( :printwidth_func ) { # Str $str
     for $init_tab, $subseq_tab {
         if $_ {
             $_.=subst( /\s/,  ' ', :g );
@@ -78,6 +78,7 @@ sub line_fold ( Str $str, Int $avail_w, Str $init_tab is copy, Str $subseq_tab i
             $_ = '';
         }
     }
+    #my $string = $str.gist;
     my $string = $str.subst( /<:White_Space-:Line_Feed>/, ' ', :g );
     $string.=subst( /<:Other-:Line_Feed>/, '' , :g );
     if $string !~~ /\n/ && wcswidth( $init_tab ~ $string ) <= $avail_w {
@@ -133,7 +134,7 @@ sub line_fold ( Str $str, Int $avail_w, Str $init_tab is copy, Str $subseq_tab i
 }
 
 
-sub print_columns ( Str $str ) returns Int is export( :printwidth_func ) {
+sub print_columns ( $str ) returns Int is export( :printwidth_func ) { # Str $str
     wcswidth( $str );
 }
 

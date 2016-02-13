@@ -1,7 +1,7 @@
 use v6;
 unit class Term::Choose;
 
-my $VERSION = '0.009';
+my $VERSION = '0.010';
 
 use Term::termios;
 
@@ -238,8 +238,8 @@ method !_choose ( @!orig_list, %!o, Int $!multiselect ) {
         my $key = self!_get_key;
         if ! $key.defined {
             self!_reset_term( 1 );
-            die "EOT: $!";
-            return;
+            die "EOT: $!"; ##
+            #return;
         }
         my ( Int $new_term_w, Int $new_term_h ) = $!plugin._term_size;
         if $new_term_w != $!term_w || $new_term_h != $!term_h {
@@ -971,7 +971,7 @@ Term::Choose - Choose items from a list interactively.
 
 =head1 VERSION
 
-Version 0.009
+Version 0.010
 
 =head1 SYNOPSIS
 
@@ -1392,7 +1392,7 @@ Matthäus Kiem <cuer2s@gmail.com>
 
 =head1 CREDITS
 
-Based on the C<choose> function from the L<Term::Clui|https://metacpan.org/pod/distribution/Term-Clui> module.
+Based on the C<choose> function from the L<Term::Clui|https://metacpan.org/pod/Term::Clui> module.
 
 Thanks to the people from L<Perl-Community.de|http://www.perl-community.de>, from
 L<stackoverflow|http://stackoverflow.com> and from L<#perl6 on irc.freenode.net|irc://irc.freenode.net/#perl6> for the

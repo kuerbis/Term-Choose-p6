@@ -1,6 +1,10 @@
 Revision history for Term::Choose
 
 
+0.010   2016-02-13
+        - Fixed source-url in Meta6.json
+        - Added .travis.yml
+
 0.009   2016-02-10
         - 'choose_multi' returns a list
         - 'line_fold' refactored
