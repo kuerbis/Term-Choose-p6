@@ -1,7 +1,7 @@
 use v6;
 unit class Term::Choose::Linux;
 
-my $VERSION = '0.010';
+my $VERSION = '0.011';
 
 use Term::termios;
 
@@ -179,12 +179,12 @@ method _reset_mode ( Int $mouse, Int $hide_cursor ) {
 }
 
 
-#$_ = qx[stty -a </dev/tty 2>&1];
+                 # qx[stty -a </dev/tty 2>&1];
 method _term_size {
-    my Str $stty = qx[stty -a]; # #
-    my Int $height = $stty.match( / 'rows '    <( \d+ )>/ ).Int;
-    my Int $width  = $stty.match( / 'columns ' <( \d+ )>/ ).Int;
-    return $width - WIDTH_CURSOR, $height; # ###
+    my Str $stty = qx[stty -a];
+    my Int $term_h = $stty.match( / 'rows '    <( \d+ )>/ ).Int;
+    my Int $term_w = $stty.match( / 'columns ' <( \d+ )>/ ).Int;
+    return $term_w - WIDTH_CURSOR, $term_h;
     # $width - WIDTH_CURSOR: don't let items reach the right edge of the terminal;
     #                        selecting an item which reaches the right edge of the terminal
     #                        messes up the output - maybe because the (hidden) terminal-cursor needs a space

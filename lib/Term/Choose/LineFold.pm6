@@ -1,13 +1,13 @@
 use v6;
 unit class Term::Choose::LineFold;
 
-my $VERSION = '0.010';
+my $VERSION = '0.011';
 
 use Terminal::WCWidth;
 
 
 
-sub cut_to_printwidth ( $str, Int $avail_w, Int $rest = 0 ) is export( :printwidth_func ) { # Str $str
+sub cut_to_printwidth ( $str, Int $avail_w, Int $rest = 0 ) is export( :all ) {
     #my $str_w = wcswidth( $str );
     #die "String with control charakter!" if $str_w == -1;
     #if $str_w <= $avail_w {
@@ -33,7 +33,7 @@ sub cut_to_printwidth ( $str, Int $avail_w, Int $rest = 0 ) is export( :printwid
     }
     elsif $left_w < $avail_w {
         $nr_chars = $avail_w + ( $str.chars - $avail_w ) div 2;
-        $adjust = ( $str.chars - $nr_chars ) div 2;
+        $adjust = ( $str.chars - $nr_chars + 1 ) div 2;
     }
 
     loop {
@@ -65,11 +65,11 @@ sub cut_to_printwidth ( $str, Int $avail_w, Int $rest = 0 ) is export( :printwid
 }
 
 
-sub line_fold ( $str, Int $avail_w, Str $init_tab is copy, Str $subseq_tab is copy ) returns Str is export( :printwidth_func ) { # Str $str
+sub line_fold ( $str, Int $avail_w, Str $init_tab is copy, Str $subseq_tab is copy ) returns Str is export( :all ) {
     for $init_tab, $subseq_tab {
         if $_ {
-            $_.=subst( /\s/,  ' ', :g );
-            $_.=subst( /<:C>/, '', :g );
+            $_.=subst( / \s /,  ' ', :g );
+            $_.=subst( / <:C> /, '', :g );
             if $_.chars > $avail_w / 4 {
                 $_ = cut_to_printwidth( $_, $avail_w div 2 );
             }
@@ -78,17 +78,16 @@ sub line_fold ( $str, Int $avail_w, Str $init_tab is copy, Str $subseq_tab is co
             $_ = '';
         }
     }
-    #my $string = $str.gist;
-    my $string = $str.subst( /<:White_Space-:Line_Feed>/, ' ', :g );
-    $string.=subst( /<:Other-:Line_Feed>/, '' , :g );
-    if $string !~~ /\n/ && wcswidth( $init_tab ~ $string ) <= $avail_w {
+    my $string = $str.subst( / <:White_Space-:Line_Feed> /, ' ', :g );
+    $string.=subst( / <:Other-:Line_Feed> /, '' , :g );
+    if $string !~~ / \n / && wcswidth( $init_tab ~ $string ) <= $avail_w {
         return $init_tab ~ $string;
     }
     my Str @paragraph;
 
     ROW: for $string.lines -> $row {
         my Str @lines;
-        my Str @words = $row.trim-trailing.split( /<?after \S><?before \s>/ );
+        my Str @words = $row.trim-trailing.split( / <?after \S > <?before \s > / );
         my Str $line = $init_tab;
 
         WORD: for 0 .. @words.end -> $i {
@@ -97,7 +96,7 @@ sub line_fold ( $str, Int $avail_w, Str $init_tab is copy, Str $subseq_tab is co
                 $tab_and_word = $init_tab ~ @words[$i];
             }
             else {
-                $tab_and_word = $subseq_tab ~ @words[$i].subst( / ^ \s /, '' );
+                $tab_and_word = $subseq_tab ~ @words[$i].subst( / ^ \s+ /, '' );
             }
             if wcswidth( $tab_and_word ) > $avail_w {
                 if $i != 0 {
@@ -121,7 +120,7 @@ sub line_fold ( $str, Int $avail_w, Str $init_tab is copy, Str $subseq_tab is co
                 }
                 else {
                     @lines.push( $line );
-                    $line = $subseq_tab ~ @words[$i].subst( / ^ \s /, '' );
+                    $line = $subseq_tab ~ @words[$i].subst( / ^ \s+ /, '' );
                 }
                 if $i == @words.end {
                     @lines.push( $line );
@@ -134,7 +133,7 @@ sub line_fold ( $str, Int $avail_w, Str $init_tab is copy, Str $subseq_tab is co
 }
 
 
-sub print_columns ( $str ) returns Int is export( :printwidth_func ) { # Str $str
+sub print_columns ( $str ) returns Int is export( :all ) {
     wcswidth( $str );
 }
 

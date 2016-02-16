@@ -1,13 +1,12 @@
 use v6;
 unit class Term::Choose;
 
-my $VERSION = '0.010';
+my $VERSION = '0.011';
 
 use Term::termios;
 
 use Term::Choose::Constants :choose;
-use Term::Choose::LineFold  :printwidth_func;
-#no warnings 'utf8';
+use Term::Choose::LineFold  :all;
 
 
 BEGIN {
@@ -122,7 +121,7 @@ sub _validate_options ( %opt, Int $list_end? ) {
         }
         when $valid{$key} eq 'Array' {
             die "$key => not an ARRAY reference."     if ! $value.isa( Array );
-            die "$key => invalid array element"       if $value.grep( { /<-[0..9]>/ } ); # Int;
+            die "$key => invalid array element"       if $value.grep( { / <-[0..9]> / } ); # Int;
             if $key eq 'lf' {
                 die "$key => too many array elemnts." if $value.elems > 2;
             }
@@ -133,7 +132,7 @@ sub _validate_options ( %opt, Int $list_end? ) {
         when $valid{$key} eq 'Str' {
             die "$key => not a string." if ! $value.isa( Str );
         }
-        when $value !~~ m/^ <{$valid{$key}}> $/ {
+        when $value !~~ / ^ <{$valid{$key}}> $ / {
             die "$key => '$value' is not a valid value.";
         }
     }
@@ -192,8 +191,8 @@ method !_prepare_new_copy_of_list {
             if @!list[$i] eq '' {
                 @!list[$i] = %!o<empty>;
             }
-            @!list[$i].=subst(   /\s/, ' ', :g );  # replace, but don't squash sequences of spaces
-            @!list[$i].=subst( /<:C>/, '',  :g );
+            @!list[$i].=subst(   / \s /, ' ', :g );  # replace, but don't squash sequences of spaces
+            @!list[$i].=subst( / <:C> /, '',  :g );
             @!list[$i] = @!list[$i].gist; 
             my Int $length = print_columns( @!list[$i] );
             if $length > $!avail_w {
@@ -567,7 +566,7 @@ method !_prepare_prompt {
     my $subseq = %!o<lf>[1] // 0;
     $!prompt_copy = line_fold( %!o<prompt>, $!avail_w, ' ' x $init, ' ' x $subseq );
     $!prompt_copy ~= "\n";
-    my $matches = $!prompt_copy.subst-mutate( /\n/, "\n\r", :g ); #
+    my $matches = $!prompt_copy.subst-mutate( / \n /, "\n\r", :g ); #
     $!nr_prompt_lines = $matches.elems;
 }
 
@@ -575,14 +574,12 @@ method !_prepare_prompt {
 method !_set_default_cell {
     my $tmp_pos = [ 0, 0 ];
     LOOP: for 0 .. $!rc2idx.end -> $i {
-        # if %!o<default> ~~ @{$self->{rc2idx}[$i]} {
-            for 0 .. $!rc2idx[$i].end -> $j {
-                if %!o<default> == $!rc2idx[$i][$j] {
-                    $tmp_pos = [ $i, $j ];
-                    last LOOP;
-                }
+        for 0 .. $!rc2idx[$i].end -> $j {
+            if %!o<default> == $!rc2idx[$i][$j] {
+                $tmp_pos = [ $i, $j ];
+                last LOOP;
             }
-        # }
+        }
     }
     while $tmp_pos[R] > $!p_end {
         $!row_on_top = $!avail_h * ( $!pos[R] div $!avail_h + 1 );
@@ -971,7 +968,7 @@ Term::Choose - Choose items from a list interactively.
 
 =head1 VERSION
 
-Version 0.010
+Version 0.011
 
 =head1 SYNOPSIS
 
