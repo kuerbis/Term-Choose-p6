@@ -8,4 +8,5 @@ install:
   - rakudobrew build-panda
   - panda installdeps .
   - panda install Term::termios
+  - panda install Terminal::WCWidth
 sudo: false
