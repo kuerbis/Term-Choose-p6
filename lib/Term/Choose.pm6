@@ -1,7 +1,7 @@
 use v6;
 unit class Term::Choose;
 
-my $VERSION = '0.012';
+my $VERSION = '0.013';
 
 #use Term::termios;
 
@@ -9,18 +9,14 @@ use Term::Choose::Constants :choose;
 use Term::Choose::LineFold  :all;
 
 
-BEGIN {
-    if $*DISTRO.is-win {
-        die "Win OS not (yet) supported.";
-        #require Term::Choose::Win32;
-    }
-    else {
-        require Term::Choose::Linux;
-    }
-}
+use Term::Choose::Linux;
+#use Term::Choose::Linux:if( ! $*DISTRO.is-win );
+#use Term::Choose::Win32:if(   $*DISTRO.is-win );
 
-has $!plugin = $*DISTRO.is-win ?? Term::Choose::Win32.new
-                               !! Term::Choose::Linux.new;
+
+has $!plugin = Term::Choose::Linux.new;
+#has $!plugin = $*DISTRO.is-win ?? Term::Choose::Win32.new
+#                               !! Term::Choose::Linux.new;
 has @!orig_list;
 has @!list;
 
@@ -968,7 +964,7 @@ Term::Choose - Choose items from a list interactively.
 
 =head1 VERSION
 
-Version 0.012
+Version 0.013
 
 =head1 SYNOPSIS
 

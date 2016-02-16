@@ -1,5 +1,9 @@
 Revision history for Term::Choose
 
+
+0.013   2016-02-16
+        - Remove BEGIN block and conditional plugin loading
+
 0.012   2016-02-16
         - Modified .travis.yml
 
