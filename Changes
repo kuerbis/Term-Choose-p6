@@ -1,5 +1,7 @@
 Revision history for Term::Choose
 
+0.012   2016-02-16
+        - Modified .travis.yml
 
 0.011   2016-02-16
         - Update 'line_fold'

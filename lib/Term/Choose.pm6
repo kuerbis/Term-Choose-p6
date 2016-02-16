@@ -1,9 +1,9 @@
 use v6;
 unit class Term::Choose;
 
-my $VERSION = '0.011';
+my $VERSION = '0.012';
 
-use Term::termios;
+#use Term::termios;
 
 use Term::Choose::Constants :choose;
 use Term::Choose::LineFold  :all;
@@ -968,7 +968,7 @@ Term::Choose - Choose items from a list interactively.
 
 =head1 VERSION
 
-Version 0.011
+Version 0.012
 
 =head1 SYNOPSIS
 
