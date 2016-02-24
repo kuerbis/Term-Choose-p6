@@ -1,6 +1,13 @@
 Revision history for Term::Choose
 
 
+0.100   2016-02-24
+        - Backward incompatible changes.
+        - From Term::termios to NCurses
+        - Removed the options 'clear_screen' and 'hide_cursor'
+        - Changed option 'mouse' - two values: off and on
+        - Option 'll' only for 'pause'
+
 0.013   2016-02-16
         - Remove BEGIN block and conditional plugin loading
 

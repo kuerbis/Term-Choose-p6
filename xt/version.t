@@ -1,16 +1,13 @@
 use v6;
 use Test;
 
-plan 7;
+plan 5;
 
 
 
 my %hash = (
     choose              => 'lib/Term/Choose.pm6',
     choose_linefold     => 'lib/Term/Choose/LineFold.pm6',
-    choose_linux        => 'lib/Term/Choose/Linux.pm6',
-    #choose_win32        => 'lib/Term/Choose/Win32.pm6',
-    choose_constants    => 'lib/Term/Choose/Constants.pm6',
 );
 
 
@@ -53,8 +50,5 @@ ok( %version<choose> > 0, 'Version greater than 0  OK' );
 
 is( %podversion<choose>,        %version<choose>, 'Version in POD Term::Choose  OK' );
 is( %version<choose_linefold>,  %version<choose>, 'Version in Term::Choose::LineFold  OK' );
-is(  %version<choose_linux>,    %version<choose>, 'Version in Term::Choose::Linux  OK' );
-#is( %version<choose_win32>,   %version<choose>,   'Version in Term::Choose::Win32 OK' );
-is( %version<choose_constants>, %version<choose>, 'Version in Term::Choose::Constants  OK' );
 is( $version_in_changelog,      %version<choose>, 'Version in "Changes"  OK' );
 is( $release_date,              $today,           'Release date in Changes is date from today  OK' );

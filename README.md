@@ -8,7 +8,7 @@ Term::Choose - Choose items from a list interactively.
 VERSION
 =======
 
-Version 0.013
+Version 0.100
 
 SYNOPSIS
 ========
@@ -68,7 +68,7 @@ Keys
 
 For the usage of `SpaceBar`, `Ctrl-SpaceBar`, `Return` and the `q`-key see [#choose](#choose), [#choose_multi](#choose_multi) and [#pause](#pause).
 
-With a *mouse* mode enabled (and if supported by the terminal) use the the left mouse key instead the `Return` key and the right mouse key instead of the `SpaceBar` key. Instead of `PageUp` and `PageDown` it can be used the mouse wheel.
+With *mouse* enabled (and if supported by the terminal) use the the left mouse key instead the `Return` key and the right mouse key instead of the `SpaceBar` key. Instead of `PageUp` and `PageDown` it can be used the mouse wheel. - Mouse wheel not yet suppoerted! 
 
 Routines
 ========
@@ -139,13 +139,6 @@ beep
 
 1 - on
 
-clear_screen
-------------
-
-0 - off (default)
-
-1 - clears the screen before printing the choices
-
 default
 -------
 
@@ -165,13 +158,6 @@ empty
 Sets the string displayed on the screen instead an empty string.
 
 default: "ltemptygt"
-
-hide_cursor
------------
-
-0 - keep the terminals highlighting of the cursor position
-
-1 - hide the terminals highlighting of the cursor position (default)
 
 index
 -----
@@ -260,6 +246,8 @@ Allowed values for the two elements are: 0 or greater.
 ll
 --
 
+This option is only available for the `pause` function/method.
+
 If all elements have the same length, the length can be passed with this option.
 
 *length* refers here to the number of print columns the element will use on the terminal.
@@ -316,11 +304,9 @@ Allowed values: 2 or greater
 mouse
 -----
 
-0 - no mouse mode (default)
+0 - no mouse (default)
 
-1 - extended SGR mouse mode (1006)
-
-2 - mouse mode 1003 (limited to the first 223 print-columns and to the first 223 rows)
+1 - mouse enabled
 
 no_spacebar
 -----------
@@ -385,24 +371,10 @@ Monospaced font
 
 It is required a terminal that uses a monospaced font which supports the printed characters.
 
-Escape sequences
-----------------
+libncurses
+----------
 
-It is required a terminal that supports ANSI escape sequences.
-
-If the option "hide_cursor" is enabled, it is also required the support for the following escape sequences:
-
-        "\e[?25l"   # Hide Cursor
-
-        "\e[?25h"   # Show Cursor
-
-If a *mouse* mode is enabled
-
-        "\e[?1003h", "\e[?1006h"   # Enable Mouse Tracking
-
-        "\e[?1003l", "\e[?1006l"   # Disable Mouse Tracking
-
-are used to enable/disable the different *mouse* modes.
+See *Installation* and *Environment variables* in [NCurses](https://github.com/azawawi/perl6-ncurses).
 
 AUTHOR
 ======

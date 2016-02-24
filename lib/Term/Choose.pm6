@@ -1,27 +1,42 @@
 use v6;
 unit class Term::Choose;
 
-my $VERSION = '0.013';
+my $VERSION = '0.100';
 
-#use Term::termios;
+use NCurses;
 
-use Term::Choose::Constants :choose;
-use Term::Choose::LineFold  :all;
-
-
-use Term::Choose::Linux;
-#use Term::Choose::Linux:if( ! $*DISTRO.is-win );
-#use Term::Choose::Win32:if(   $*DISTRO.is-win );
+use Term::Choose::LineFold :all;
 
 
-has $!plugin = Term::Choose::Linux.new;
-#has $!plugin = $*DISTRO.is-win ?? Term::Choose::Win32.new
-#                               !! Term::Choose::Linux.new;
+constant R = 0;
+constant C = 1;
+constant OK = 0;
+constant WIDTH_CURSOR  = 1;
+
+constant CONTROL_SPACE = 0x00;
+constant CONTROL_A     = 0x01;
+constant CONTROL_B     = 0x02;
+constant CONTROL_D     = 0x04;
+constant CONTROL_E     = 0x05;
+constant CONTROL_F     = 0x06;
+constant CONTROL_H     = 0x08;
+constant KEY_TAB       = 0x09;
+constant KEY_RETURN    = 0x0a;
+constant KEY_SPACE     = 0x20;
+constant KEY_h         = 0x68;
+constant KEY_j         = 0x6a;
+constant KEY_k         = 0x6b;
+constant KEY_l         = 0x6c;
+constant KEY_q         = 0x71;
+
+
 has @!orig_list;
 has @!list;
 
 has %.o_global;
 has %!o;
+
+has NCurses::WINDOW $!win;
 
 has Int   $!multiselect;
 has Int   $!term_w;
@@ -41,8 +56,6 @@ has Int   $!p_end;
 has Array $!rc2idx;
 has Array $!pos;
 has Int   $!row_on_top;
-has Int   $!i_row;
-has Int   $!i_col;
 has Int   $!cursor_row;
 has Array $!marked;
 
@@ -56,10 +69,8 @@ method new ( %o_global? ) {
 
 sub _set_defaults ( %opt ) {
     %opt<beep>          //= 0;
-    %opt<clear_screen>  //= 0;
     %opt<default>       //= 0;
     %opt<empty>         //= '<empty>';
-    %opt<hide_cursor>   //= 1;
     %opt<index>         //= 0;
     %opt<justify>       //= 0;
     %opt<keep>          //= 5;
@@ -82,14 +93,12 @@ sub _set_defaults ( %opt ) {
 sub _valid_options {
     return {
         beep            => '<[ 0 1 ]>',
-        clear_screen    => '<[ 0 1 ]>',
-        hide_cursor     => '<[ 0 1 ]>',
         index           => '<[ 0 1 ]>',
+        mouse           => '<[ 0 1 ]>',
         order           => '<[ 0 1 ]>',
         page            => '<[ 0 1 ]>',
         justify         => '<[ 0 1 2 ]>',
         layout          => '<[ 0 1 2 ]>',
-        mouse           => '<[ 0 1 2 ]>',
         keep            => '<[ 1 .. 9 ]><[ 0 .. 9 ]>*',
         ll              => '<[ 1 .. 9 ]><[ 0 .. 9 ]>*',
         max_height      => '<[ 1 .. 9 ]><[ 0 .. 9 ]>*',
@@ -134,35 +143,9 @@ sub _validate_options ( %opt, Int $list_end? ) {
     }
 }
 
-
-
-method !_init_term {
-    $!plugin._set_mode( %!o<mouse>, %!o<hide_cursor> );
-}
-
-method !_reset_term ( Int $from_choose ) {
-    if $from_choose {
-        print CR;
-        my Int $up = $!i_row + $!nr_prompt_lines;
-        $!plugin._up( $up ) if $up;
-        $!plugin._clear_to_end_of_screen; #
-    }
-    if $!plugin.defined {
-        $!plugin._reset_mode( %!o<mouse>, %!o<hide_cursor> );
-    }
-}
-
 submethod DESTROY () { # ###
-    self!_reset_term;
+    endwin();
 }
-
-
-method !_get_key {
-    my $key = $!plugin._get_key_OS( %!o<mouse> );
-    return self!_mouse_info_to_key( |$key ) if $key.isa( Array );
-    return $key ;
-}
-
 
 method !_prepare_new_copy_of_list {
     @!list = @!orig_list;
@@ -214,6 +197,32 @@ method choose_multi ( @list, %opt? ) { return self!_choose( @list, %opt, 1   ) }
 method pause        ( @list, %opt? ) { return self!_choose( @list, %opt, Int ) }
 
 
+
+method !_init_term {
+    $!win = initscr;
+    noecho();
+    cbreak;
+    keypad( $!win, True );
+    my Array[int32] $old;
+    my $s = mousemask( ALL_MOUSE_EVENTS +| REPORT_MOUSE_POSITION, $old );
+    curs_set( 0 );
+    #mouseinterval( 500 );
+}
+
+method !_reset_term {
+    %!o<default> = $!rc2idx[$!pos[R]][$!pos[C]];
+    if $!marked.elems {
+        %!o<mark> = self!_marked_to_idx;
+    }
+    #sleep 0.5;
+    endwin();
+    nc_refresh;
+    self!_init_term();
+    self!_wr_first_screen;
+}
+
+
+
 method !_choose ( @!orig_list, %!o, Int $!multiselect ) {
     if ! @!orig_list.elems {
         return;
@@ -225,32 +234,18 @@ method !_choose ( @!orig_list, %!o, Int $!multiselect ) {
     if ! %!o<prompt>.defined {
         %!o<prompt> = $!multiselect.defined ?? 'Your choice' !! 'Continue with ENTER';
     }
-    signal(SIGINT).tap( { exit 1 } ); # act Supplies
     self!_init_term;
     self!_wr_first_screen;
+    my Int $pressed; #
 
     GET_KEY: loop {
-        my $key = self!_get_key;
-        if ! $key.defined {
-            self!_reset_term( 1 );
-            die "EOT: $!"; ##
-            #return;
-        }
-        my ( Int $new_term_w, Int $new_term_h ) = $!plugin._term_size;
+        my $key = getch();
+        my Int $new_term_w = getmaxx( $!win );
+        my Int $new_term_h = getmaxy( $!win );
         if $new_term_w != $!term_w || $new_term_h != $!term_h {
-            %!o<default> = $!rc2idx[$!pos[R]][$!pos[C]];
-            if $!multiselect && $!marked.elems {
-                %!o<mark> = self!_marked_to_idx;
-            }
-            print CR;
-            my Int $up = $!i_row + $!nr_prompt_lines;
-            $!plugin._up( $up ) if $up;
-            $!plugin._clear_to_end_of_screen;
-            self!_wr_first_screen;
+            self!_reset_term();
             next GET_KEY;
         }
-        next GET_KEY if $key == NEXT_get_key;
-        next GET_KEY if $key == KEY_Tilde;
 
         # $!rc2idx holds the new list (AoA) formated in "_index_to_rowcol" appropirate to the chosen layout.
         # $!rc2idx does not hold the values dircetly but the respective list indexes from the original list.
@@ -267,7 +262,9 @@ method !_choose ( @!orig_list, %!o, Int $!multiselect ) {
         # or the index of the last column in the first row would be $!rc2idx[0].end.
 
         given $key {
-            when VK_DOWN | KEY_j {
+            #when KEY_RESIZE {
+            #}
+            when KEY_DOWN | KEY_j {
                 if ! $!rc2idx[$!pos[R]+1] || ! $!rc2idx[$!pos[R]+1][$!pos[C]] {
                     self!_beep;
                 }
@@ -286,7 +283,7 @@ method !_choose ( @!orig_list, %!o, Int $!multiselect ) {
                     }
                 }
             }
-            when VK_UP | KEY_k {
+            when KEY_UP | KEY_k {
                 if $!pos[R] == 0 {
                     self!_beep;
                 }
@@ -305,7 +302,7 @@ method !_choose ( @!orig_list, %!o, Int $!multiselect ) {
                     }
                 }
             }
-            when KEY_TAB | CONTROL_I {
+            when KEY_TAB {
                 if $!pos[R] == $!rc2idx.end && $!pos[C] == $!rc2idx[$!pos[R]].end {
                     self!_beep;
                 }
@@ -333,7 +330,7 @@ method !_choose ( @!orig_list, %!o, Int $!multiselect ) {
                     }
                 }
             }
-            when KEY_BSPACE | CONTROL_H | KEY_BTAB {
+            when KEY_BACKSPACE | CONTROL_H | KEY_BTAB {
                 if $!pos[C] == 0 && $!pos[R] == 0 {
                     self!_beep;
                 }
@@ -361,7 +358,7 @@ method !_choose ( @!orig_list, %!o, Int $!multiselect ) {
                     }
                 }
             }
-            when VK_RIGHT | KEY_l {
+            when KEY_RIGHT | KEY_l {
                 if $!pos[C] == $!rc2idx[$!pos[R]].end {
                     self!_beep;
                 }
@@ -371,7 +368,7 @@ method !_choose ( @!orig_list, %!o, Int $!multiselect ) {
                     self!_wr_cell( $!pos[R], $!pos[C] );
                 }
             }
-            when VK_LEFT | KEY_h {
+            when KEY_LEFT | KEY_h {
                 if $!pos[C] == 0 {
                     self!_beep;
                 }
@@ -381,7 +378,7 @@ method !_choose ( @!orig_list, %!o, Int $!multiselect ) {
                     self!_wr_cell( $!pos[R], $!pos[C] );
                 }
             }
-            when VK_PAGE_UP | CONTROL_B {
+            when KEY_PPAGE | CONTROL_B {
                 if $!p_begin <= 0 {
                     self!_beep;
                 }
@@ -393,7 +390,7 @@ method !_choose ( @!orig_list, %!o, Int $!multiselect ) {
                     self!_wr_screen;
                 }
             }
-            when VK_PAGE_DOWN | CONTROL_F {
+            when KEY_NPAGE | CONTROL_F {
                 if $!p_end >= $!rc2idx.end {
                     self!_beep;
                 }
@@ -419,7 +416,7 @@ method !_choose ( @!orig_list, %!o, Int $!multiselect ) {
                     self!_wr_screen;
                 }
             }
-            when VK_HOME | CONTROL_A {
+            when KEY_HOME | CONTROL_A {
                 if $!pos[C] == 0 && $!pos[R] == 0 {
                     self!_beep;
                 }
@@ -433,7 +430,7 @@ method !_choose ( @!orig_list, %!o, Int $!multiselect ) {
                     self!_wr_screen;
                 }
             }
-            when VK_END | CONTROL_E {
+            when KEY_END | CONTROL_E {
                 if %!o<order> == 1 && $!rest {
                     if $!pos[R] == $!rc2idx.end - 1 && $!pos[C] == $!rc2idx[$!pos[R]].end {
                         self!_beep;
@@ -469,16 +466,11 @@ method !_choose ( @!orig_list, %!o, Int $!multiselect ) {
                 }
             }
             when KEY_q | CONTROL_D {
-                self!_reset_term( 1 );
+                endwin();
                 return;
             }
-            when CONTROL_C {
-                self!_reset_term( 1 );
-                note "^C";
-                exit 1;
-            }
-            when KEY_ENTER {
-                self!_reset_term( 1 );
+            when KEY_RETURN | KEY_ENTER { #
+                endwin();
                 if ! $!multiselect.defined {
                     return;
                 }
@@ -541,15 +533,98 @@ method !_choose ( @!orig_list, %!o, Int $!multiselect ) {
                     self!_beep;
                 }
             }
+            when KEY_MOUSE {
+                my NCurses::MEVENT $event .= new;
+                if getmouse( $event ) == OK {
+                    if $event.bstate == BUTTON1_CLICKED | BUTTON1_PRESSED {
+                        my $ret = self!_curr_pos_to_mouse_xy( $event.x, $event.y );
+                        if $ret {
+                            ungetch( KEY_RETURN );
+                        }
+                    }
+                    #elsif $event.bstate == BUTTON3_CLICKED | BUTTON3_PRESSED {
+                    ####
+                    elsif $event.bstate == 16384 | 8192 | 4096 | 2048 {
+                        if $event.bstate == 4096 && $pressed {
+                            $pressed = 0;
+                            next GET_KEY;
+                        }
+                        if $event.bstate == 8192 {
+                            $pressed = 1;
+                        }
+                    ####
+                        my $ret = self!_curr_pos_to_mouse_xy( $event.x, $event.y );
+                        if $ret {
+                            ungetch( KEY_SPACE );
+                        }
+                    }
+                    #elsif $event.bstate == BUTTON4_PRESSED {
+                    #    ungetch( KEY_PPAGE );
+                    #}
+                    #elsif $event.bstate == BUTTON5_PRESSED {
+                    #    ungetch( KEY_NPAGE );
+                    #}
+                }
+                next GET_KEY;
+            }
             default {
                 self!_beep;
             }
         }
+        nc_refresh();
     }
 }
 
+
+method !_curr_pos_to_mouse_xy ( Int $abs_mouse_x, Int $abs_mouse_y ) {
+    my Int $abs_y_of_top_row = $!nr_prompt_lines;
+    if $abs_mouse_y < $abs_y_of_top_row {
+        return;
+    }
+    my Int $mouse_row = $abs_mouse_y - $abs_y_of_top_row;
+    my Int $mouse_col = $abs_mouse_x;
+    if $mouse_row > $!rc2idx.end {
+        return;
+    }
+    my Int $pad = $!rc2idx.end == 0 ?? %!o<pad_one_row> !! %!o<pad>;
+    my Int $row = $mouse_row + $!row_on_top;
+    my Int $matched_col;
+    my Int $end_last_col = 0;
+    COL: for 0 .. $!rc2idx[$row].end -> $col {
+        my Int $end_this_col;
+        if $!rc2idx.end == 0 {
+            $end_this_col = $end_last_col + print_columns( @!list[$!rc2idx[$row][$col]] ) + $pad;
+        }
+        else { #
+            $end_this_col = $end_last_col + $!col_w + $pad;
+        }
+        if $col == 0 {
+            $end_this_col -= $pad div 2;
+        }
+        if $col == $!rc2idx[$row].end && $end_this_col > $!avail_w {
+            $end_this_col = $!avail_w;
+        }
+        if $end_last_col < $mouse_col && $end_this_col >= $mouse_col {
+            $matched_col = $col;
+            last COL;
+        }
+        $end_last_col = $end_this_col;
+    }
+    if ! $matched_col.defined {
+        return;
+    }
+    if $row != $!pos[R] || $matched_col != $!pos[C] {
+        my Array $tmp = $!pos; #
+        $!pos = [ $row, $matched_col ];
+        self!_wr_cell( $tmp[0], $tmp[1] );
+        self!_wr_cell( $!pos[R], $!pos[C] );
+    }
+    return 1;
+}
+
+
 method !_beep {
-    print BEEP if %!o<beep>;
+    beep() if %!o<beep>;
 }
 
 
@@ -569,36 +644,37 @@ method !_prepare_prompt {
 
 method !_set_default_cell {
     my $tmp_pos = [ 0, 0 ];
-    LOOP: for 0 .. $!rc2idx.end -> $i {
-        for 0 .. $!rc2idx[$i].end -> $j {
+    ROW: for 0 .. $!rc2idx.end -> $i {
+        COL: for 0 .. $!rc2idx[$i].end -> $j {
             if %!o<default> == $!rc2idx[$i][$j] {
                 $tmp_pos = [ $i, $j ];
-                last LOOP;
+                last ROW;
             }
         }
     }
-    while $tmp_pos[R] > $!p_end {
-        $!row_on_top = $!avail_h * ( $!pos[R] div $!avail_h + 1 );
-        $!pos[R]  = $!row_on_top;
-        $!p_begin = $!row_on_top;
-        $!p_end   = $!p_begin + $!avail_h - 1;
-        $!p_end   = $!rc2idx.end if $!p_end > $!rc2idx.end;
-    }
+    $!row_on_top = $!avail_h * ( $tmp_pos[R] div $!avail_h );
+    $!p_begin = $!row_on_top;
+    $!p_end   = $!p_begin + $!avail_h - 1;
+    $!p_end   = $!rc2idx.end if $!p_end > $!rc2idx.end;
     $!pos = $tmp_pos;
 }
 
 
 method !_wr_first_screen {
-    ( $!term_w, $!term_h ) = $!plugin._term_size;
+    $!term_w = getmaxx( $!win );
+    $!term_h = getmaxy( $!win );
+
     ( $!avail_w, $!avail_h ) = ( $!term_w, $!term_h );
-    if ! $*DISTRO.is-win {
-        $!avail_w += WIDTH_CURSOR;
-    }
+
+    $!avail_w += WIDTH_CURSOR;
+
     if %!o<max_width> && $!avail_w > %!o<max_width> {
         $!avail_w = %!o<max_width>;
     }
+
     self!_prepare_new_copy_of_list;
-    if $!avail_w - WIDTH_CURSOR >= $!col_w && ! $*DISTRO.is-win {
+
+    if $!avail_w - WIDTH_CURSOR >= $!col_w {
         $!avail_w -= WIDTH_CURSOR;
         # WIDTH_CURSOR: only use the last terminal-column if required and if there is only one print-column;
         #               with only one print-column the output doesn't get messed up if an item
@@ -607,46 +683,49 @@ method !_wr_first_screen {
     if $!avail_w < 2 {
         die "Terminal width to small.";
     }
+
     self!_prepare_prompt;
     $!avail_h -= $!nr_prompt_lines;
+
     $!pp_row = %!o<page> ?? 1 !! 0;
+
     my $keep = %!o<keep> + $!pp_row;
     if $!avail_h < $keep {
         $!avail_h = $!term_h > $keep ?? $keep !! $!term_h;
     }
+
     if %!o<max_height> && %!o<max_height> < $!avail_h {
         $!avail_h = %!o<max_height>;
     }
+
     $!layout = %!o<layout>;
     self!_index_to_rowcol;
+
     if %!o<page> {
         self!_set_page_nr_print_fmt;
     }
-    my Int $avail_h_idx = $!avail_h - 1; #
+
     $!p_begin    = 0;
-    $!p_end      = $avail_h_idx > $!rc2idx.end ?? $!rc2idx.end !! $avail_h_idx; #
+    $!p_end      = $!avail_h - 1;
+    $!p_end      = $!rc2idx.end if $!p_end > $!rc2idx.end;
     $!row_on_top = 0;
-    $!i_row      = 0;
-    $!i_col      = 0;
     $!pos        = [ 0, 0 ];
     $!marked     = [];
+
     if $!multiselect && %!o<mark> {
         self!_idx_to_marked( %!o<mark>, 1 );
     }
+
     if %!o<default>.defined && %!o<default> <= @!list.end {
         self!_set_default_cell;
     }
-    if %!o<clear_screen> {
-        $!plugin._clear_screen;
-    }
+
     if %!o<prompt> ne '' {
-        print $!prompt_copy;
+        mvaddstr( 0, 0, $!prompt_copy );
     }
+
     self!_wr_screen;
-    if %!o<mouse> {
-        $!plugin._get_cursor_position;
-    }
-    $!cursor_row = $!i_row;
+    nc_refresh();
 }
 
 method !_set_page_nr_print_fmt {
@@ -669,13 +748,15 @@ method !_set_page_nr_print_fmt {
 }
 
 method !_wr_screen {
-    self!_goto( 0, 0 );
-    $!plugin._clear_to_end_of_screen;
+    move( $!nr_prompt_lines, 0 );
+    clrtobot();
     if $!pp_row {
-        self!_goto( $!avail_h - 1 + $!pp_row, 0 );
         my Str $pp_line = sprintf $!pp_line_fmt, $!row_on_top div $!avail_h + 1;
-        print $pp_line;
-        $!i_col += $pp_line.chars;
+        mvaddstr(
+            $!avail_h + $!nr_prompt_lines,
+            0,
+            $pp_line
+        );
      }
     for $!p_begin .. $!p_end -> $row {
         for 0 .. $!rc2idx[$row].end -> $col {
@@ -697,53 +778,40 @@ method !_wr_cell ( Int $row, Int $col ) {
                 $lngth += %!o<pad_one_row>;
             }
         }
-        self!_goto( $row - $!row_on_top, $lngth );
-        $!plugin._bold_underline if $!marked[$row][$col];
-        $!plugin._reverse        if $is_current_pos;
-        print @!list[$idx];
-        $!i_col += print_columns( @!list[$idx] );
+        attron( A_BOLD +| A_UNDERLINE ) if $!marked[$row][$col];
+        attron( A_REVERSE )             if $is_current_pos;
+        mvaddstr( 
+            $row - $!row_on_top + $!nr_prompt_lines,
+            $lngth,
+            @!list[$idx]
+        );
     }
     else {
-        self!_goto( $row - $!row_on_top, ( $!col_w + %!o<pad> ) * $col );
-        $!plugin._bold_underline if $!marked[$row][$col];
-        $!plugin._reverse        if $is_current_pos;
-        print self!_pad_str_to_colwidth( $idx );
-        $!i_col += $!col_w;
+        attron( A_BOLD +| A_UNDERLINE ) if $!marked[$row][$col];
+        attron( A_REVERSE )             if $is_current_pos;
+        mvaddstr( 
+            $row - $!row_on_top + $!nr_prompt_lines,
+            ( $!col_w + %!o<pad> ) * $col,
+            self!_pad_str_to_colwidth: $idx
+        );
     }
-    $!plugin._reset if $!marked[$row][$col] || $is_current_pos;
+    attroff( A_BOLD +| A_UNDERLINE ) if $!marked[$row][$col];
+    attroff( A_REVERSE )             if $is_current_pos;
+    #wnoutrefresh( $!win );
 }
 
-method !_goto ( Int $newrow, Int $newcol ) {
-    if $newrow > $!i_row {
-        print CR, LF x ( $newrow - $!i_row );
-        $!i_row += ( $newrow - $!i_row );
-        $!i_col = 0;
-    }
-    elsif $newrow < $!i_row {
-        $!plugin._up( $!i_row - $newrow );
-        $!i_row -= ( $!i_row - $newrow );
-    }
-    if $newcol > $!i_col {
-        $!plugin._right( $newcol - $!i_col );
-        $!i_col += ( $newcol - $!i_col );
-    }
-    elsif $newcol < $!i_col {
-        $!plugin._left( $!i_col - $newcol );
-        $!i_col -= ( $!i_col - $newcol );
-    }
-}
 
 method !_pad_str_to_colwidth ( Int $idx ) {
-    my Int $str_length = @!length[$idx];
-    if $str_length < $!col_w {
+    my Int $str_w = @!length[$idx];
+    if $str_w < $!col_w {
         if %!o<justify> == 0 {
-            return @!list[$idx] ~ " " x ( $!col_w - $str_length );
+            return @!list[$idx] ~ " " x ( $!col_w - $str_w );
         }
         elsif %!o<justify> == 1 {
-            return " " x ( $!col_w - $str_length ) ~ @!list[$idx];
+            return " " x ( $!col_w - $str_w ) ~ @!list[$idx];
         }
         elsif %!o<justify> == 2 {
-            my Int $fill = $!col_w - $str_length;
+            my Int $fill = $!col_w - $str_w;
             my Int $half_fill = $fill div 2;
             return " " x $half_fill ~ @!list[$idx] ~ " " x ( $fill - $half_fill );
         }
@@ -842,7 +910,7 @@ method !_idx_to_marked ( Array $indexes, Int $boolean ) {
         return;
     }
     my ( Int $row, Int $col );
-    my Int $cols_per_row = $!rc2idx[0].end;
+    my Int $cols_per_row = $!rc2idx[0].elems;
     if %!o<order> == 0 {
         for $indexes.list -> $idx {
             $row = $idx div $cols_per_row;
@@ -854,7 +922,7 @@ method !_idx_to_marked ( Array $indexes, Int $boolean ) {
         my Int $rows_per_col = $!rc2idx.elems;
         my Int $end_last_full_col = $rows_per_col * ( $!rest || $cols_per_row );
         for $indexes.list -> $idx {
-            next if $idx > @!list.end;
+            next if $idx > @!list.end; ###
             if $idx <= $end_last_full_col {
                 $row = $idx % $rows_per_col;
                 $col = $idx div $rows_per_col;
@@ -874,85 +942,20 @@ method !_marked_to_idx {
     if %!o<order> == 1 {
         for 0 .. $!rc2idx[0].end -> $col {
             for 0 .. $!rc2idx.end -> $row {
-                if $!marked[$row][$col] {
-                    @idx.push( $!rc2idx[$row][$col] );
-                }
+                @idx.push( $!rc2idx[$row][$col] ) if $!marked[$row][$col];
             }
         }
     }
     else {
         for 0 .. $!rc2idx.end -> $row {
             for 0 .. $!rc2idx[$row].end -> $col {
-                if $!marked[$row][$col] {
-                    @idx.push( $!rc2idx[$row][$col] );
-                }
+                @idx.push( $!rc2idx[$row][$col] ) if $!marked[$row][$col];
             }
         }
     }
     return @idx;
 }
 
-
-method !_mouse_info_to_key ( Int $abs_cursor_y, Int $button, Int $abs_mouse_x, Int $abs_mouse_y ) {
-    if $button == 4 {
-        return VK_PAGE_UP;
-    }
-    elsif $button == 5 {
-        return VK_PAGE_DOWN;
-    }
-    my Int $abs_y_top_row = $abs_cursor_y - $!cursor_row;
-    return NEXT_get_key if $abs_mouse_y < $abs_y_top_row;
-    my Int $mouse_row = $abs_mouse_y - $abs_y_top_row;
-    my Int $mouse_col = $abs_mouse_x;
-    my ( Int $found_row, Int $found_col );
-    my Int $found = 0;
-    my Int $half_pad = ( $!rc2idx.end == 0 ?? %!o<pad_one_row> !! %!o<pad> ) div 2;
-    ROW: for 0 .. $!rc2idx.end -> $row {
-        if $row == $mouse_row {
-            my Int $end_last_col = 0;
-            COL: for 0 .. $!rc2idx[$row].end -> $col {
-                my Int $end_this_col;
-                if $!rc2idx.end == 0 {
-                    $end_this_col = $end_last_col + print_columns( @!list[$!rc2idx[$row][$col]] ) + %!o<pad_one_row>;
-                }
-                else { #
-                    $end_this_col = $end_last_col + $!col_w + %!o<pad>;
-                }
-                if $col == 0 {
-                    $end_this_col -= $half_pad;
-                }
-                if $col == $!rc2idx[$row].end && $end_this_col > $!avail_w {
-                    $end_this_col = $!avail_w;
-                }
-                if $end_last_col < $mouse_col && $end_this_col >= $mouse_col {
-                    $found = 1;
-                    $found_row = $row + $!row_on_top;
-                    $found_col = $col;
-                    last ROW;
-                }
-                $end_last_col = $end_this_col;
-            }
-        }
-    }
-    return NEXT_get_key if ! $found;
-    my $return_char = '';
-    if $button == 1 {
-        $return_char = KEY_ENTER;
-    }
-    elsif $button == 3 {
-        $return_char = KEY_SPACE;
-    }
-    else {
-        return NEXT_get_key;
-    }
-    if $found_row != $!pos[R] || $found_col != $!pos[C] {
-        my Array $tmp = $!pos; #
-        $!pos = [ $found_row, $found_col ];
-        self!_wr_cell( $tmp[0], $tmp[1] );
-        self!_wr_cell( $!pos[R], $!pos[C] );
-    }
-    return $return_char;
-}
 
 
 
@@ -964,7 +967,7 @@ Term::Choose - Choose items from a list interactively.
 
 =head1 VERSION
 
-Version 0.013
+Version 0.100
 
 =head1 SYNOPSIS
 
@@ -1023,8 +1026,9 @@ end of the list.
 For the usage of C<SpaceBar>, C<Ctrl-SpaceBar>, C<Return> and the C<q>-key see L<#choose>, L<#choose_multi> and
 L<#pause>.
 
-With a I<mouse> mode enabled (and if supported by the terminal) use the the left mouse key instead the C<Return> key and
+With I<mouse> enabled (and if supported by the terminal) use the the left mouse key instead the C<Return> key and
 the right mouse key instead of the C<SpaceBar> key. Instead of C<PageUp> and C<PageDown> it can be used the mouse wheel.
+- Mouse wheel not yet suppoerted! 
 
 =head1 Routines
 
@@ -1110,12 +1114,6 @@ Options which expect a number as their value expect integers.
 
 1 - on
 
-=head2 clear_screen
-
-0 - off (default)
-
-1 - clears the screen before printing the choices
-
 =head2 default
 
 With the option I<default> it can be selected an element, which will be highlighted as the default instead of the first
@@ -1134,12 +1132,6 @@ Allowed values: 0 or greater
 Sets the string displayed on the screen instead an empty string.
 
 default: "E<lt>emptyE<gt>"
-
-=head2 hide_cursor
-
-0 - keep the terminals highlighting of the cursor position
-
-1 - hide the terminals highlighting of the cursor position (default)
 
 =head2 index
 
@@ -1235,6 +1227,8 @@ Allowed values for the two elements are: 0 or greater.
 
 =head2 ll
 
+This option is only available for the C<pause> function/method.
+
 If all elements have the same length, the length can be passed with this option.
 
 I<length> refers here to the number of print columns the element will use on the terminal.
@@ -1291,11 +1285,9 @@ Allowed values: 2 or greater
 
 =head2 mouse
 
-0 - no mouse mode (default)
+0 - no mouse (default)
 
-1 - extended SGR mouse mode (1006)
-
-2 - mouse mode 1003 (limited to the first 223 print-columns and to the first 223 rows)
+1 - mouse enabled
 
 =head2 no_spacebar
 
@@ -1353,31 +1345,9 @@ default: "E<lt>undefE<gt>"
 
 It is required a terminal that uses a monospaced font which supports the printed characters.
 
-=head2 Escape sequences
+=head2 libncurses
 
-It is required a terminal that supports ANSI escape sequences.
-
-If the option "hide_cursor" is enabled, it is also required the support for the following escape sequences:
-
-=begin code
-
-    "\e[?25l"   # Hide Cursor
-
-    "\e[?25h"   # Show Cursor
-
-=end code
-
-If a I<mouse> mode is enabled
-
-=begin code
-
-    "\e[?1003h", "\e[?1006h"   # Enable Mouse Tracking
-
-    "\e[?1003l", "\e[?1006l"   # Disable Mouse Tracking
-
-=end code
-
-are used to enable/disable the different I<mouse> modes.
+See I<Installation> and I<Environment variables> in L<NCurses|https://github.com/azawawi/perl6-ncurses>.
 
 =head1 AUTHOR
 
