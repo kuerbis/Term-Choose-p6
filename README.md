@@ -8,7 +8,7 @@ Term::Choose - Choose items from a list interactively.
 VERSION
 =======
 
-Version 0.100
+Version 0.101
 
 SYNOPSIS
 ========
@@ -35,6 +35,8 @@ SYNOPSIS
 
 DESCRIPTION
 ===========
+
+`Term::Choose` does not (yet) support strings with wide characters.
 
 Choose interactively from a list of items.
 

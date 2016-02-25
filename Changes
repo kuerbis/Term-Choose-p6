@@ -1,6 +1,9 @@
 Revision history for Term::Choose
 
 
+0.101   2016-02-25
+        - Update documentation: wide characters not yet supported
+
 0.100   2016-02-24
         - Backward incompatible changes.
         - From Term::termios to NCurses
