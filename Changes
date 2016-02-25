@@ -1,6 +1,9 @@
 Revision history for Term::Choose
 
 
+0.102   2016-02-25
+        - Update documentation: only ascii-charater strings are supported
+
 0.101   2016-02-25
         - Update documentation: wide characters not yet supported
 

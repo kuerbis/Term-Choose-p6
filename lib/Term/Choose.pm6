@@ -1,7 +1,7 @@
 use v6;
 unit class Term::Choose;
 
-my $VERSION = '0.101';
+my $VERSION = '0.102';
 
 use NCurses;
 
@@ -966,7 +966,7 @@ Term::Choose - Choose items from a list interactively.
 
 =head1 VERSION
 
-Version 0.101
+Version 0.102
 
 =head1 SYNOPSIS
 
@@ -992,7 +992,7 @@ Version 0.101
 
 =head1 DESCRIPTION
 
-C<Term::Choose> does not (yet) support strings with wide characters.
+C<Term::Choose> supports only ascii-characters strings.
 
 Choose interactively from a list of items.
 
