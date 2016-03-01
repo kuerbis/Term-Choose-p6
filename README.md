@@ -8,7 +8,7 @@ Term::Choose - Choose items from a list interactively.
 VERSION
 =======
 
-Version 0.102
+Version 0.103
 
 SYNOPSIS
 ========
@@ -261,6 +261,8 @@ If the option *ll* is set, none of the substitutions described in [#SUBSTITUTION
 If *ll* is set to a value less than the length of the elements the output could break.
 
 If the value of *ll* is greater than the screen width the elements will be trimmed to fit into the screen.
+
+If *ll* is set and *index* is set to `1` a window-resize causes a `return -1`.
 
 Allowed values: 1 or greater
 

@@ -1,7 +1,7 @@
 use v6;
 unit class Term::Choose;
 
-my $VERSION = '0.102';
+my $VERSION = '0.103';
 
 use NCurses;
 
@@ -36,6 +36,7 @@ has @!list;
 has %.o_global;
 has %!o;
 
+has NCurses::WINDOW $.g_win; ##
 has NCurses::WINDOW $!win;
 
 has Int   $!multiselect;
@@ -60,10 +61,10 @@ has Int   $!cursor_row;
 has Array $!marked;
 
 
-method new ( %o_global? ) {
+method new ( %o_global?, $g_win=NCurses::WINDOW ) { ##
     _validate_options( %o_global );
     _set_defaults( %o_global );
-    self.bless( :%o_global );
+    self.bless( :%o_global, :$g_win ); ## opt
 }
 
 
@@ -144,7 +145,7 @@ sub _validate_options ( %opt, Int $list_end? ) {
 }
 
 submethod DESTROY () { # ###
-    endwin();
+    self!_end_term();
 }
 
 method !_prepare_new_copy_of_list {
@@ -209,19 +210,10 @@ method !_init_term {
     #mouseinterval( 500 );
 }
 
-method !_reset_term {
-    %!o<default> = $!rc2idx[$!pos[R]][$!pos[C]];
-    if $!marked.elems {
-        %!o<mark> = self!_marked_to_idx;
-    }
-    #sleep 0.5;
+method !_end_term {
+    return if $!g_win;
     endwin();
-    nc_refresh;
-    self!_init_term();
-    self!_wr_first_screen;
 }
-
-
 
 method !_choose ( @!orig_list, %!o, Int $!multiselect ) {
     if ! @!orig_list.elems {
@@ -243,7 +235,15 @@ method !_choose ( @!orig_list, %!o, Int $!multiselect ) {
         my Int $new_term_w = getmaxx( $!win );
         my Int $new_term_h = getmaxy( $!win );
         if $new_term_w != $!term_w || $new_term_h != $!term_h {
-            self!_reset_term();
+            if %!o<ll> && ( %!o<index> || ! $!multiselect.defined ) {
+                return -1;
+            }
+            %!o<default> = $!rc2idx[$!pos[R]][$!pos[C]];
+            if $!marked.elems {
+                %!o<mark> = self!_marked_to_idx;
+            }
+            clear();
+            self!_wr_first_screen;
             next GET_KEY;
         }
 
@@ -466,11 +466,11 @@ method !_choose ( @!orig_list, %!o, Int $!multiselect ) {
                 }
             }
             when KEY_q | CONTROL_D {
-                endwin();
+                self!_end_term();
                 return;
             }
             when KEY_RETURN | KEY_ENTER { #
-                endwin();
+                self!_end_term();
                 if ! $!multiselect.defined {
                     return;
                 }
@@ -966,7 +966,7 @@ Term::Choose - Choose items from a list interactively.
 
 =head1 VERSION
 
-Version 0.102
+Version 0.103
 
 =head1 SYNOPSIS
 
@@ -1244,6 +1244,8 @@ characters (especially unsupporeted non-spacing characters) are in den passed st
 If I<ll> is set to a value less than the length of the elements the output could break.
 
 If the value of I<ll> is greater than the screen width the elements will be trimmed to fit into the screen.
+
+If I<ll> is set and I<index> is set to C<1> a window-resize causes a C<return -1>.
 
 Allowed values: 1 or greater
 

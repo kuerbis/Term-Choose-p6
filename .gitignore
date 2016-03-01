@@ -18,3 +18,4 @@ MYMETA.yml
 *.old
 *.log
 *~
+*.pl
