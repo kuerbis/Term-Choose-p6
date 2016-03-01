@@ -1,6 +1,10 @@
 Revision history for Term::Choose
 
 
+0.104   2016-03-01
+        - Made the option 'll' private
+        - Update documentation
+
 0.103   2016-03-01
         - Optional global win
         - if ll and (pause() or index=1): on window-resize return -1

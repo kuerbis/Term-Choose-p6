@@ -1,7 +1,7 @@
 use v6;
 unit class Term::Choose;
 
-my $VERSION = '0.103';
+my $VERSION = '0.104';
 
 use NCurses;
 
@@ -966,7 +966,7 @@ Term::Choose - Choose items from a list interactively.
 
 =head1 VERSION
 
-Version 0.103
+Version 0.104
 
 =head1 SYNOPSIS
 
@@ -1223,31 +1223,6 @@ The option I<lf> expects a array with one or two elements:
 from the beginning of paragraphs
 
 Allowed values for the two elements are: 0 or greater.
-
-(default: undefined)
-
-=head2 ll
-
-This option is only available for the C<pause> function/method.
-
-If all elements have the same length, the length can be passed with this option.
-
-I<length> refers here to the number of print columns the element will use on the terminal.
-
-If I<ll> is set, then C<choose> doesn't calculate the length of the longest element itself but uses the value passed
-with this option.
-
-If the option I<ll> is set, none of the substitutions described in L<#SUBSTITUTIONS> are applied and the options
-I<empty> and I<undef> have no meaning. It is the up to the user to ensure that no control-characters and no unsupported
-characters (especially unsupporeted non-spacing characters) are in den passed strings.
-
-If I<ll> is set to a value less than the length of the elements the output could break.
-
-If the value of I<ll> is greater than the screen width the elements will be trimmed to fit into the screen.
-
-If I<ll> is set and I<index> is set to C<1> a window-resize causes a C<return -1>.
-
-Allowed values: 1 or greater
 
 (default: undefined)
 

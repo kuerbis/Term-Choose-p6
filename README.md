@@ -8,7 +8,7 @@ Term::Choose - Choose items from a list interactively.
 VERSION
 =======
 
-Version 0.103
+Version 0.104
 
 SYNOPSIS
 ========
@@ -242,29 +242,6 @@ The option *lf* expects a array with one or two elements:
 - a second element (`SUBSEQUENT_TAB`) sets the number of spaces inserted at the beginning of all broken lines apart from the beginning of paragraphs
 
 Allowed values for the two elements are: 0 or greater.
-
-(default: undefined)
-
-ll
---
-
-This option is only available for the `pause` function/method.
-
-If all elements have the same length, the length can be passed with this option.
-
-*length* refers here to the number of print columns the element will use on the terminal.
-
-If *ll* is set, then `choose` doesn't calculate the length of the longest element itself but uses the value passed with this option.
-
-If the option *ll* is set, none of the substitutions described in [#SUBSTITUTIONS](#SUBSTITUTIONS) are applied and the options *empty* and *undef* have no meaning. It is the up to the user to ensure that no control-characters and no unsupported characters (especially unsupporeted non-spacing characters) are in den passed strings.
-
-If *ll* is set to a value less than the length of the elements the output could break.
-
-If the value of *ll* is greater than the screen width the elements will be trimmed to fit into the screen.
-
-If *ll* is set and *index* is set to `1` a window-resize causes a `return -1`.
-
-Allowed values: 1 or greater
 
 (default: undefined)
 
