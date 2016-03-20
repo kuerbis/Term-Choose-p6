@@ -1,7 +1,7 @@
 use v6;
 unit module Term::Choose::NCurses;
 
-my $VERSION = '0.107';
+my $VERSION = '0.108';
 
 
 use NativeCall;
@@ -24,12 +24,17 @@ class MEVENT is repr('CStruct') {
 };
 
 
+#constant OK            is export( :all ) = 0; # ?
+constant ERR           is export( :all ) = -1;  # T::F
+constant KEY_CODE_YES  is export( :all ) = 256; # T::F
+
 constant KEY_DOWN      is export( :all ) = 258;
 constant KEY_UP        is export( :all ) = 259;
 constant KEY_LEFT      is export( :all ) = 260;
 constant KEY_RIGHT     is export( :all ) = 261;
 constant KEY_HOME      is export( :all ) = 262;
 constant KEY_BACKSPACE is export( :all ) = 263;
+constant KEY_DC        is export( :all ) = 330;
 constant KEY_NPAGE     is export( :all ) = 338;
 constant KEY_PPAGE     is export( :all ) = 339;
 constant KEY_ENTER     is export( :all ) = 343;
@@ -135,6 +140,9 @@ sub getmaxy(WINDOW)                   returns int32  is native(LIB) is export( :
 sub getmouse(MEVENT)                  returns int32  is native(LIB) is export( :all ) {*};
 sub mousemask(int32,CArray[int32])    returns int32  is native(LIB) is export( :all ) {*};
 sub ungetch(int32)                    returns int32  is native(LIB) is export( :all ) {*};
+
+sub nodelay(WINDOW, bool)             returns int32  is native(LIB) is export( :all ) {*};  # T::F
+sub get_wch(int32 is rw)              returns int32  is native(LIB) is export( :all ) {*};  # T::F
 
 
 

@@ -1,6 +1,9 @@
 Revision history for Term::Choose
 
 
+0.108   2016-03-20
+        - Upgrade Term::Choose::NCurses (required by T::F)
+
 0.107   2016-03-17
         - Fixed source-url in META6.json
 
