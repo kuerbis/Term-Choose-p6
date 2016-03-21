@@ -1,7 +1,7 @@
 use v6;
 unit module Term::Choose::NCurses;
 
-my $VERSION = '0.108';
+my $VERSION = '0.109';
 
 
 use NativeCall;
@@ -10,7 +10,6 @@ constant LIB = %*ENV<PERL6_NCURSES_LIB> || 'libncursesw.so.5';
 
 
 class WINDOW is repr('CPointer') { }
-class SCREEN is repr('CPointer') { }
 
 class MEVENT is repr('CStruct') {
   #short id;           /* ID to distinguish multiple devices */

@@ -1,7 +1,7 @@
 use v6;
 unit class Term::Choose;
 
-my $VERSION = '0.108';
+my $VERSION = '0.109';
 
 use Term::Choose::NCurses :all;
 use Term::Choose::LineFold :all;
@@ -237,7 +237,15 @@ method !_choose ( @!orig_list, %!o, Int $!multiselect ) {
     my Int $pressed; #
 
     GET_KEY: loop {
-        my $key = getch();
+        my $key;
+        WAIT: loop {
+            $key = getch();
+            if $key == -1 { # ERR {
+                sleep 0.01;
+                next WAIT;
+            }
+            last WAIT;
+        }
         my Int $new_term_w = getmaxx( $!win );
         my Int $new_term_h = getmaxy( $!win );
         if $new_term_w != $!term_w || $new_term_h != $!term_h {
@@ -541,7 +549,7 @@ method !_choose ( @!orig_list, %!o, Int $!multiselect ) {
             }
             when KEY_MOUSE {
                 my Term::Choose::NCurses::MEVENT $event .= new;
-                if ( getmouse( $event ) == OK ) {
+                if getmouse( $event ) == OK {
                     if $event.bstate == BUTTON1_CLICKED | BUTTON1_PRESSED {
                         my $ret = self!_curr_pos_to_mouse_xy( $event.x, $event.y );
                         if $ret {
@@ -961,7 +969,7 @@ Term::Choose - Choose items from a list interactively.
 
 =head1 VERSION
 
-Version 0.108
+Version 0.109
 
 =head1 SYNOPSIS
 
