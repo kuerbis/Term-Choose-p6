@@ -5,7 +5,6 @@ language: perl6
 perl6:
   - latest
 install:
-  - echo $TRAVIS_OS_NAME
   - rakudobrew build-panda
   - panda --verbose installdeps .
   - panda --verbose install NCurses
