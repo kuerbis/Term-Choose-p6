@@ -1,7 +1,7 @@
 use v6;
 unit class Term::Choose;
 
-my $VERSION = '0.110';
+my $VERSION = '0.111';
 
 use Term::Choose::NCurses :all;
 use Term::Choose::LineFold :all;
@@ -969,7 +969,7 @@ Term::Choose - Choose items from a list interactively.
 
 =head1 VERSION
 
-Version 0.110
+Version 0.111
 
 =head1 SYNOPSIS
 

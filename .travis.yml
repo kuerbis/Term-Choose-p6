@@ -8,6 +8,7 @@ install:
   - echo $TRAVIS_OS_NAME
   - rakudobrew build-panda
   - panda --verbose installdeps .
-  - panda install Term::termios
-  - panda install Terminal::WCWidth
+  - panda --verbose install NCurses
+  - panda --verbose install Term::termios
+  - panda --verbose install Terminal::WCWidth
 sudo: false

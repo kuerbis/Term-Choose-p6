@@ -1,6 +1,9 @@
 Revision history for Term::Choose
 
 
+0.111   2016-04-27
+        - Modified '.travis.yml'
+
 0.110   2016-04-27
         - Announcement incompatible changes
 
