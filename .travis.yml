@@ -5,8 +5,9 @@ language: perl6
 perl6:
   - latest
 install:
+  - echo $TRAVIS_OS_NAME
   - rakudobrew build-panda
-  - panda installdeps .
+  - panda --verbose installdeps .
   - panda install Term::termios
   - panda install Terminal::WCWidth
 sudo: false
