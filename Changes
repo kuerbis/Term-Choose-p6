@@ -1,6 +1,10 @@
 Revision history for Term::Choose
 
 
+0.113   2016-05-15
+        - Replaced underscores with hyphens in option- and routine-names
+        - Modified '.travis.yml'
+
 0.112   2016-04-27
         - Modified '.travis.yml'
 
@@ -33,8 +37,8 @@ Revision history for Term::Choose
 
 0.103   2016-03-01
         - Optional global win
-        - if ll and (pause() or index=1): on window-resize return -1
-        - ll works with 'choose', 'choose_multi' and 'pause'
+        - If 'll' and (pause() or index=1): on window-resize return -1
+        - 'll' works with 'choose', 'choose_multi' and 'pause'
         - Update documentation.
 
 0.102   2016-02-25
