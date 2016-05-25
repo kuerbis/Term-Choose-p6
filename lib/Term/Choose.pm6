@@ -1,7 +1,7 @@
 use v6;
 unit class Term::Choose;
 
-my $VERSION = '0.113';
+my $VERSION = '0.114';
 
 use Term::Choose::NCurses :all;
 use Term::Choose::LineFold :all;
@@ -255,7 +255,6 @@ method !_choose ( @!orig_list, %!o, Int $!multiselect ) {
             if $!marked.elems {
                 %!o<mark> = self!_marked_to_idx;
             }
-            clear();
             self!_wr_first_screen;
             next GET_KEY;
         }
@@ -723,6 +722,7 @@ method !_wr_first_screen {
         self!_set_default_cell;
     }
 
+    clear();
     if %!o<prompt> ne '' {
         mvaddstr( 0, 0, $!prompt_copy );
     }
@@ -968,7 +968,7 @@ Term::Choose - Choose items from a list interactively.
 
 =head1 VERSION
 
-Version 0.113
+Version 0.114
 
 =head1 SYNOPSIS
 

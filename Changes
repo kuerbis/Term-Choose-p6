@@ -1,6 +1,9 @@
 Revision history for Term::Choose
 
 
+0.114   2016-05-25
+        - 'clear' before writing the first screen
+
 0.113   2016-05-15
         - Replaced underscores with hyphens in option- and routine-names
         - Modified '.travis.yml'
