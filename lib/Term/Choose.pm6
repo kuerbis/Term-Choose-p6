@@ -1,7 +1,7 @@
 use v6;
 unit class Term::Choose;
 
-my $VERSION = '0.114';
+my $VERSION = '0.115';
 
 use Term::Choose::NCurses :all;
 use Term::Choose::LineFold :all;
@@ -209,8 +209,10 @@ method !_init_term {
     noecho();
     cbreak;
     keypad( $!win, True );
-    my Array[int32] $old;
-    my $s = mousemask( ALL_MOUSE_EVENTS +| REPORT_MOUSE_POSITION, $old );
+    if %!o<mouse> {
+        my Array[int32] $old;
+        my $s = mousemask( ALL_MOUSE_EVENTS +| REPORT_MOUSE_POSITION, $old );
+    }
     curs_set( 0 );
 }
 
@@ -968,7 +970,7 @@ Term::Choose - Choose items from a list interactively.
 
 =head1 VERSION
 
-Version 0.114
+Version 0.115
 
 =head1 SYNOPSIS
 

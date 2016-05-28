@@ -1,6 +1,9 @@
 Revision history for Term::Choose
 
 
+0.115   2016-05-28
+        - Fixed option 'mouse'
+
 0.114   2016-05-25
         - 'clear' before writing the first screen
 
