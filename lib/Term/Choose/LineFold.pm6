@@ -1,13 +1,13 @@
 use v6;
 unit class Term::Choose::LineFold;
 
-my $VERSION = '0.115';
+my $VERSION = '0.116';
 
 use Terminal::WCWidth;
 
 
 
-sub cut-to-printwidth ( $str, Int $avail_w, Int $rest = 0 ) is export( :all, :cut-to-printwidth ) {
+sub cut-to-printwidth ( $str, Int $avail_w, Int $rest = 0 ) is export {
     #my $str_w = wcswidth( $str );
     #die "String with control charakter!" if $str_w == -1;
     #if $str_w <= $avail_w {
@@ -65,7 +65,7 @@ sub cut-to-printwidth ( $str, Int $avail_w, Int $rest = 0 ) is export( :all, :cu
 }
 
 
-sub line-fold ( $str, Int $avail_w, Str $init_tab is copy, Str $subseq_tab is copy ) returns Str is export( :all, :line-fold ) {
+sub line-fold ( $str, Int $avail_w, Str $init_tab is copy, Str $subseq_tab is copy ) returns Str is export {
     for $init_tab, $subseq_tab {
         if $_ {
             $_.=subst( / \s /,  ' ', :g );
@@ -133,7 +133,7 @@ sub line-fold ( $str, Int $avail_w, Str $init_tab is copy, Str $subseq_tab is co
 }
 
 
-sub print-columns ( $str ) returns Int is export( :all, :print-columns ) {
+sub print-columns ( $str ) returns Int is export {
     wcswidth( $str );
 }
 

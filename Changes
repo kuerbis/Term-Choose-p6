@@ -1,6 +1,9 @@
 Revision history for Term::Choose
 
 
+0.116   2016-10-13
+        - Subroutines: use the default export
+
 0.115   2016-05-28
         - Fixed option 'mouse'
 

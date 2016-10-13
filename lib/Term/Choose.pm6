@@ -1,10 +1,10 @@
 use v6;
 unit class Term::Choose;
 
-my $VERSION = '0.115';
+my $VERSION = '0.116';
 
-use Term::Choose::NCurses :all;
-use Term::Choose::LineFold :all;
+use Term::Choose::NCurses;
+use Term::Choose::LineFold;
 
 
 constant R  = 0;
@@ -187,9 +187,9 @@ method !_prepare_new_copy_of_list {
 
 
 
-sub choose       ( @list, %opt? ) is export( :DEFAULT, :choose )       { return Term::Choose.new().choose(       @list, %opt ) }
-sub choose-multi ( @list, %opt? ) is export( :DEFAULT, :choose-mulit ) { return Term::Choose.new().choose-multi( @list, %opt ) }
-sub pause        ( @list, %opt? ) is export( :DEFAULT, :pause )        { return Term::Choose.new().pause(        @list, %opt ) }
+sub choose       ( @list, %opt? ) is export { return Term::Choose.new().choose(       @list, %opt ) }
+sub choose-multi ( @list, %opt? ) is export { return Term::Choose.new().choose-multi( @list, %opt ) }
+sub pause        ( @list, %opt? ) is export { return Term::Choose.new().pause(        @list, %opt ) }
 
 method choose       ( @list, %opt? ) { return self!_choose( @list, %opt, 0   ) }
 method choose-multi ( @list, %opt? ) { return self!_choose( @list, %opt, 1   ) }
@@ -785,7 +785,7 @@ method !_wr_cell ( Int $row, Int $col ) {
         }
         attron( A_BOLD +| A_UNDERLINE ) if $!marked[$row][$col];
         attron( A_REVERSE )             if $is_current_pos;
-        mvaddstr( 
+        mvaddstr(
             $row - $!row_on_top + $!nr_prompt_lines,
             $lngth,
             @!list[$idx]
@@ -794,7 +794,7 @@ method !_wr_cell ( Int $row, Int $col ) {
     else {
         attron( A_BOLD +| A_UNDERLINE ) if $!marked[$row][$col];
         attron( A_REVERSE )             if $is_current_pos;
-        mvaddstr( 
+        mvaddstr(
             $row - $!row_on_top + $!nr_prompt_lines,
             ( $!col_w + %!o<pad> ) * $col,
             self!_pad_str_to_colwidth: $idx
@@ -970,7 +970,7 @@ Term::Choose - Choose items from a list interactively.
 
 =head1 VERSION
 
-Version 0.115
+Version 0.116
 
 =head1 SYNOPSIS
 
