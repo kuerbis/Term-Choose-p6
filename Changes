@@ -1,5 +1,7 @@
 Revision history for Term::Choose
 
+0.117   2016-12-10
+        - Constructor: named parameters
 
 0.116   2016-10-13
         - Subroutines: use the default export

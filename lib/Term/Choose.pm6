@@ -1,7 +1,7 @@
 use v6;
 unit class Term::Choose;
 
-my $VERSION = '0.116';
+my $VERSION = '0.117';
 
 use Term::Choose::NCurses;
 use Term::Choose::LineFold;
@@ -30,11 +30,11 @@ constant KEY_q         = 0x71;
 has @!orig_list;
 has @!list;
 
-has %.o_global;
+has %.defaults;
 has %!o;
 
-has Term::Choose::NCurses::WINDOW $.g_win;
-has Term::Choose::NCurses::WINDOW $!win;
+has Term::Choose::NCurses::WINDOW $.win;
+has Term::Choose::NCurses::WINDOW $!win_local;
 
 has Int   $!multiselect;
 has Int   $!term_w;
@@ -45,7 +45,7 @@ has Int   $!col_w;
 has Int   @!length;
 has Int   $!layout;
 has Int   $!rest;
-has Int   $!pp_row;
+has Int   $!print_pp_row;
 has Str   $!pp_line_fmt;
 has Int   $!nr_prompt_lines;
 has Str   $!prompt_copy;
@@ -58,10 +58,10 @@ has Int   $!cursor_row;
 has Array $!marked;
 
 
-method new ( %o_global?, $g_win=Term::Choose::NCurses::WINDOW ) { ##
-    _validate_options( %o_global );
-    _set_defaults( %o_global );
-    self.bless( :%o_global, :$g_win ); ## opt
+method new ( :%defaults, :$win=Term::Choose::NCurses::WINDOW ) {
+    _validate_options( %defaults );
+    _set_defaults( %defaults );
+    self.bless( :%defaults, :$win );
 }
 
 
@@ -113,10 +113,10 @@ sub _valid_options {
     };
 };
 
-sub _validate_options ( %opt, Int $list_end? ) {
+sub _validate_options ( %opt, Int $list_last_index? ) {
     my $valid = _valid_options();
     for %opt.kv -> $key, $value {
-        when $valid{$key}:!exists { #
+        when $valid{$key}:!exists {
             die "'$key' is not a valid option name";
         }
         when ! $value.defined {
@@ -129,7 +129,7 @@ sub _validate_options ( %opt, Int $list_end? ) {
                 die "$key => too many array elemnts." if $value.elems > 2;
             }
             else {
-                die "$key => value out of range."     if $list_end.defined && $value.any > $list_end;
+                die "$key => value out of range."     if $list_last_index.defined && $value.any > $list_last_index;
             }
         }
         when $valid{$key} eq 'Str' {
@@ -170,7 +170,7 @@ method !_prepare_new_copy_of_list {
             }
             @!list[$i].=subst(   / \s /, ' ', :g );  # replace, but don't squash sequences of spaces
             @!list[$i].=subst( / <:C> /, '',  :g );
-            @!list[$i] = @!list[$i].gist; 
+            @!list[$i] = @!list[$i].gist;
             my Int $length = print-columns( @!list[$i] );
             if $length > $!avail_w {
                 @!list[$i] = cut-to-printwidth( @!list[$i], $!avail_w - $dots_w ) ~ $dots;
@@ -198,17 +198,17 @@ method pause        ( @list, %opt? ) { return self!_choose( @list, %opt, Int ) }
 
 
 method !_init_term {
-    if $!g_win {
-        $!win = $!g_win;
+    if $!win {
+        $!win_local = $!win;
     }
     else {
         my int32 constant LC_ALL = 6;
         setlocale( LC_ALL, "" );
-        $!win = initscr;
+        $!win_local = initscr;
     }
     noecho();
     cbreak;
-    keypad( $!win, True );
+    keypad( $!win_local, True );
     if %!o<mouse> {
         my Array[int32] $old;
         my $s = mousemask( ALL_MOUSE_EVENTS +| REPORT_MOUSE_POSITION, $old );
@@ -217,7 +217,7 @@ method !_init_term {
 }
 
 method !_end_term {
-    return if $!g_win;
+    return if $!win;
     endwin();
 }
 
@@ -227,7 +227,7 @@ method !_choose ( @!orig_list, %!o, Int $!multiselect ) {
         return;
     }
     _validate_options( %!o, @!orig_list.end );
-    for %!o_global.kv -> $key, $value {
+    for %!defaults.kv -> $key, $value {
         %!o{$key} //= $value;
     }
     if ! %!o<prompt>.defined {
@@ -247,8 +247,8 @@ method !_choose ( @!orig_list, %!o, Int $!multiselect ) {
             }
             last WAIT;
         }
-        my Int $new_term_w = getmaxx( $!win );
-        my Int $new_term_h = getmaxy( $!win );
+        my Int $new_term_w = getmaxx( $!win_local );
+        my Int $new_term_h = getmaxy( $!win_local );
         if $new_term_w != $!term_w || $new_term_h != $!term_h {
             if %!o<ll> {
                 return -1;
@@ -675,8 +675,8 @@ method !_set_default_cell {
 
 
 method !_wr_first_screen {
-    $!term_w = getmaxx( $!win );
-    $!term_h = getmaxy( $!win );
+    $!term_w = getmaxx( $!win_local );
+    $!term_h = getmaxy( $!win_local );
 
     ( $!avail_w, $!avail_h ) = ( $!term_w, $!term_h );
     if %!o<max-width> && $!avail_w > %!o<max-width> {
@@ -691,9 +691,9 @@ method !_wr_first_screen {
     self!_prepare_prompt;
     $!avail_h -= $!nr_prompt_lines;
 
-    $!pp_row = %!o<page> ?? 1 !! 0;
+    $!print_pp_row = %!o<page> ?? 1 !! 0;
 
-    my $keep = %!o<keep> + $!pp_row;
+    my $keep = %!o<keep> + $!print_pp_row;
     if $!avail_h < $keep {
         $!avail_h = $!term_h > $keep ?? $keep !! $!term_h;
     }
@@ -735,7 +735,7 @@ method !_wr_first_screen {
 
 method !_set_page_nr_print_fmt {
     if $!rc2idx.end / $!avail_h > 1 {
-        $!avail_h -= $!pp_row;
+        $!avail_h -= $!print_pp_row;
         my $last_p_nr = $!rc2idx.end div $!avail_h + 1;
         my $p_nr_w = $last_p_nr.chars;
         $!pp_line_fmt = '--- Page %0' ~ $p_nr_w ~ 'd/' ~ $last_p_nr ~ ' ---';
@@ -748,14 +748,14 @@ method !_set_page_nr_print_fmt {
         }
     }
     else {
-        $!pp_row = 0;
+        $!print_pp_row = 0;
     }
 }
 
 method !_wr_screen {
     move( $!nr_prompt_lines, 0 );
     clrtobot();
-    if $!pp_row {
+    if $!print_pp_row {
         my Str $pp_line = sprintf $!pp_line_fmt, $!row_on_top div $!avail_h + 1;
         mvaddstr(
             $!avail_h + $!nr_prompt_lines,
@@ -821,7 +821,7 @@ method !_pad_str_to_colwidth ( Int $idx ) {
         }
     }
     else {
-        return @!list[$idx];
+        return @!list[$idx] ~ "";
     }
 }
 
@@ -970,7 +970,7 @@ Term::Choose - Choose items from a list interactively.
 
 =head1 VERSION
 
-Version 0.116
+Version 0.117
 
 =head1 SYNOPSIS
 
@@ -1031,7 +1031,22 @@ L<#pause>.
 
 With I<mouse> enabled (and if supported by the terminal) use the the left mouse key instead the C<Return> key and
 the right mouse key instead of the C<SpaceBar> key. Instead of C<PageUp> and C<PageDown> it can be used the mouse wheel.
-- Mouse wheel not yet suppoerted! 
+- Mouse wheel not yet suppoerted!
+
+=head1 CONSTRUCTOR
+
+The constructor method C<new> can be called with optional named arguments:
+
+=item defaults
+
+Expects as its value a hash. Sets the defaults for the instance. See L<#OPTIONS>.
+
+=item win
+
+Expects as its value a window object created by ncurses C<initscr>.
+
+If set, C<choose>, C<choose-multi> and C<pause> use this global window instead of creating their own without calling
+C<endwin> to restores the terminal before returning.
 
 =head1 ROUTINES
 
