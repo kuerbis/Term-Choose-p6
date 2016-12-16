@@ -1,10 +1,10 @@
 use v6;
 unit class Term::Choose;
 
-my $VERSION = '0.117';
+my $VERSION = '0.118';
 
 use Term::Choose::NCurses;
-use Term::Choose::LineFold;
+use Term::Choose::LineFold :to-printwidth, :line-fold, :print-columns;
 
 
 constant R  = 0;
@@ -152,7 +152,7 @@ method !_prepare_new_copy_of_list {
     if %!o<ll> {
         if %!o<ll> > $!avail_w {
             for @!list {
-                $_ = cut-to-printwidth( $_, $!avail_w - $dots_w ) ~ $dots;
+                $_ = to-printwidth( $_, $!avail_w - $dots_w ) ~ $dots;
             }
             $!col_w = $!avail_w;
         }
@@ -173,7 +173,7 @@ method !_prepare_new_copy_of_list {
             @!list[$i] = @!list[$i].gist;
             my Int $length = print-columns( @!list[$i] );
             if $length > $!avail_w {
-                @!list[$i] = cut-to-printwidth( @!list[$i], $!avail_w - $dots_w ) ~ $dots;
+                @!list[$i] = to-printwidth( @!list[$i], $!avail_w - $dots_w ) ~ $dots;
                 @!length[$i] = $!avail_w;
             }
             else {
@@ -186,10 +186,9 @@ method !_prepare_new_copy_of_list {
 }
 
 
-
-sub choose       ( @list, %opt? ) is export { return Term::Choose.new().choose(       @list, %opt ) }
-sub choose-multi ( @list, %opt? ) is export { return Term::Choose.new().choose-multi( @list, %opt ) }
-sub pause        ( @list, %opt? ) is export { return Term::Choose.new().pause(        @list, %opt ) }
+sub choose       ( @list, %opt? ) is export( :DEFAULT, :choose )       { return Term::Choose.new().choose(       @list, %opt ) }
+sub choose-multi ( @list, %opt? ) is export( :DEFAULT, :choose-multi ) { return Term::Choose.new().choose-multi( @list, %opt ) }
+sub pause        ( @list, %opt? ) is export( :DEFAULT, :pause )        { return Term::Choose.new().pause(        @list, %opt ) }
 
 method choose       ( @list, %opt? ) { return self!_choose( @list, %opt, 0   ) }
 method choose-multi ( @list, %opt? ) { return self!_choose( @list, %opt, 1   ) }
@@ -241,7 +240,7 @@ method !_choose ( @!orig_list, %!o, Int $!multiselect ) {
         my $key;
         WAIT: loop {
             $key = getch();
-            if $key == -1 { # ERR {
+            if $key == ERR {
                 sleep 0.01;
                 next WAIT;
             }
@@ -549,7 +548,7 @@ method !_choose ( @!orig_list, %!o, Int $!multiselect ) {
             }
             when KEY_MOUSE {
                 my Term::Choose::NCurses::MEVENT $event .= new;
-                if getmouse( $event ) == 0 { # OK {
+                if getmouse( $event ) == OK {
                     if $event.bstate == BUTTON1_CLICKED | BUTTON1_PRESSED {
                         my $ret = self!_curr_pos_to_mouse_xy( $event.x, $event.y );
                         if $ret {
@@ -970,11 +969,11 @@ Term::Choose - Choose items from a list interactively.
 
 =head1 VERSION
 
-Version 0.117
+Version 0.118
 
 =head1 SYNOPSIS
 
-    use Term::Choose;
+    use Term::Choose :choose;
 
     my @array = <one two three four five>;
 
@@ -1003,6 +1002,11 @@ For C<choose>, C<choose-multi> and C<pause> the first argument (Array) holds the
 With the optional second argument (Hash) it can be passed the different options. See L<#OPTIONS>.
 
 The return values are described in L<#Routines>
+
+=head1 FUNCTIONAL INTERFACE
+
+Importing the subroutines explicitly (C<:name_of_the_subroutine>) might become compulsory (optional for now) with the
+next release.
 
 =head1 USAGE
 
