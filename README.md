@@ -8,7 +8,7 @@ Term::Choose - Choose items from a list interactively.
 VERSION
 =======
 
-Version 0.119
+Version 0.120
 
 SYNOPSIS
 ========
@@ -370,7 +370,7 @@ libncurses
 
 `Term::Choose` requires `libncursesw` to be installed. To overwrite the autodetected ncurses library: specify the location of the ncurses library by setting the environment variable `PERL6_NCURSES_LIB`.
 
-If the name of the ncurses library matches `libncursesw.so.6` `Term::Choose` expects `NCURSES_MOUSE_VERSION E<gt> 1`.
+If the name of the ncurses library matches `libncursesw.so.6` `Term::Choose` expects `NCURSES_MOUSE_VERSION` gt `1`.
 
 Monospaced font
 ---------------

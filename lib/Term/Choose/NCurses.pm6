@@ -1,7 +1,7 @@
 use v6;
 unit module Term::Choose::NCurses;
 
-my $VERSION = '0.119';
+my $VERSION = '0.120';
 
 
 # from NCurses

@@ -1,7 +1,7 @@
 use v6;
 unit class Term::Choose;
 
-my $VERSION = '0.119';
+my $VERSION = '0.120';
 
 use Term::Choose::NCurses;
 use Term::Choose::LineFold :to-printwidth, :line-fold, :print-columns;
@@ -966,7 +966,7 @@ Term::Choose - Choose items from a list interactively.
 
 =head1 VERSION
 
-Version 0.119
+Version 0.120
 
 =head1 SYNOPSIS
 
@@ -1342,7 +1342,8 @@ default: "E<lt>undefE<gt>"
 C<Term::Choose> requires C<libncursesw> to be installed. To overwrite the autodetected ncurses library: specify the
 location of the ncurses library by setting the environment variable C<PERL6_NCURSES_LIB>.
 
-If the name of the ncurses library matches C<libncursesw.so.6> C<Term::Choose> expects C<NCURSES_MOUSE_VERSION E<gt> 1>.
+If the name of the ncurses library matches C<libncursesw.so.6> C<Term::Choose> expects C<NCURSES_MOUSE_VERSION> E<gt>
+C<1>.
 
 =head2 Monospaced font
 
