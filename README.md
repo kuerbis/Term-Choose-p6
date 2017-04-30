@@ -8,7 +8,7 @@ Term::Choose - Choose items from a list interactively.
 VERSION
 =======
 
-Version 0.121
+Version 0.122
 
 SYNOPSIS
 ========

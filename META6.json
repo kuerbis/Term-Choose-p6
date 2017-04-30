@@ -4,6 +4,8 @@
   ],
   "build-depends" : [ ],
   "depends" : [
+    "LibraryCheck",
+    "NativeCall",
     "Terminal::WCWidth"
   ],
   "description" : "Choose items from a list interactively.",
