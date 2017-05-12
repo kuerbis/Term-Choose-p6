@@ -230,7 +230,7 @@ method !_init_term {
     else {
         my int32 constant LC_ALL = 6;
         setlocale( LC_ALL, "" );
-        $!win_local = initscr, # or die "Failed to initialize ncurses\n";
+        $!win_local = initscr; # or die "Failed to initialize ncurses\n";
     }
     noecho();
     cbreak();
