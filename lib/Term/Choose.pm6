@@ -63,7 +63,7 @@ method new ( :%defaults, :$win=Term::Choose::NCurses::WINDOW ) {
 method num-threads {
     return %*ENV<TC_NUM_THREADS> if %*ENV<TC_NUM_THREADS>;
     my $proc = run( 'nproc', :out );
-    return $proc.out.get || 2;
+    return $proc.out.get.Int || 2;
 }
 
 
@@ -167,7 +167,7 @@ method !_prepare_new_copy_of_list {
     }
     else {
         @!list = ();
-        my $threads = self.num-threads;
+        my Int $threads = self.num-threads;
         while $threads > @!orig_list.elems {
             last if $threads < 2;
             $threads = $threads div 2;
