@@ -1,7 +1,7 @@
 use v6;
 unit class Term::Choose;
 
-my $VERSION = '0.127';
+my $VERSION = '0.128';
 
 use Term::Choose::NCurses;
 use Term::Choose::LineFold :to-printwidth, :line-fold, :print-columns;
@@ -35,7 +35,7 @@ has %!o;
 has Term::Choose::NCurses::WINDOW $.win;
 has Term::Choose::NCurses::WINDOW $!win_local;
 
-has Int $.num-threads = %*ENV<TC_NUM_THREADS> || 2;
+has Int $.num-threads = %*ENV<TC_NUM_THREADS>;
 
 has Int   $!term_w;
 has Int   $!term_h;
@@ -269,6 +269,10 @@ method !_choose ( @!orig_list, %!o, Int $multiselect ) {
         %!o<pad-one-row> = %!o<pad>;
     }
     self!_init_term;
+    if ! $!num-threads {
+        my $proc = run( 'nproc', :out ).out.get;
+        $!num-threads = $proc.out.get // 2; #/
+    }
     self!_wr_first_screen;
     my Int $pressed; #
 
@@ -988,7 +992,7 @@ Term::Choose - Choose items from a list interactively.
 
 =head1 VERSION
 
-Version 0.127
+Version 0.128
 
 =head1 SYNOPSIS
 
