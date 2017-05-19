@@ -1,6 +1,9 @@
 Revision history for Term::Choose
 
 
+0.129   2017-05-19
+        - Bugfix num-threads
+
 0.128   2017-05-19
         - If TC_NUM_THREADS is not set, try nproc
 

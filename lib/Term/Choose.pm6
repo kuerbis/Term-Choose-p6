@@ -1,7 +1,7 @@
 use v6;
 unit class Term::Choose;
 
-my $VERSION = '0.128';
+my $VERSION = '0.129';
 
 use Term::Choose::NCurses;
 use Term::Choose::LineFold :to-printwidth, :line-fold, :print-columns;
@@ -35,8 +35,6 @@ has %!o;
 has Term::Choose::NCurses::WINDOW $.win;
 has Term::Choose::NCurses::WINDOW $!win_local;
 
-has Int $.num-threads = %*ENV<TC_NUM_THREADS>;
-
 has Int   $!term_w;
 has Int   $!term_h;
 has Int   $!avail_w;
@@ -60,6 +58,12 @@ method new ( :%defaults, :$win=Term::Choose::NCurses::WINDOW ) {
     _validate_options( %defaults );
     _set_defaults( %defaults );
     self.bless( :%defaults, :$win );
+}
+
+method num-threads {
+    return %*ENV<TC_NUM_THREADS> if %*ENV<TC_NUM_THREADS>;
+    my $proc = run( 'nproc', :out );
+    return $proc.out.get || 2;
 }
 
 
@@ -163,7 +167,7 @@ method !_prepare_new_copy_of_list {
     }
     else {
         @!list = ();
-        my $threads = $!num-threads;
+        my $threads = self.num-threads;
         while $threads > @!orig_list.elems {
             last if $threads < 2;
             $threads = $threads div 2;
@@ -269,10 +273,6 @@ method !_choose ( @!orig_list, %!o, Int $multiselect ) {
         %!o<pad-one-row> = %!o<pad>;
     }
     self!_init_term;
-    if ! $!num-threads {
-        my $proc = run( 'nproc', :out ).out.get;
-        $!num-threads = $proc.out.get // 2; #/
-    }
     self!_wr_first_screen;
     my Int $pressed; #
 
@@ -992,7 +992,7 @@ Term::Choose - Choose items from a list interactively.
 
 =head1 VERSION
 
-Version 0.128
+Version 0.129
 
 =head1 SYNOPSIS
 
