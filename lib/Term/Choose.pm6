@@ -1,7 +1,7 @@
 use v6;
 unit class Term::Choose;
 
-my $VERSION = '0.129';
+my $VERSION = '0.130';
 
 use Term::Choose::NCurses;
 use Term::Choose::LineFold :to-printwidth, :line-fold, :print-columns;
@@ -75,13 +75,13 @@ sub _set_defaults ( %opt ) {
     %opt<justify>       //= 0;
     %opt<keep>          //= 5;
     %opt<layout>        //= 1;
-    %opt<lf>            //= Array;
+    %opt<lf>            //= List;
     %opt<ll>            //= Int;
-    %opt<mark>          //= Array;
+    %opt<mark>          //= List;
     %opt<max-height>    //= Int;
     %opt<max-width>     //= Int;
     %opt<mouse>         //= 0;
-    %opt<no-spacebar>   //= Array;
+    %opt<no-spacebar>   //= List;
     %opt<order>         //= 1;
     %opt<pad>           //= 2;
     %opt<page>          //= 1;
@@ -105,9 +105,9 @@ sub _valid_options {
         default         => '<[ 0 .. 9 ]>+',
         pad             => '<[ 0 .. 9 ]>+',
         pad-one-row     => '<[ 0 .. 9 ]>+',
-        lf              => 'Array',
-        mark            => 'Array',
-        no-spacebar     => 'Array',
+        lf              => 'List',
+        mark            => 'List',
+        no-spacebar     => 'List',
         empty           => 'Str',
         prompt          => 'Str',
         undef           => 'Str',
@@ -123,11 +123,11 @@ sub _validate_options ( %opt, Int $list_end? ) {
         when ! $value.defined {
             next;
         }
-        when $valid{$key} eq 'Array' {
-            die "$key => {$value.perl} is not an ARRAY."  if ! $value.isa( Array );
-            die "$key => invalid array element"           if $value.grep( { / <-[0..9]> / } ); # .grep( { $_ !~~ UInt } );
+        when $valid{$key} eq 'List' {
+            die "$key => {$value.perl} is not an List."  if ! $value.isa( List );
+            die "$key => invalid list element"           if $value.grep( { / <-[0..9]> / } ); # .grep( { $_ !~~ UInt } );
             if $key eq 'lf' {
-                die "$key => too many array elemnts."     if $value.elems > 2;
+                die "$key => too many list elemnts."     if $value.elems > 2;
             }
             else {
                 die "$key => value out of range."         if $list_end.defined && $value.any > $list_end;
@@ -928,7 +928,7 @@ method !_index2rowcol {
 }
 
 
-method !_marked_idx2rc ( Array $indexes, Bool $yesno ) {
+method !_marked_idx2rc ( List $indexes, Bool $yesno ) {
     if $!layout == 2 {
         for $indexes.list -> $i {
             $!marked[$i][0] = $yesno;
@@ -992,7 +992,7 @@ Term::Choose - Choose items from a list interactively.
 
 =head1 VERSION
 
-Version 0.129
+Version 0.130
 
 =head1 SYNOPSIS
 
@@ -1020,7 +1020,7 @@ Version 0.129
 
 Choose interactively from a list of items.
 
-For C<choose>, C<choose-multi> and C<pause> the first argument (Array) holds the list of the available choices.
+For C<choose>, C<choose-multi> and C<pause> the first argument holds the list of the available choices.
 
 With the optional second argument (Hash) it can be passed the different options. See L<#OPTIONS>.
 
@@ -1104,10 +1104,8 @@ C<q> or C<Ctrl-D>.
 
 =head1 OUTPUT
 
-For the output on the screen the array elements are modified.
-
-All the modifications are made on a copy of the original array so C<choose> and C<choose-multi> return the chosen
-elements as they were passed without modifications.
+For the output on the screen the elements of the list are copied and then modified. Chosen elements are returned as they
+were passed without modifications.
 
 Modifications:
 
@@ -1259,7 +1257,7 @@ From broad to narrow: 0 > 1 > 2
 
 If I<prompt> lines are folded, the option I<lf> allows to insert spaces at beginning of the folded lines.
 
-The option I<lf> expects a array with one or two elements:
+The option I<lf> expects a list with one or two elements:
 
 - the first element (C<INITIAL_TAB>) sets the number of spaces inserted at beginning of paragraphs
 
@@ -1274,7 +1272,7 @@ Allowed values for the two elements are: 0 or greater.
 
 This is a C<choose-multi>-only option.
 
-I<mark> expects as its value an array. The elements of the array are list indexes. C<choose> preselects the
+I<mark> expects as its value an list of indexes (integers). C<choose> preselects the
 list-elements correlating to these indexes.
 
 (default: undefined)
@@ -1315,7 +1313,7 @@ Allowed values: 2 or greater
 
 This is a C<choose-multi>-only option.
 
-I<no-spacebar> expects as its value an array. The elements of the array are indexes of choices which should not be
+I<no-spacebar> expects as its value an list. The elements of the list are indexes of choices which should not be
 markable with the C<SpaceBar> or with the right mouse key. If an element is preselected with the option I<mark> and also
 marked as not selectable with the option I<no-spacebar>, the user can not remove the preselection of this element.
 

@@ -1,6 +1,9 @@
 Revision history for Term::Choose
 
 
+0.130   2017-06-24
+        - Multi-value-options: changed type from Array to List
+
 0.129   2017-05-19
         - Bugfix num-threads
 

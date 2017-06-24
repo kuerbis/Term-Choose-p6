@@ -8,7 +8,7 @@ Term::Choose - Choose items from a list interactively.
 VERSION
 =======
 
-Version 0.129
+Version 0.130
 
 SYNOPSIS
 ========
@@ -38,7 +38,7 @@ DESCRIPTION
 
 Choose interactively from a list of items.
 
-For `choose`, `choose-multi` and `pause` the first argument (Array) holds the list of the available choices.
+For `choose`, `choose-multi` and `pause` the first argument holds the list of the available choices.
 
 With the optional second argument (Hash) it can be passed the different options. See [#OPTIONS](#OPTIONS).
 
@@ -119,9 +119,7 @@ Nothing can be chosen, nothing is returned but the user can move around and read
 OUTPUT
 ======
 
-For the output on the screen the array elements are modified.
-
-All the modifications are made on a copy of the original array so `choose` and `choose-multi` return the chosen elements as they were passed without modifications.
+For the output on the screen the elements of the list are copied and then modified. Chosen elements are returned as they were passed without modifications.
 
 Modifications:
 
@@ -253,7 +251,7 @@ lf
 
 If *prompt* lines are folded, the option *lf* allows to insert spaces at beginning of the folded lines.
 
-The option *lf* expects a array with one or two elements:
+The option *lf* expects a list with one or two elements:
 
 - the first element (`INITIAL_TAB`) sets the number of spaces inserted at beginning of paragraphs
 
@@ -268,7 +266,7 @@ mark
 
 This is a `choose-multi`-only option.
 
-*mark* expects as its value an array. The elements of the array are list indexes. `choose` preselects the list-elements correlating to these indexes.
+*mark* expects as its value an list of indexes (integers). `choose` preselects the list-elements correlating to these indexes.
 
 (default: undefined)
 
@@ -312,7 +310,7 @@ no-spacebar
 
 This is a `choose-multi`-only option.
 
-*no-spacebar* expects as its value an array. The elements of the array are indexes of choices which should not be markable with the `SpaceBar` or with the right mouse key. If an element is preselected with the option *mark* and also marked as not selectable with the option *no-spacebar*, the user can not remove the preselection of this element.
+*no-spacebar* expects as its value an list. The elements of the list are indexes of choices which should not be markable with the `SpaceBar` or with the right mouse key. If an element is preselected with the option *mark* and also marked as not selectable with the option *no-spacebar*, the user can not remove the preselection of this element.
 
 (default: undefined)
 
