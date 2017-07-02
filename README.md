@@ -8,30 +8,26 @@ Term::Choose - Choose items from a list interactively.
 VERSION
 =======
 
-Version 0.130
+Version 0.131
 
 SYNOPSIS
 ========
 
     use Term::Choose :choose;
 
-    my @array = <one two three four five>;
+    my @list = <one two three four five>;
 
 
     # Functional interface:
      
-    my $choice = choose( @array, { layout => 1 } );
-
-    say $choice;
+    my $chosen = choose( @list, :layout( 2 ) );
 
 
     # OO interface:
      
     my $tc = Term::Choose.new();
 
-    $choice = $tc.choose( @array, { layout => 1 } );
-
-    say $choice;
+    $chosen = $tc.choose( @list, :layout( 1 ), :mouse( 1 ) );
 
 DESCRIPTION
 ===========
@@ -40,7 +36,9 @@ Choose interactively from a list of items.
 
 For `choose`, `choose-multi` and `pause` the first argument holds the list of the available choices.
 
-With the optional second argument (Hash) it can be passed the different options. See [#OPTIONS](#OPTIONS).
+The different options can be passed as key-values pairs. See [#OPTIONS](#OPTIONS) to find the available options.
+
+Passing the options as a hash is deprecated. The support of passing the options as a hash may be removed with the next release.
 
 The return values are described in [#Routines](#Routines)
 
@@ -78,15 +76,11 @@ With *mouse* enabled (and if supported by the terminal) use the the left mouse k
 CONSTRUCTOR
 ===========
 
-The constructor method `new` can be called with optional named arguments:
+The constructor method `new` can be called with named arguments:
 
   * defaults
 
-Expects as its value a hash. Sets the defaults for the instance. See [#OPTIONS](#OPTIONS).
-
-  * win
-
-Expects as its value a window object created by ncurses `initscr`.
+Sets the defaults (a list of key-value pairs) for the instance. See [#OPTIONS](#OPTIONS).
 
 If set, `choose`, `choose-multi` and `pause` use this global window instead of creating their own without calling `endwin` to restores the terminal before returning.
 

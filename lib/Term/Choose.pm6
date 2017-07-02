@@ -1,7 +1,7 @@
 use v6;
 unit class Term::Choose;
 
-my $VERSION = '0.130';
+my $VERSION = '0.131';
 
 use Term::Choose::NCurses;
 use Term::Choose::LineFold :to-printwidth, :line-fold, :print-columns;
@@ -29,10 +29,10 @@ constant KEY_q         = 0x71;
 has @!orig_list;
 has @!list;
 
-has %.defaults;
+has %!defaults;
 has %!o;
 
-has Term::Choose::NCurses::WINDOW $.win;
+has Term::Choose::NCurses::WINDOW $!win;
 has Term::Choose::NCurses::WINDOW $!win_local;
 
 has Int   $!term_w;
@@ -54,11 +54,17 @@ has Array $!p;
 has Array $!marked;
 has Bool  $!ext_mouse;
 
-method new ( :%defaults, :$win=Term::Choose::NCurses::WINDOW ) {
-    _validate_options( %defaults );
-    _set_defaults( %defaults );
-    self.bless( :%defaults, :$win );
+method new ( :$defaults, :$win=Term::Choose::NCurses::WINDOW ) { # to add 'new' to the BUILD _valid_options error messages
+    self.bless( :$defaults, :$win );
 }
+
+submethod BUILD( :$defaults, :$win ) {
+    %!defaults := $defaults.Hash;
+    _validate_options( %!defaults );
+    _set_defaults( %!defaults );
+    $!win := $win;
+}
+
 
 method num-threads {
     return %*ENV<TC_NUM_THREADS> if %*ENV<TC_NUM_THREADS>;
@@ -217,14 +223,13 @@ method !_prepare_new_copy_of_list {
 }
 
 
-sub choose       ( @list, %opt? ) is export( :DEFAULT, :choose )       { return Term::Choose.new().choose(       @list, %opt ) }
-sub choose-multi ( @list, %opt? ) is export( :DEFAULT, :choose-multi ) { return Term::Choose.new().choose-multi( @list, %opt ) }
-sub pause        ( @list, %opt? ) is export( :DEFAULT, :pause )        { return Term::Choose.new().pause(        @list, %opt ) }
+sub choose       ( @list, %deprecated?, *%opt ) is export( :DEFAULT, :choose )       { Term::Choose.new().choose(       @list, %deprecated || %opt ) }
+sub choose-multi ( @list, %deprecated?, *%opt ) is export( :DEFAULT, :choose-multi ) { Term::Choose.new().choose-multi( @list, %deprecated || %opt ) }
+sub pause        ( @list, %deprecated?, *%opt ) is export( :DEFAULT, :pause )        { Term::Choose.new().pause(        @list, %deprecated || %opt ) }
 
-method choose       ( @list, %opt? ) { return self!_choose( @list, %opt, 0   ) }
-method choose-multi ( @list, %opt? ) { return self!_choose( @list, %opt, 1   ) }
-method pause        ( @list, %opt? ) { return self!_choose( @list, %opt, Int ) }
-
+method choose       ( @list, %deprecated?, *%opt ) { self!_choose( @list, %deprecated || %opt, 0   ) }
+method choose-multi ( @list, %deprecated?, *%opt ) { self!_choose( @list, %deprecated || %opt, 1   ) }
+method pause        ( @list, %deprecated?, *%opt ) { self!_choose( @list, %deprecated || %opt, Int ) }
 
 
 method !_init_term {
@@ -992,29 +997,25 @@ Term::Choose - Choose items from a list interactively.
 
 =head1 VERSION
 
-Version 0.130
+Version 0.131
 
 =head1 SYNOPSIS
 
     use Term::Choose :choose;
 
-    my @array = <one two three four five>;
+    my @list = <one two three four five>;
 
 
     # Functional interface:
  
-    my $choice = choose( @array, { layout => 1 } );
-
-    say $choice;
+    my $chosen = choose( @list, :layout( 2 ) );
 
 
     # OO interface:
  
     my $tc = Term::Choose.new();
 
-    $choice = $tc.choose( @array, { layout => 1 } );
-
-    say $choice;
+    $chosen = $tc.choose( @list, :layout( 1 ), :mouse( 1 ) );
 
 =head1 DESCRIPTION
 
@@ -1022,7 +1023,10 @@ Choose interactively from a list of items.
 
 For C<choose>, C<choose-multi> and C<pause> the first argument holds the list of the available choices.
 
-With the optional second argument (Hash) it can be passed the different options. See L<#OPTIONS>.
+The different options can be passed as key-values pairs. See L<#OPTIONS> to find the available options.
+
+Passing the options as a hash is deprecated. The support of passing the options as a hash may be removed with the next
+release.
 
 The return values are described in L<#Routines>
 
@@ -1062,15 +1066,11 @@ the right mouse key instead of the C<SpaceBar> key. Instead of C<PageUp> and C<P
 
 =head1 CONSTRUCTOR
 
-The constructor method C<new> can be called with optional named arguments:
+The constructor method C<new> can be called with named arguments:
 
 =item defaults
 
-Expects as its value a hash. Sets the defaults for the instance. See L<#OPTIONS>.
-
-=item win
-
-Expects as its value a window object created by ncurses C<initscr>.
+Sets the defaults (a list of key-value pairs) for the instance. See L<#OPTIONS>.
 
 If set, C<choose>, C<choose-multi> and C<pause> use this global window instead of creating their own without calling
 C<endwin> to restores the terminal before returning.
