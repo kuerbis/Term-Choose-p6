@@ -7,7 +7,7 @@ plan 6;
 
 my %hash = (
     choose              => 'lib/Term/Choose.pm6',
-    choose_ncurses      => 'lib/Term/Choose/NCurses.pm6',
+    choose_ncurses      => 'lib/Term/Choose/NCursesAdd.pm6',
     choose_linefold     => 'lib/Term/Choose/LineFold.pm6',
 );
 
@@ -50,7 +50,7 @@ my Date $today = Date.today;
 ok( %version<choose> > 0, 'Version greater than 0  OK' );
 
 is( %podversion<choose>,        %version<choose>, 'Version in POD Term::Choose  OK' );
-is( %version<choose_ncurses>,   %version<choose>, 'Version in Term::Choose::NCurses  OK' );
+is( %version<choose_ncurses>,   %version<choose>, 'Version in Term::Choose::NCursesAdd  OK' );
 is( %version<choose_linefold>,  %version<choose>, 'Version in Term::Choose::LineFold  OK' );
 is( $version_in_changelog,      %version<choose>, 'Version in "Changes"  OK' );
 is( $release_date,              $today,           'Release date in Changes is date from today  OK' );

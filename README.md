@@ -8,7 +8,7 @@ Term::Choose - Choose items from a list interactively.
 VERSION
 =======
 
-Version 0.131
+Version 0.132
 
 SYNOPSIS
 ========
@@ -20,14 +20,14 @@ SYNOPSIS
 
     # Functional interface:
      
-    my $chosen = choose( @list, :layout( 2 ) );
+    my $chosen = choose( @list, :layout(2) );
 
 
     # OO interface:
      
-    my $tc = Term::Choose.new();
+    my $tc = Term::Choose.new( :default( :1mouse, :0order ) );
 
-    $chosen = $tc.choose( @list, :layout( 1 ), :mouse( 1 ) );
+    $chosen = $tc.choose( @list, :1layout, :2default );
 
 DESCRIPTION
 ===========
@@ -71,7 +71,7 @@ Keys
 
 For the usage of `SpaceBar`, `Ctrl-SpaceBar`, `Return` and the `q`-key see [#choose](#choose), [#choose-multi](#choose-multi) and [#pause](#pause).
 
-With *mouse* enabled (and if supported by the terminal) use the the left mouse key instead the `Return` key and the right mouse key instead of the `SpaceBar` key. Instead of `PageUp` and `PageDown` it can be used the mouse wheel (if supported).
+With *mouse* enabled (and if supported by the terminal) use the the left mouse key instead the `Return` key and the right mouse key instead of the `SpaceBar` key. Instead of `PageUp` and `PageDown` it can be used the mouse wheel if the extended mouse mode is enabled. Setting the environment variable `PERL6_NCURSES_LIB` to `libncursesw.so.6` enbables the extended mouse mode.
 
 CONSTRUCTOR
 ===========
@@ -81,6 +81,10 @@ The constructor method `new` can be called with named arguments:
   * defaults
 
 Sets the defaults (a list of key-value pairs) for the instance. See [#OPTIONS](#OPTIONS).
+
+  * win
+
+Expects as its value a `WINDOW` object - the return value of [NCurses](NCurses) `initscr`.
 
 If set, `choose`, `choose-multi` and `pause` use this global window instead of creating their own without calling `endwin` to restores the terminal before returning.
 
@@ -375,8 +379,6 @@ libncurses
 ----------
 
 `Term::Choose` requires `libncursesw` to be installed.
-
-If the name of the ncurses library matches `libncursesw.so.6` `Term::Choose` expects the extended mouse feature to be enabled.
 
 Monospaced font
 ---------------

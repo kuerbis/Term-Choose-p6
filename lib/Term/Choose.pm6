@@ -1,9 +1,10 @@
 use v6;
 unit class Term::Choose;
 
-my $VERSION = '0.131';
+my $VERSION = '0.132';
 
-use Term::Choose::NCurses;
+use NCurses;
+use Term::Choose::NCursesAdd;
 use Term::Choose::LineFold :to-printwidth, :line-fold, :print-columns;
 
 constant R  = 0;
@@ -32,8 +33,8 @@ has @!list;
 has %!defaults;
 has %!o;
 
-has Term::Choose::NCurses::WINDOW $!win;
-has Term::Choose::NCurses::WINDOW $!win_local;
+has WINDOW $!win;
+has WINDOW $!win_local;
 
 has Int   $!term_w;
 has Int   $!term_h;
@@ -54,7 +55,7 @@ has Array $!p;
 has Array $!marked;
 has Bool  $!ext_mouse;
 
-method new ( :$defaults, :$win=Term::Choose::NCurses::WINDOW ) { # to add 'new' to the BUILD _valid_options error messages
+method new ( :$defaults, :$win=WINDOW ) { # to add 'new' to the BUILD -> _valid_options -> error-messages
     self.bless( :$defaults, :$win );
 }
 
@@ -239,7 +240,7 @@ method !_init_term {
     else {
         my int32 constant LC_ALL = 6;
         setlocale( LC_ALL, "" );
-        $!win_local = initscr() or die "Failed to initialize ncurses\n"; # $!
+        $!win_local = initscr();
     }
     noecho();
     cbreak();
@@ -248,10 +249,10 @@ method !_init_term {
         if library() ~~ / 'libncursesw.so.' ( \d+ ) / {
             $!ext_mouse = $0 >= 6;
         }
-        my Array[int32] $old;
-        my $s = mousemask(
-            $!ext_mouse ?? EMM_ALL_MOUSE_EVENTS +| EMM_REPORT_MOUSE_POSITION !! ALL_MOUSE_EVENTS +| REPORT_MOUSE_POSITION,
-            $old
+        mousemask(
+            $!ext_mouse ?? EMM_ALL_MOUSE_EVENTS +| EMM_REPORT_MOUSE_POSITION
+                        !!     ALL_MOUSE_EVENTS +|     REPORT_MOUSE_POSITION,
+            0
         );
         my $mi = mouseinterval( 5 );
     }
@@ -278,7 +279,7 @@ method !_choose ( @!orig_list, %!o, Int $multiselect ) {
         %!o<pad-one-row> = %!o<pad>;
     }
     self!_init_term;
-    self!_wr_first_screen;
+    self!_wr_first_screen( $multiselect );
     my Int $pressed; #
 
     GET_KEY: loop {
@@ -301,7 +302,7 @@ method !_choose ( @!orig_list, %!o, Int $multiselect ) {
             if $!marked.elems {
                 %!o<mark> = self!_marked_rc2idx;
             }
-            self!_wr_first_screen;
+            self!_wr_first_screen( $multiselect );
             next GET_KEY;
         }
 
@@ -575,7 +576,7 @@ method !_choose ( @!orig_list, %!o, Int $multiselect ) {
                 }
             }
             when KEY_MOUSE {
-                my Term::Choose::NCurses::MEVENT $event .= new;
+                my NCurses::MEVENT $event .= new;
                 if getmouse( $event ) == OK {
                     if $!ext_mouse {
                         if $event.bstate == EMM_BUTTON1_CLICKED | EMM_BUTTON1_PRESSED {
@@ -714,7 +715,7 @@ method !_set_default_cell {
 }
 
 
-method !_wr_first_screen {
+method !_wr_first_screen( Int $multiselect ) {
     $!term_w = getmaxx( $!win_local );
     $!term_h = getmaxy( $!win_local );
     ( $!avail_w, $!avail_h ) = ( $!term_w, $!term_h );
@@ -745,7 +746,7 @@ method !_wr_first_screen {
     $!row_bottom = $!rc2idx.end if $!row_bottom > $!rc2idx.end;
     $!p = [ 0, 0 ];
     $!marked = [];
-    if %!o<mark> {
+    if %!o<mark> && $multiselect {
         self!_marked_idx2rc( %!o<mark>, True );
     }
     if %!o<default>.defined && %!o<default> <= @!list.end {
@@ -997,7 +998,7 @@ Term::Choose - Choose items from a list interactively.
 
 =head1 VERSION
 
-Version 0.131
+Version 0.132
 
 =head1 SYNOPSIS
 
@@ -1008,14 +1009,14 @@ Version 0.131
 
     # Functional interface:
  
-    my $chosen = choose( @list, :layout( 2 ) );
+    my $chosen = choose( @list, :layout(2) );
 
 
     # OO interface:
  
-    my $tc = Term::Choose.new();
+    my $tc = Term::Choose.new( :default( :1mouse, :0order ) );
 
-    $chosen = $tc.choose( @list, :layout( 1 ), :mouse( 1 ) );
+    $chosen = $tc.choose( @list, :1layout, :2default );
 
 =head1 DESCRIPTION
 
@@ -1062,7 +1063,8 @@ L<#pause>.
 
 With I<mouse> enabled (and if supported by the terminal) use the the left mouse key instead the C<Return> key and
 the right mouse key instead of the C<SpaceBar> key. Instead of C<PageUp> and C<PageDown> it can be used the mouse wheel
-(if supported).
+if the extended mouse mode is enabled. Setting the environment variable C<PERL6_NCURSES_LIB> to C<libncursesw.so.6>
+enbables the extended mouse mode.
 
 =head1 CONSTRUCTOR
 
@@ -1071,6 +1073,10 @@ The constructor method C<new> can be called with named arguments:
 =item defaults
 
 Sets the defaults (a list of key-value pairs) for the instance. See L<#OPTIONS>.
+
+=item win
+
+Expects as its value a C<WINDOW> object - the return value of L<NCurses> C<initscr>.
 
 If set, C<choose>, C<choose-multi> and C<pause> use this global window instead of creating their own without calling
 C<endwin> to restores the terminal before returning.
@@ -1379,9 +1385,6 @@ will overwrite the autodetected ncurses library location.
 =head2 libncurses
 
 C<Term::Choose> requires C<libncursesw> to be installed.
-
-If the name of the ncurses library matches C<libncursesw.so.6> C<Term::Choose> expects the extended mouse feature to be
-enabled.
 
 =head2 Monospaced font
 
