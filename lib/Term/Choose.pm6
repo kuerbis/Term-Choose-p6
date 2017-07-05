@@ -1,5 +1,5 @@
 use v6;
-unit class Term::Choose:ver<0.0.1>;
+unit class Term::Choose:ver<0.0.2>;
 
 use NCurses;
 use Term::Choose::NCursesAdd;
@@ -129,10 +129,10 @@ sub _validate_options ( %opt, Int $list_end? ) {
             next;
         }
         when $valid{$key} eq 'List' {
-            die "$key => {$value.perl} is not an List."  if ! $value.isa( List );
-            die "$key => invalid list element"           if $value.grep( { / <-[0..9]> / } ); # .grep( { $_ !~~ UInt } );
+            die "$key => {$value.perl} is not an List."   if ! $value.isa( List );
+            die "$key => invalid list element"            if $value.grep( { $_ !~~ UInt } );
             if $key eq 'lf' {
-                die "$key => too many list elemnts."     if $value.elems > 2;
+                die "$key => too many list elemnts."      if $value.elems > 2;
             }
             else {
                 die "$key => value out of range."         if $list_end.defined && $value.any > $list_end;
