@@ -1,13 +1,8 @@
 use v6;
 unit module Term::Choose::NCursesAdd;
 
-my $VERSION = '0.132';
-
-
 
 use NativeCall;
-
-
 
 # from locale.h
 

@@ -1,6 +1,9 @@
 Revision history for Term::Choose
 
 
+0.0.1   2017-07-05
+        - Set version in META6 - new version format
+
 0.132   2017-07-03
         - Use NCurses
 

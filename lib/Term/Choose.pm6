@@ -1,7 +1,5 @@
 use v6;
-unit class Term::Choose;
-
-my $VERSION = '0.132';
+unit class Term::Choose:ver<0.0.1>;
 
 use NCurses;
 use Term::Choose::NCursesAdd;
@@ -995,10 +993,6 @@ method !_marked_rc2idx {
 =head1 NAME
 
 Term::Choose - Choose items from a list interactively.
-
-=head1 VERSION
-
-Version 0.132
 
 =head1 SYNOPSIS
 

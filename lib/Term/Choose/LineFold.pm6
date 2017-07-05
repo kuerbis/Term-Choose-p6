@@ -1,10 +1,7 @@
 use v6;
 unit class Term::Choose::LineFold;
 
-my $VERSION = '0.132';
-
 use Terminal::WCWidth;
-
 
 
 sub to-printwidth( $str, Int $avail_w, Bool $dot=False ) is export( :to-printwidth ) {
