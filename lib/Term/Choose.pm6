@@ -1,5 +1,5 @@
 use v6;
-unit class Term::Choose:ver<0.0.2>;
+unit class Term::Choose:ver<0.0.3>;
 
 use NCurses;
 use Term::Choose::NCursesAdd;
@@ -152,9 +152,6 @@ sub _validate_options ( %opt, Int $list_end? ) {
     }
 }
 
-submethod DESTROY () { #
-    self!_end_term();
-}
 
 method !_prepare_new_copy_of_list {
     if %!o<ll> {
@@ -265,6 +262,9 @@ method !_end_term {
 method !_choose ( @!orig_list, %!o, Int $multiselect ) {
     if ! @!orig_list.elems {
         return;
+    }
+    CATCH {
+        endwin();
     }
     _validate_options( %!o, @!orig_list.end );
     for %!defaults.kv -> $key, $value {
