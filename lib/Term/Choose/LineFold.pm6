@@ -5,34 +5,34 @@ use Terminal::WCWidth;
 
 
 sub to-printwidth( $str, Int $avail_w, Bool $dot=False ) is export( :to-printwidth ) {
-    my Int $res = 0;
-    my Str @graph;
-    my Int @width;
-    my Str $tail = '...';
-    my Int $tmp_w = $avail_w - 3;
-    if ! $dot || $avail_w < 6 {
-        $tail = '';
-        $tmp_w = $avail_w;
-    }
+    # expects a $str with no invalid characters (s:g/<:C>//)
+    # hence no check if wcwidth returns -1
+    my $res = 0;
+    my @graph;
+    my %cache;
     for $str.NFC {
-        my $w = wcwidth($_);
-        #return -1 if $w < 0; # already removed with s:g/<:C>//
-        if $res + $w > $avail_w {
-            while $res > $tmp_w {
-                @graph.pop;
-                @width.pop;
-                $res = @width.sum;
-            }
-            if $res < $tmp_w {
-                return @graph.join ~ ' ' ~ $tail, $res + 1; #
-            }
-            else {
-                return @graph.join       ~ $tail, $res;
-            }
+        my \char = .chr;
+        my $w;
+        if ! %cache.EXISTS-KEY( char ) {
+            $w := %cache.BIND-KEY( char, wcwidth( $_ ) );
         }
-        $res += $w;
-        @width.push: $w;
-        @graph.push: .chr;
+        else {
+            $w := %cache.AT-KEY( char );
+        }
+        if $res + $w > $avail_w {
+            if $dot && $avail_w > 5 {
+                my \tail = '...';
+                my \tail_len = 3;
+                while $res > $avail_w - tail_len {
+                    $res = $res - %cache.AT-KEY( @graph.pop );
+                }
+                return @graph.join ~ '.' ~ tail, $res + tail_len + 1 if $res < $avail_w - tail_len;
+                return @graph.join       ~ tail, $res + tail_len;
+            }
+            return @graph.join, $res;
+        }
+        $res = $res + $w;
+        @graph.push: char;
     }
     return @graph.join, $res;
 }
@@ -109,7 +109,20 @@ sub line-fold ( $str, Int $avail_w, Str $init_tab is copy, Str $subseq_tab is co
 
 
 sub print-columns ( $str ) returns Int is export( :print-columns ) {
-    wcswidth( $str );
+    # expects a $str with no invalid characters (s:g/<:C>//)
+    # hence no check if wcwidth returns -1
+    my %cache;
+    my Int $res = 0;
+    for $str.NFC {
+        my \char = .chr;
+        if ! %cache.EXISTS-KEY( char ) {
+            $res = $res + %cache.BIND-KEY( char, wcwidth( $_ ) );
+        }
+        else {
+            $res = $res + %cache.AT-KEY( char );
+        }
+    }
+    $res;
 }
 
 
