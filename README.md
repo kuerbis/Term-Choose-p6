@@ -365,7 +365,7 @@ The method `num-threads` returns the setting used by `Term::Choose`.
 
 head2 libncurses
 
-The location of the used ncurses library can be specified by setting the environment variable `PERL6_NCURSES_LIB`. This will overwrite the autodetected ncurses library location.
+The location of the used ncurses library can be specified by setting the environment variable `PERL6_NCURSES_LIB`. This will overwrite the default library location.
 
 REQUIREMENTS
 ============
@@ -373,7 +373,7 @@ REQUIREMENTS
 libncurses
 ----------
 
-`Term::Choose` requires `libncursesw` to be installed.
+`Term::Choose` requires `libncurses` to be installed. If the list elements contain wide characters it is required `libncursesw.so.6`. See [#ENVIRONMET VARIABLES](#ENVIRONMET VARIABLES).
 
 Monospaced font
 ---------------

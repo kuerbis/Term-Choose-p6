@@ -1,5 +1,5 @@
 use v6;
-unit class Term::Choose:ver<0.0.4>;
+unit class Term::Choose:ver<0.0.5>;
 
 use NCurses;
 use Term::Choose::NCursesAdd;
@@ -228,6 +228,7 @@ method choose-multi ( @list, %deprecated?, *%opt ) { self!_choose( @list, %depre
 method pause        ( @list, %deprecated?, *%opt ) { self!_choose( @list, %deprecated || %opt, Int ) }
 
 
+
 method !_init_term {
     if $!win {
         $!win_local = $!win;
@@ -244,11 +245,12 @@ method !_init_term {
         if library() ~~ / 'libncursesw.so.' ( \d+ ) / {
             $!ext_mouse = $0 >= 6;
         }
-        mousemask(
-            $!ext_mouse ?? EMM_ALL_MOUSE_EVENTS +| EMM_REPORT_MOUSE_POSITION
-                        !!     ALL_MOUSE_EVENTS +|     REPORT_MOUSE_POSITION,
-            0
-        );
+        if $!ext_mouse {
+            mousemask( EMM_ALL_MOUSE_EVENTS +| EMM_REPORT_MOUSE_POSITION, 0 );
+        }
+        else {
+            mousemask( ALL_MOUSE_EVENTS +| REPORT_MOUSE_POSITION, 0 ); ##
+        }
         my $mi = mouseinterval( 5 );
     }
     curs_set( 0 );
@@ -1372,13 +1374,14 @@ The method C<num-threads> returns the setting used by C<Term::Choose>.
 head2 libncurses
 
 The location of the used ncurses library can be specified by setting the environment variable C<PERL6_NCURSES_LIB>. This
-will overwrite the autodetected ncurses library location.
+will overwrite the default library location.
 
 =head1 REQUIREMENTS
 
 =head2 libncurses
 
-C<Term::Choose> requires C<libncursesw> to be installed.
+C<Term::Choose> requires C<libncurses> to be installed. If the list elements contain wide characters it is required
+C<libncursesw.so.6>. See L<#ENVIRONMET VARIABLES>.
 
 =head2 Monospaced font
 
