@@ -42,7 +42,7 @@ To browse through the available list-elements use the keys described below.
 
 If the items of the list don't fit on the screen, the user can scroll to the next (previous) page(s).
 
-If the window size is changed, after a keystroke the screen is rewritten.
+If the window size is changed, the screen is rewritten.
 
 How to choose the items is described for each method/function separately in [Routines](Routines).
 
@@ -59,7 +59,7 @@ Keys
 
 For the usage of `SpaceBar`, `Ctrl-SpaceBar`, `Return` and the `q`-key see [#choose](#choose), [#choose-multi](#choose-multi) and [#pause](#pause).
 
-With *mouse* enabled (and if supported by the terminal) use the the left mouse key instead the `Return` key and the right mouse key instead of the `SpaceBar` key. Instead of `PageUp` and `PageDown` it can be used the mouse wheel if the extended mouse mode is enabled. Setting the environment variable `PERL6_NCURSES_LIB` to `libncursesw.so.6` enbables the extended mouse mode.
+With *mouse* enabled use the the left mouse key instead the `Return` key and the right mouse key instead of the `SpaceBar` key. Instead of `PageUp` and `PageDown` it can be used the mouse wheel. The mouse wheel only works, if the ncurses library supports the extended mouse mode.
 
 CONSTRUCTOR
 ===========
@@ -230,7 +230,7 @@ mark
 
 This is a `choose-multi`-only option.
 
-*mark* expects as its value an list of indexes (integers). `choose` preselects the list-elements correlating to these indexes.
+*mark* expects as its value an list of indexes (integers). `choose-multi` preselects the list-elements correlating to these indexes.
 
 (default: undefined)
 
@@ -315,8 +315,6 @@ If *prompt* is undefined, a default prompt-string will be shown.
 
 If the *prompt* value is an empty string (""), no prompt-line will be shown.
 
-default: *multiselect* == `0` ?? `Close with ENTER` !! `Your choice:`. 
-
 undef
 -----
 
@@ -334,7 +332,8 @@ multithreading
 
 The method `num-threads` returns the setting used by `Term::Choose`.
 
-head2 libncurses
+libncurses
+----------
 
 The location of the used ncurses library can be specified by setting the environment variable `PERL6_NCURSES_LIB`. This will overwrite the default library location.
 
@@ -344,7 +343,7 @@ REQUIREMENTS
 libncurses
 ----------
 
-`Term::Choose` requires `libncurses` to be installed. If the list elements contain wide characters it is required `libncursesw.so.6`. See [#ENVIRONMET VARIABLES](#ENVIRONMET VARIABLES).
+`Term::Choose` requires `libncurses` to be installed. If the list elements contain wide characters it is required an approprirate ncurses library else wide character will break the output.
 
 Monospaced font
 ---------------

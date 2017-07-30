@@ -1,5 +1,5 @@
 use v6;
-unit class Term::Choose:ver<1.0.0>;
+unit class Term::Choose:ver<1.0.1>;
 
 use NCurses;
 use Term::Choose::NCursesAdd;
@@ -292,9 +292,9 @@ method !_choose ( @!orig_list, %!o, Int $multiselect ) {
         }
         next GET_KEY if $key == ERR;
 
-        # $!rc2idx holds the new list (AoA) formated in "_list_index2rowcol" appropirate to the chosen layout.
-        # $!rc2idx does not hold the values dircetly but the respective list indexes from the original list.
-        # If the original list would be ( 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h' ) and the new formated list should be
+        # $!rc2idx holds the new list (AoA) formatted in "_list_index2rowcol" appropriate to the chosen layout.
+        # $!rc2idx does not hold the values directly but the respective list indexes from the original list.
+        # If the original list would be ( 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h' ) and the new formatted list should be
         #     a d g
         #     b e h
         #     c f
@@ -1008,7 +1008,7 @@ To browse through the available list-elements use the keys described below.
 
 If the items of the list don't fit on the screen, the user can scroll to the next (previous) page(s).
 
-If the window size is changed, after a keystroke the screen is rewritten.
+If the window size is changed, the screen is rewritten.
 
 How to choose the items is described for each method/function separately in L<Routines>.
 
@@ -1027,10 +1027,9 @@ end of the list.
 For the usage of C<SpaceBar>, C<Ctrl-SpaceBar>, C<Return> and the C<q>-key see L<#choose>, L<#choose-multi> and
 L<#pause>.
 
-With I<mouse> enabled (and if supported by the terminal) use the the left mouse key instead the C<Return> key and
-the right mouse key instead of the C<SpaceBar> key. Instead of C<PageUp> and C<PageDown> it can be used the mouse wheel
-if the extended mouse mode is enabled. Setting the environment variable C<PERL6_NCURSES_LIB> to C<libncursesw.so.6>
-enbables the extended mouse mode.
+With I<mouse> enabled use the the left mouse key instead the C<Return> key and the right mouse key instead of the
+C<SpaceBar> key. Instead of C<PageUp> and C<PageDown> it can be used the mouse wheel. The mouse wheel only works, if the
+ncurses library supports the extended mouse mode.
 
 =head1 CONSTRUCTOR
 
@@ -1211,7 +1210,7 @@ Allowed values for the two elements are: 0 or greater.
 
 This is a C<choose-multi>-only option.
 
-I<mark> expects as its value an list of indexes (integers). C<choose> preselects the
+I<mark> expects as its value an list of indexes (integers). C<choose-multi> preselects the
 list-elements correlating to these indexes.
 
 (default: undefined)
@@ -1291,8 +1290,6 @@ If I<prompt> is undefined, a default prompt-string will be shown.
 
 If the I<prompt> value is an empty string (""), no prompt-line will be shown.
 
-default: I<multiselect> == C<0> ??  C<Close with ENTER> !! C<Your choice:>. 
-
 =head2 undef
 
 Sets the string displayed on the screen instead an undefined element.
@@ -1308,7 +1305,7 @@ the environment variable C<TC_NUM_THREADS>.
 
 The method C<num-threads> returns the setting used by C<Term::Choose>.
 
-head2 libncurses
+=head2 libncurses
 
 The location of the used ncurses library can be specified by setting the environment variable C<PERL6_NCURSES_LIB>. This
 will overwrite the default library location.
@@ -1318,7 +1315,7 @@ will overwrite the default library location.
 =head2 libncurses
 
 C<Term::Choose> requires C<libncurses> to be installed. If the list elements contain wide characters it is required
-C<libncursesw.so.6>. See L<#ENVIRONMET VARIABLES>.
+an approprirate ncurses library else wide character will break the output.
 
 =head2 Monospaced font
 
