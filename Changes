@@ -1,6 +1,11 @@
 Revision history for Term::Choose
 
 
+1.0.4   2017-12-31
+        - Refactoring parameter handling
+        - Bugfix in "all_in_first_row"
+        - Improved language in POD
+
 1.0.3   2017-08-29
         - Added tags to the META6.json file
 

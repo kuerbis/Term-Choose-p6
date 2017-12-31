@@ -213,7 +213,7 @@ From broad to narrow: 0 > 1 > 2
 lf
 --
 
-If *prompt* lines are folded, the option *lf* allows to insert spaces at beginning of the folded lines.
+If *prompt* lines are folded, the option *lf* allows one to insert spaces at beginning of the folded lines.
 
 The option *lf* expects a list with one or two elements:
 
@@ -368,3 +368,4 @@ LICENSE AND COPYRIGHT
 Copyright (C) 2016-2017 Matthäus Kiem.
 
 This library is free software; you can redistribute it and/or modify it under the Artistic License 2.0.
+
