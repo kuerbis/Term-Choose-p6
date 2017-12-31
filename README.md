@@ -294,13 +294,6 @@ Sets the number of whitespaces between columns. (default: 2)
 
 Allowed values: 0 or greater
 
-pad-one-row
------------
-
-Sets the number of whitespaces between elements: *pad-one-row* is used instead of *pad*, if all items separated with *pad-one-row* fit in one row. (default: value of the option *pad*)
-
-Allowed values: 0 or greater
-
 page
 ----
 

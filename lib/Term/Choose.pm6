@@ -1,5 +1,5 @@
 use v6;
-unit class Term::Choose:ver<1.0.4>;
+unit class Term::Choose:ver<1.1.0>;
 
 use NCurses;
 use Term::Choose::NCursesAdd;
@@ -48,7 +48,7 @@ has PInt     $.max-height;
 has Int_gt_1 $.max-width;
 has UInt     $.default     = 0;
 has UInt     $.pad         = 2;
-has UInt     $.pad-one-row;
+has UInt     $.pad-one-row; # ###
 has List     $.lf;
 has List     $.mark;
 has List     $.no-spacebar;
@@ -64,7 +64,6 @@ has Int   $!avail_w;
 has Int   $!avail_h;
 has Int   $!col_w;
 has Int   @!length;
-has Str   $!all_in_first_row;
 has Int   $!rest;
 has Int   $!print_pp_row;
 has Str   $!pp_line_fmt;
@@ -206,7 +205,7 @@ method !_choose (
         Int_gt_1 :$max-width   = $!max-width,
         UInt     :$default     = $!default,
         UInt     :$pad         = $!pad,
-        UInt     :$pad-one-row = $!pad-one-row // $pad, #/
+        UInt     :$pad-one-row = $!pad-one-row, # ###
         List     :$lf          = $!lf,
         List     :$mark        = $!mark,
         List     :$no-spacebar = $!no-spacebar,
@@ -222,13 +221,16 @@ method !_choose (
         endwin();
     }
     %!o = :$beep, :$index, :$mouse, :$order, :$page, :$justify, :$layout, :$keep, :$ll, :$max-height, :$max-width,
-              :$default, :$pad, :$pad-one-row, :$lf, :$mark, :$no-spacebar, :$prompt, :$empty, :$undef;
+              :$default, :$pad, :$lf, :$mark, :$no-spacebar, :$prompt, :$empty, :$undef;
     if ! %!o<prompt>.defined {
         %!o<prompt> = $multiselect.defined ?? 'Your choice' !! 'Continue with ENTER';
     }
-    if ! %!o<pad-one-row>.defined {
-        %!o<pad-one-row> = %!o<pad>;
+# ###
+    if $pad-one-row.defined {
+        %!o<prompt> ~= ' ["pad-one-row" removed - complaints to cuer2s@gmail.com, subject: "pad-one-row"]';
     }
+# ###
+
     self!_init_term();
     self!_wr_first_screen( $multiselect );
     my Int $pressed;
@@ -592,16 +594,15 @@ method !_mouse_xy2pos ( Int $abs_mouse_x, Int $abs_mouse_y ) {
     if $mouse_row > $!rc2idx.end {
         return;
     }
-    my Int $pad = $!all_in_first_row ?? %!o<pad-one-row> !! %!o<pad>;
     my Int $row = $mouse_row + $!row_top;
     my Int $matched_col;
     my Int $end_prev_col = 0;
     COL: for ^$!rc2idx[$row] -> $col {
         my Int $end_this_col = $end_prev_col
                              + ( $!rc2idx.end == 0 ?? print-columns( @!list[$!rc2idx[0][$col]] ) !! $!col_w )
-                             + $pad;
+                             + %!o<pad>;
         if $col == 0 {
-            $end_this_col -= $pad div 2;
+            $end_this_col -= %!o<pad> div 2;
         }
         if $col == $!rc2idx[$row].end && $end_this_col > $!avail_w {
             $end_this_col = $!avail_w;
@@ -746,12 +747,11 @@ method !_wr_cell ( Int $row, Int $col ) {
     my Bool $is_current_pos = $row == $!p[R] && $col == $!p[C];
     my Int $i = $!rc2idx[$row][$col];
     if $!rc2idx.end == 0 && $!rc2idx[0].end > 0 {
-        my $pad = $!all_in_first_row ?? %!o<pad-one-row> !! %!o<pad>;
         my Int $lngth = 0;
         if $col > 0 {
             for ^$col -> $c { #
                 $lngth += print-columns( @!list[ $!rc2idx[$row][$c] ] );
-                $lngth += $pad;
+                $lngth += %!o<pad>;
             }
         }
         attron( A_BOLD +| A_UNDERLINE ) if $!marked[$row][$col];
@@ -802,18 +802,18 @@ method !_list_index2rowcol () {
     if $!col_w + %!o<pad> >= $!avail_w {
         %!o<tmp_layout> = 2;
     }
-    $!all_in_first_row = '';
+    my Str $all_in_first_row = '';
     if %!o<tmp_layout> == 0|1 {
         for ^@!list -> $i {
-            $!all_in_first_row ~= @!list[$i];
-            $!all_in_first_row ~= ' ' x %!o<pad-one-row> if $i < @!list.end;
-            if print-columns( $!all_in_first_row ) > $!avail_w {
-                $!all_in_first_row = '';
+            $all_in_first_row ~= @!list[$i];
+            $all_in_first_row ~= ' ' x %!o<pad> if $i < @!list.end;
+            if print-columns( $all_in_first_row ) > $!avail_w {
+                $all_in_first_row = '';
                 last;
             }
         }
     }
-    if $!all_in_first_row {
+    if $all_in_first_row {
         $!rc2idx[0] = [ ^@!list ];
     }
     elsif %!o<tmp_layout> == 2 {
@@ -1233,13 +1233,6 @@ If the output has more than one row and more than one column:
 =head2 pad
 
 Sets the number of whitespaces between columns. (default: 2)
-
-Allowed values: 0 or greater
-
-=head2 pad-one-row
-
-Sets the number of whitespaces between elements: I<pad-one-row> is used instead of I<pad>, if all items separated
-with I<pad-one-row> fit in one row. (default: value of the option I<pad>)
 
 Allowed values: 0 or greater
 

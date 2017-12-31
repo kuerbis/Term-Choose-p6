@@ -4,32 +4,7 @@ use Test;
 use Term::Choose;
 
 
-
-my $pad = 3;
-my $pad-one-row = 5;
-
-
-my $n = Term::Choose.new( :$pad );
-
-is $n.pad,         $pad,   'pad ok';
-is $n.pad-one-row, UInt, 'pad-one-row ok';
-
-
-$n = Term::Choose.new( :$pad, :$pad-one-row );
-
-is $n.pad,         $pad,         'pad ok';
-is $n.pad-one-row, $pad-one-row, 'pad-one-row ok';
-
-
-$n = Term::Choose.new( :$pad-one-row );
-
-is $n.pad-one-row, $pad-one-row, 'pad-one-row ok';
-
-
-
-
-
-my @unsigned_int = <default pad pad-one-row>;
+my @unsigned_int = <default pad>;
 
 my @inval_u_int = 'hello', -1, ( 2, 4, 6 ), 3.4;
 for @unsigned_int -> $key {
