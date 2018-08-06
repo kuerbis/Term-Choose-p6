@@ -55,6 +55,8 @@ Keys
 
   * the `PageUp` key (or `Ctrl-B`) to go back one page, the `PageDown` key (or `Ctrl-F`) to go forward one page,
 
+  * the `Insert` key to go back 25 pages, the `Delete` key to go forward 25 pages,
+
   * the `Home` key (or `Ctrl-A`) to jump to the beginning of the list, the `End` key (or `Ctrl-E`) to jump to the end of the list.
 
 For the usage of `SpaceBar`, `Ctrl-SpaceBar`, `Return` and the `q`-key see [#choose](#choose), [#choose-multi](#choose-multi) and [#pause](#pause).

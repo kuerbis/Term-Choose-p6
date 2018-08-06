@@ -1,6 +1,6 @@
 use v6;
 
-unit class Term::Choose:ver<1.3.0>;
+unit class Term::Choose:ver<1.4.0>;
 
 use NCurses;
 use Term::Choose::NCursesAdd;
@@ -237,6 +237,8 @@ method !_choose ( Int $multiselect, @!orig_list,
     }
     self!_init_term();
     self!_wr_first_screen( $multiselect );
+    my Int $fast_page = 25;
+    my List $saved_pos;
     my Int $pressed;
 
     GET_KEY: loop {
@@ -259,6 +261,18 @@ method !_choose ( Int $multiselect, @!orig_list,
             if $key == none( LINE_FEED, CARRIAGE_RETURN) && $key < 361 {
                 %*ENV<TC_RESET_AUTO_UP> = 1;
             }
+        }
+        my $page_step = 1;
+        if $key == KEY_IC {
+            $page_step = $fast_page if $!row_top - $fast_page * $!avail_h >= 0;
+            $key = KEY_PPAGE;
+        }
+        elsif $key == KEY_DC {
+            $page_step = $fast_page if $!row_bottom + $fast_page * $!avail_h <= $!rc2idx.end;
+            $key = KEY_NPAGE;
+        }
+        if ( $saved_pos && $key != KEY_PPAGE && $key != CONTROL_B && $key != KEY_NPAGE && $key != CONTROL_F ) {
+            $saved_pos = Any; #
         }
 
         # $!rc2idx holds the new list (AoA) formatted in "_list_index2rowcol" appropriate to the chosen layout.
@@ -391,9 +405,16 @@ method !_choose ( Int $multiselect, @!orig_list,
                     self!_beep();
                 }
                 else {
-                    $!row_top    = $!avail_h * ( $!p[R] div $!avail_h - 1 );
+                    $!row_top    = $!avail_h * ( $!p[R] div $!avail_h - $page_step );
                     $!row_bottom = $!row_top + $!avail_h - 1;
-                    $!p[R] -= $!avail_h; # after $!row_top
+                    if $saved_pos {
+                        $!p[R] = $saved_pos[R];
+                        $!p[C] = $saved_pos[C];
+                        $saved_pos = Any; #
+                    }
+                    else {
+                        $!p[R] -= $!avail_h * $page_step; # after $!row_top
+                    }
                     self!_wr_screen();
                 }
             }
@@ -402,22 +423,19 @@ method !_choose ( Int $multiselect, @!orig_list,
                     self!_beep();
                 }
                 else {
-                    $!row_top    = $!avail_h * ( $!p[R] div $!avail_h + 1 );
+                    $!row_top    = $!avail_h * ( $!p[R] div $!avail_h + $page_step );
                     $!row_bottom = $!row_top + $!avail_h - 1;
                     $!row_bottom = $!rc2idx.end if $!row_bottom > $!rc2idx.end;
-                    $!p[R] += $!avail_h; # after $!row_top
-                    if $!p[R] >= $!rc2idx.end {
-                        if $!rc2idx.end == $!row_top || ! $!rest || $!p[C] <= $!rest - 1 {
-                            if $!p[R] != $!rc2idx.end {
-                                $!p[R] = $!rc2idx.end;
-                            }
-                            if $!rest && $!p[C] > $!rest - 1 {
-                                $!p[C] = $!rc2idx[ $!p[R] ].end;
-                            }
+
+                    if $!p[R] + $!avail_h > $!rc2idx.end || $!p[C] > $!rc2idx[$!p[R] + $!avail_h].end {
+                        $saved_pos = [ $!p[R], $!p[C] ];
+                        $!p[R] = $!rc2idx.end;
+                        if $!p[C] > $!rc2idx[$!p[R]].end {
+                            $!p[C] = $!rc2idx[$!p[R]];
                         }
-                        else {
-                            $!p[R] = $!rc2idx.end - 1;
-                        }
+                    }
+                    else {
+                        $!p[R] += $!avail_h * $page_step;
                     }
                     self!_wr_screen();
                 }
@@ -1007,6 +1025,8 @@ How to choose the items is described for each method/function separately in L<Ro
 backward,
 
 =item the C<PageUp> key (or C<Ctrl-B>) to go back one page, the C<PageDown> key (or C<Ctrl-F>) to go forward one page,
+
+=item the C<Insert> key to go back 25 pages, the C<Delete> key to go forward 25 pages,
 
 =item the C<Home> key (or C<Ctrl-A>) to jump to the beginning of the list, the C<End> key (or C<Ctrl-E>) to jump to the
 end of the list.
