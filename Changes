@@ -1,6 +1,9 @@
 Revision history for Term::Choose
 
 
+1.4.2   2018-08-07
+        - page-down: save position
+
 1.4.1   2018-08-06
         - Bugfix in page-down
 
