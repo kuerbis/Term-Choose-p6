@@ -1,6 +1,6 @@
 use v6;
 
-unit class Term::Choose:ver<1.4.2>;
+unit class Term::Choose:ver<1.4.3>;
 
 use NCurses;
 use Term::Choose::NCursesAdd;
@@ -73,8 +73,8 @@ has Int   $!rest;
 has Int   $!print_pp_row;
 has Str   $!pp_row_fmt;
 has Str   @!prompt_lines;
-has Int   $!row_top;
-has Int   $!row_bottom;
+has Int   $!begin_p;
+has Int   $!end_p;
 has Array $!rc2idx;
 has Array $!p;
 has Array $!marked;
@@ -265,11 +265,11 @@ method !_choose ( Int $multiselect, @!orig_list,
         }
         my $page_step = 1;
         if $key == KEY_IC {
-            $page_step = $fast_page if $!row_top - $fast_page * $!avail_h >= 0;
+            $page_step = $fast_page if $!begin_p - $fast_page * $!avail_h >= 0;
             $key = KEY_PPAGE;
         }
         elsif $key == KEY_DC {
-            $page_step = $fast_page if $!row_bottom + $fast_page * $!avail_h <= $!rc2idx.end;
+            $page_step = $fast_page if $!end_p + $fast_page * $!avail_h <= $!rc2idx.end;
             $key = KEY_NPAGE;
         }
         if $saved_pos && $key != KEY_PPAGE && $key != CONTROL_B && $key != KEY_NPAGE && $key != CONTROL_F {
@@ -299,14 +299,14 @@ method !_choose ( Int $multiselect, @!orig_list,
                 }
                 else {
                     $!p[R]++;
-                    if $!p[R] <= $!row_bottom {
+                    if $!p[R] <= $!end_p {
                         self!_wr_cell( $!p[R] - 1, $!p[C] );
                         self!_wr_cell( $!p[R]    , $!p[C] );
                     }
                     else {
-                        $!row_top    = $!row_bottom + 1;
-                        $!row_bottom = $!row_bottom + $!avail_h;
-                        $!row_bottom = $!rc2idx.end if $!row_bottom > $!rc2idx.end;
+                        $!begin_p = $!end_p + 1;
+                        $!end_p   = $!end_p + $!avail_h;
+                        $!end_p   = $!rc2idx.end if $!end_p > $!rc2idx.end;
                         self!_wr_screen();
                     }
                 }
@@ -317,14 +317,14 @@ method !_choose ( Int $multiselect, @!orig_list,
                 }
                 else {
                     $!p[R]--;
-                    if $!p[R] >= $!row_top {
+                    if $!p[R] >= $!begin_p {
                         self!_wr_cell( $!p[R] + 1, $!p[C] );
                         self!_wr_cell( $!p[R]    , $!p[C] );
                     }
                     else {
-                        $!row_bottom = $!row_top - 1;
-                        $!row_top    = $!row_top - $!avail_h;
-                        $!row_top    = 0 if $!row_top < 0;
+                        $!end_p   = $!begin_p - 1;
+                        $!begin_p = $!begin_p - $!avail_h;
+                        $!begin_p = 0 if $!begin_p < 0;
                         self!_wr_screen();
                     }
                 }
@@ -342,14 +342,14 @@ method !_choose ( Int $multiselect, @!orig_list,
                     else {
                         $!p[R]++;
                         $!p[C] = 0;
-                        if $!p[R] <= $!row_bottom {
+                        if $!p[R] <= $!end_p {
                             self!_wr_cell( $!p[R] - 1, $!rc2idx[ $!p[R]-1 ].end );
                             self!_wr_cell( $!p[R]    , $!p[C]                   );
                         }
                         else {
-                            $!row_top    = $!row_bottom + 1;
-                            $!row_bottom = $!row_bottom + $!avail_h;
-                            $!row_bottom = $!rc2idx.end if $!row_bottom > $!rc2idx.end;
+                            $!begin_p = $!end_p + 1;
+                            $!end_p   = $!end_p + $!avail_h;
+                            $!end_p   = $!rc2idx.end if $!end_p > $!rc2idx.end;
                             self!_wr_screen();
                         }
                     }
@@ -368,14 +368,14 @@ method !_choose ( Int $multiselect, @!orig_list,
                     else {
                         $!p[R]--;
                         $!p[C] = $!rc2idx[ $!p[R] ].end;
-                        if $!p[R] >= $!row_top {
+                        if $!p[R] >= $!begin_p {
                             self!_wr_cell( $!p[R] + 1, 0      );
                             self!_wr_cell( $!p[R]    , $!p[C] );
                         }
                         else {
-                            $!row_bottom = $!row_top - 1;
-                            $!row_top    = $!row_top - $!avail_h; #
-                            $!row_top    = 0 if $!row_top < 0;
+                            $!end_p   = $!begin_p - 1;
+                            $!begin_p = $!begin_p - $!avail_h; #
+                            $!begin_p = 0 if $!begin_p < 0;
                             self!_wr_screen();
                         }
                     }
@@ -402,32 +402,32 @@ method !_choose ( Int $multiselect, @!orig_list,
                 }
             }
             when KEY_PPAGE | CONTROL_B {
-                if $!row_top <= 0 {
+                if $!begin_p <= 0 {
                     self!_beep();
                 }
                 else {
-                    $!row_top    = $!avail_h * ( $!p[R] div $!avail_h - $page_step );
-                    $!row_bottom = $!row_top + $!avail_h - 1;
+                    $!begin_p    = $!avail_h * ( $!p[R] div $!avail_h - $page_step );
+                    $!end_p = $!begin_p + $!avail_h - 1;
                     if $saved_pos {
-                        $!p[R] = $saved_pos[R] + $!row_top;
+                        $!p[R] = $saved_pos[R] + $!begin_p;
                         $!p[C] = $saved_pos[C];
                         $saved_pos = Array;
                     }
                     else {
-                        $!p[R] -= $!avail_h * $page_step; # after $!row_top
+                        $!p[R] -= $!avail_h * $page_step; # after $!begin_p
                     }
                     self!_wr_screen();
                 }
             }
             when KEY_NPAGE | CONTROL_F {
-                if $!row_bottom >= $!rc2idx.end {
+                if $!end_p >= $!rc2idx.end {
                     self!_beep();
                 }
                 else {
-                    my $backup_row_top = $!row_top;
-                    $!row_top    = $!avail_h * ( $!p[R] div $!avail_h + $page_step );
-                    $!row_bottom = $!row_top + $!avail_h - 1;
-                    $!row_bottom = $!rc2idx.end if $!row_bottom > $!rc2idx.end;
+                    my $backup_row_top = $!begin_p;
+                    $!begin_p = $!avail_h * ( $!p[R] div $!avail_h + $page_step );
+                    $!end_p   = $!begin_p + $!avail_h - 1;
+                    $!end_p   = $!rc2idx.end if $!end_p > $!rc2idx.end;
                     if $!p[R] + $!avail_h > $!rc2idx.end || $!p[C] > $!rc2idx[$!p[R] + $!avail_h].end {
                         $saved_pos = [ $!p[R] - $backup_row_top, $!p[C] ];
                         $!p[R] = $!rc2idx.end;
@@ -448,9 +448,9 @@ method !_choose ( Int $multiselect, @!orig_list,
                 else {
                     $!p[R] = 0;
                     $!p[C] = 0;
-                    $!row_top    = 0;
-                    $!row_bottom = $!row_top + $!avail_h - 1;
-                    $!row_bottom = $!rc2idx.end if $!row_bottom > $!rc2idx.end;
+                    $!begin_p = 0;
+                    $!end_p   = $!begin_p + $!avail_h - 1;
+                    $!end_p   = $!rc2idx.end if $!end_p > $!rc2idx.end;
                     self!_wr_screen();
                 }
             }
@@ -462,13 +462,13 @@ method !_choose ( Int $multiselect, @!orig_list,
                     else {
                         $!p[R] = $!rc2idx.end - 1;
                         $!p[C] = $!rc2idx[ $!p[R] ].end;
-                        $!row_top = $!rc2idx.elems - ( $!rc2idx.elems % $!avail_h || $!avail_h );
-                        if $!row_top == $!rc2idx.end {
-                            $!row_top    = $!row_top - $!avail_h;
-                            $!row_bottom = $!row_top + $!avail_h - 1;
+                        $!begin_p = $!rc2idx.elems - ( $!rc2idx.elems % $!avail_h || $!avail_h );
+                        if $!begin_p == $!rc2idx.end {
+                            $!begin_p = $!begin_p - $!avail_h;
+                            $!end_p   = $!begin_p + $!avail_h - 1;
                         }
                         else {
-                            $!row_bottom   = $!rc2idx.end;
+                            $!end_p = $!rc2idx.end;
                         }
                         self!_wr_screen();
                     }
@@ -480,8 +480,8 @@ method !_choose ( Int $multiselect, @!orig_list,
                     else {
                         $!p[R] = $!rc2idx.end;
                         $!p[C] = $!rc2idx[ $!p[R] ].end;
-                        $!row_top    = $!rc2idx.elems - ( $!rc2idx.elems % $!avail_h || $!avail_h );
-                        $!row_bottom = $!rc2idx.end;
+                        $!begin_p = $!rc2idx.elems - ( $!rc2idx.elems % $!avail_h || $!avail_h );
+                        $!end_p   = $!rc2idx.end;
                         self!_wr_screen();
                     }
                 }
@@ -630,7 +630,7 @@ method !_mouse_xy2pos ( Int $abs_mouse_x, Int $abs_mouse_y ) {
     if $mouse_row > $!rc2idx.end {
         return;
     }
-    my Int $row = $mouse_row + $!row_top;
+    my Int $row = $mouse_row + $!begin_p;
     my Int $matched_col;
     my Int $end_prev_col = 0;
     COL: for ^$!rc2idx[$row] -> $col {
@@ -698,9 +698,9 @@ method !_pos_to_default {
             }
         }
     }
-    $!row_top    = $!avail_h * ( $!p[R] div $!avail_h );
-    $!row_bottom = $!row_top + $!avail_h - 1;
-    $!row_bottom = $!rc2idx.end if $!row_bottom > $!rc2idx.end;
+    $!begin_p = $!avail_h * ( $!p[R] div $!avail_h );
+    $!end_p   = $!begin_p + $!avail_h - 1;
+    $!end_p   = $!rc2idx.end if $!end_p > $!rc2idx.end;
 }
 
 
@@ -725,9 +725,9 @@ method !_wr_first_screen ( Int $multiselect ) {
     if %!o<page> {
         self!_set_pp_print_fmt;
     }
-    $!row_top    = 0;
-    $!row_bottom = $!avail_h - 1;
-    $!row_bottom = $!rc2idx.end if $!row_bottom > $!rc2idx.end;
+    $!begin_p = 0;
+    $!end_p   = $!avail_h - 1;
+    $!end_p   = $!rc2idx.end if $!end_p > $!rc2idx.end;
     $!p = [ 0, 0 ];
     $!marked = [];
     if %!o<mark> && $multiselect {
@@ -745,7 +745,7 @@ method !_wr_first_screen ( Int $multiselect ) {
 }
 
 method !_set_pp_print_fmt {
-    if $!rc2idx.end / $!avail_h > 1 {
+    if $!rc2idx.elems / $!avail_h > 1 {
         $!avail_h -= $!print_pp_row;
         my $total_pp = $!rc2idx.end div $!avail_h + 1;
         my $pp_w = $total_pp.chars;
@@ -767,14 +767,14 @@ method !_wr_screen {
     move( @!prompt_lines.elems, 0 );
     clrtobot();
     if $!print_pp_row {
-        my Str $pp_row = sprintf $!pp_row_fmt, $!row_top div $!avail_h + 1;
+        my Str $pp_row = sprintf $!pp_row_fmt, $!begin_p div $!avail_h + 1;
         mvaddstr(
             $!avail_h + @!prompt_lines.elems,
             0,
             $pp_row
         );
      }
-    for $!row_top .. $!row_bottom -> $row {
+    for $!begin_p .. $!end_p -> $row {
         for ^$!rc2idx[$row] -> $col {
             self!_wr_cell( $row, $col );
         }
@@ -796,7 +796,7 @@ method !_wr_cell ( Int $row, Int $col ) {
         attron( A_BOLD +| A_UNDERLINE ) if $!marked[$row][$col];
         attron( A_REVERSE )             if $is_current_pos;
         mvaddstr(
-            $row - $!row_top + @!prompt_lines.elems,
+            $row - $!begin_p + @!prompt_lines.elems,
             $lngth,
             @!list[$i]
         );
@@ -805,7 +805,7 @@ method !_wr_cell ( Int $row, Int $col ) {
         attron( A_BOLD +| A_UNDERLINE ) if $!marked[$row][$col];
         attron( A_REVERSE )             if $is_current_pos;
         mvaddstr(
-            $row - $!row_top + @!prompt_lines.elems,
+            $row - $!begin_p + @!prompt_lines.elems,
             ( $!col_w + %!o<pad> ) * $col,
             self!_pad_str_to_colwidth( $i )
         );

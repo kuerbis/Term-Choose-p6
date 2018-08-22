@@ -1,6 +1,10 @@
 Revision history for Term::Choose
 
 
+1.4.3   2018-08-22
+        - Renamed variables
+        - Bugfix in page count
+
 1.4.2   2018-08-07
         - page-down: save position
 
