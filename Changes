@@ -1,6 +1,10 @@
 Revision history for Term::Choose
 
 
+1.4.4   2018-08-24
+        - Fist upload to CPAN
+        - No Changes
+
 1.4.3   2018-08-22
         - Renamed variables
         - Bugfix in page count

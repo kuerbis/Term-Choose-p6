@@ -1,6 +1,6 @@
 use v6;
 
-unit class Term::Choose:ver<1.4.3>;
+unit class Term::Choose:ver<1.4.4>;
 
 use NCurses;
 use Term::Choose::NCursesAdd;
