@@ -1,6 +1,6 @@
 use v6;
 
-unit class Term::Choose:ver<1.4.4>;
+unit class Term::Choose:ver<1.4.5>;
 
 use NCurses;
 use Term::Choose::NCursesAdd;
@@ -92,19 +92,9 @@ method num-threads {
 method !_prepare_new_copy_of_list {
     if %!o<ll> {
         @!list = @!orig_list;
-        if %!o<ll> > $!avail_w {
-            for @!list {
-                $_ = to-printwidth( $_, $!avail_w, True ).[0];
-            }
-            $!col_w = $!avail_w;
-        }
-        else {
-            $!col_w = %!o<ll>;
-        }
-        @!w_list = $!col_w xx @!list.elems;
+        $!col_w = %!o<ll>;
     }
     else {
-        @!list = ();
         my Int $threads = self.num-threads;
         while $threads > @!orig_list.elems {
             last if $threads < 2;
@@ -120,7 +110,7 @@ method !_prepare_new_copy_of_list {
                 do for $range[0] ..^ $range[1] -> $i {
                     if ! @!orig_list[$i].defined {
                         my ( $str, $len ) := to-printwidth(
-                            %!o<undef>.subst( / \s /, ' ', :g ).subst( / <:C> /, '',  :g ),
+                            %!o<undef>.subst( / \t /,  ' ', :g ).subst( / \v+ /,  '  ', :g ).subst( / <:Cc+:Noncharacter_Code_Point+:Cs> /, '', :g ),
                             $!avail_w,
                             True,
                             @cache
@@ -129,7 +119,7 @@ method !_prepare_new_copy_of_list {
                     }
                     elsif @!orig_list[$i] eq '' {
                         my ( $str, $len ) := to-printwidth(
-                            %!o<empty>.subst( / \s /, ' ', :g ).subst( / <:C> /, '',  :g ),
+                            %!o<empty>.subst( / \t /,  ' ', :g ).subst( / \v+ /,  '  ', :g ).subst( / <:Cc+:Noncharacter_Code_Point+:Cs> /, '', :g ),
                             $!avail_w,
                             True,
                             @cache
@@ -138,8 +128,8 @@ method !_prepare_new_copy_of_list {
                     }
                     else {
                         my ( $str, $len ) := to-printwidth(
-                            @!orig_list[$i].subst( / \s /, ' ', :g ).subst( / <:C> /, '',  :g ),
-                            $!avail_w,        #                        #
+                            @!orig_list[$i].subst( / \t /,  ' ', :g ).subst( / \v+ /,  '  ', :g ).subst( / <:Cc+:Noncharacter_Code_Point+:Cs> /, '', :g ),
+                            $!avail_w,
                             True,
                             @cache
                         );
@@ -148,6 +138,7 @@ method !_prepare_new_copy_of_list {
                 }
             };
         }
+        @!list = ();
         @!w_list = ();
         for await @promise -> @portion {
             for @portion {
@@ -158,6 +149,7 @@ method !_prepare_new_copy_of_list {
         $!col_w = @!w_list.max;
     }
 }
+
 
 
 sub choose       ( @list, *%opt ) is export( :DEFAULT, :choose )       { Term::Choose.new().choose(       @list, |%opt ) }
@@ -201,7 +193,6 @@ method !_end_term {
 
 method !_choose ( Int $multiselect, @!orig_list,
         Int_0_or_1       :$beep                 = $!beep,
-
         Int_0_or_1       :$index                = $!index,
         Int_0_or_1       :$mouse                = $!mouse,
         Int_0_or_1       :$order                = $!order,
@@ -237,6 +228,9 @@ method !_choose ( Int $multiselect, @!orig_list,
     }
     self!_init_term();
     self!_wr_first_screen( $multiselect );
+    if %!o<ll> && %!o<ll> > $!term_w {
+        return -2; #
+    }
     my Int $fast_page = 25;
     my Array $saved_pos;
     my Int $pressed;
@@ -551,6 +545,9 @@ method !_choose ( Int $multiselect, @!orig_list,
                     if %!o<no-spacebar> {
                         self!_marked_idx2rc( $no-spacebar, False );
                     }
+                    if %!o<meta-items> {
+                        self!_marked_idx2rc( $meta-items, False );
+                    }
                     self!_wr_screen();
                 }
                 else {
@@ -816,6 +813,9 @@ method !_wr_cell ( Int $row, Int $col ) {
 
 
 method !_pad_str_to_colwidth ( Int $i ) {
+    if %!o<ll> {
+        return @!list[$i];
+    }
     my Int $str_w = @!w_list[$i];
     if $str_w < $!col_w {
         if %!o<justify> == 0 {
@@ -831,7 +831,7 @@ method !_pad_str_to_colwidth ( Int $i ) {
         }
     }
     else {
-        return @!list[$i] ~ "";
+        return @!list[$i];
     }
 }
 

@@ -1,6 +1,10 @@
 Revision history for Term::Choose
 
 
+1.4.5   2018-12-11
+        - Update substitution
+        - Bugfix: don't allow to select 'meta_items' with Cntrl-SpaceBar.
+
 1.4.4   2018-08-24
         - Fist upload to CPAN
         - No Changes

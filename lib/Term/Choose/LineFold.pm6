@@ -37,16 +37,24 @@ sub to-printwidth( $str, Int $avail_w, Bool $dot=False, @cache? ) is export( :to
 
 sub line-fold( $str, Int $avail_w, Str $init_tab is copy, Str $subseq_tab is copy ) is export( :line-fold ) {
     for $init_tab, $subseq_tab {
-        if $_ {
-            $_ = to-printwidth( $_.=subst( / \s /,  ' ', :g ).=subst( / <:C> /, '', :g ),  $avail_w div 2, False ).[0];
+        if $_ { # .gist
+            $_ = to-printwidth(
+                    $_.=subst( / \t /,  ' ', :g ).=subst( / \v+ /,  '  ', :g ).=subst( / <:Cc+:Noncharacter_Code_Point+:Cs> /, '', :g ),
+                    $avail_w div 2,
+                    False
+                ).[0];
         }
         else {
             $_ = '';
         }
     }
-    my $string = $str.subst( / <:White_Space-:Line_Feed> /, ' ', :g );
-    $string.=subst( / <:Other-:Line_Feed> /, '' , :g );
-    if $string !~~ / \n / && print-columns( $init_tab ~ $string ) <= $avail_w {
+    my $string = ( $str // '' );
+    if $string ~~ Buf {
+        $string = $string.gist; # perl
+    }
+    $string.subst( / \t /, ' ', :g );
+    $string.=subst( / <:Cc+:Noncharacter_Code_Point+:Cs> && \V /, '' , :g ); #
+    if $string !~~ / \R / && print-columns( $init_tab ~ $string ) <= $avail_w {
         return $init_tab ~ $string;
     }
     my Str @lines;
@@ -82,13 +90,13 @@ sub line-fold( $str, Int $avail_w, Str $init_tab is copy, Str $subseq_tab is cop
             }
         }
     }
-    @lines.push( '' ) if $str.ends-with( "\n" );
+    @lines.push( '' ) if $string.ends-with( "\n" );
     return @lines; #
 }
 
 
 sub print-columns( $str, @cache? ) returns Int is export( :print-columns ) {
-    # no check if wcwidth returns -1 because no invalid characters (s:g/<:C>//)
+    # no check if wcwidth returns -1 because invalid characters removed
     my Int $width = 0;
     for $str.NFC {
         if @cache.EXISTS-POS( $_ ) {

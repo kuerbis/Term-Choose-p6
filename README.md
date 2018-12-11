@@ -31,9 +31,9 @@ Choose interactively from a list of items.
 
 For `choose`, `choose-multi` and `pause` the first argument holds the list of the available choices.
 
-The different options can be passed as key-values pairs. See [#OPTIONS](#OPTIONS) to find the available options.
+The different options can be passed as key-values pairs. See [OPTIONS](#OPTIONS) to find the available options.
 
-The return values are described in [#Routines](#Routines)
+The return values are described in [Routines](#Routines)
 
 USAGE
 =====
@@ -59,14 +59,14 @@ Keys
 
   * the `Home` key (or `Ctrl-A`) to jump to the beginning of the list, the `End` key (or `Ctrl-E`) to jump to the end of the list.
 
-For the usage of `SpaceBar`, `Ctrl-SpaceBar`, `Return` and the `q`-key see [#choose](#choose), [#choose-multi](#choose-multi) and [#pause](#pause).
+For the usage of `SpaceBar`, `Ctrl-SpaceBar`, `Return` and the `q`-key see [choose](#choose), [choose-multi](#choose-multi) and [pause](#pause).
 
 With *mouse* enabled use the the left mouse key instead the `Return` key and the right mouse key instead of the `SpaceBar` key. Instead of `PageUp` and `PageDown` it can be used the mouse wheel. The mouse wheel only works, if the ncurses library supports the extended mouse mode.
 
 CONSTRUCTOR
 ===========
 
-The constructor method `new` can be called with named arguments. For the valid options see [#OPTIONS](#OPTIONS). Setting the options in `new` overwrites the default values for the instance.
+The constructor method `new` can be called with named arguments. For the valid options see [OPTIONS](#OPTIONS). Setting the options in `new` overwrites the default values for the instance.
 
 Additionally to the options mentioned below one can set the option [win](win). The opton [win](win) expects as its value a `WINDOW` object - the return value of [NCurses](NCurses) `initscr`.
 
