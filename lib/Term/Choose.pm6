@@ -1,6 +1,6 @@
 use v6;
 
-unit class Term::Choose:ver<1.4.5>;
+unit class Term::Choose:ver<1.4.6>;
 
 use NCurses;
 use Term::Choose::NCursesAdd;
@@ -500,7 +500,7 @@ method !_choose ( Int $multiselect, @!orig_list,
                     elsif %!o<include-highlighted> == 2 && ! self!_marked_rc2idx().elems {
                         $!marked[ $!p[R] ][ $!p[C] ] = True;
                     }
-                    elsif %!o<meta-items>.defined {
+                    if %!o<meta-items>.defined && ! $!marked[ $!p[R] ][ $!p[C] ] {
                         for %!o<meta-items>.list -> $meta_item {
                             if $meta_item == $!rc2idx[ $!p[R] ][ $!p[C] ] {
                                 $!marked[ $!p[R] ][ $!p[C] ] = True;
