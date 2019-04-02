@@ -57,7 +57,7 @@ has Int   $!term_h;
 has Int   $!avail_w;
 has Int   $!avail_h;
 has Int   $!col_w;
-has Int   $!col_w_plus; #
+has Int   $!col_w_plus;
 has Int   @!w_list;
 has Int   $!current_layout;
 has Int   $!rest;
@@ -782,7 +782,6 @@ method !_wr_first_screen ( Int $multiselect ) {
 
 method !_wr_screen {
     my @lines;
-    #if $!rc2idx.elems == 1 {
     if $!current_layout == -1 {
         my $row = 0;
         @lines = ( 0 .. $!rc2idx[$row].end ).map({
