@@ -5,7 +5,7 @@ unit module Term::Choose::ReadKey;
 my Int $abs_cursor_Y;
 
 
-sub read-key( Int $mouse ) is export( :read-key ) {
+sub read-key( Int $mouse ) is export( :DEFAULT, :read-key ) {
     my $buf = Buf.new;
     my $c1;
     while ! try $c1 = $buf.decode {

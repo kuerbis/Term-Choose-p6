@@ -1,12 +1,12 @@
 use v6;
 
-unit class Term::Choose:ver<1.5.2>;
+unit class Term::Choose:ver<1.5.3>;
 
 use Term::termios;
 
-use Term::Choose::ReadKey :read-key;
-use Term::Choose::Screen :ALL;
-use Term::Choose::LineFold :to-printwidth, :line-fold, :print-columns;
+use Term::Choose::ReadKey;
+use Term::Choose::Screen;
+use Term::Choose::LineFold;
 
 
 constant R  = 0;
@@ -391,6 +391,10 @@ method !_choose ( Int $multiselect, @!orig_list,
         if $c ~~ Array {
             $c = self!_mouse_info_to_key( |$c );
         }
+        #if ! $c.defined {
+        #    self!_end_term();
+        #    die "EOT!";
+        #}
         next READ_KEY if ! $c.defined;
         next READ_KEY if $c eq '~'; #
         my ( Int $new_term_w, Int $new_term_h ) = get-term-size();
@@ -648,6 +652,10 @@ method !_choose ( Int $multiselect, @!orig_list,
             }
             when '^C' {
                 self!_end_term();
+                if $!loop {
+                    clr-to-bot();
+                    show-cursor();
+                }
                 "^C".note;
                 exit 1;
             }

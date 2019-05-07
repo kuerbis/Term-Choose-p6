@@ -31,7 +31,7 @@ sub char_width( Int $ord_char ) {
 }
 
 
-sub to-printwidth( $str, Int $avail_w, Bool $dot=False, @cache? ) is export( :to-printwidth ) {
+sub to-printwidth( $str, Int $avail_w, Bool $dot=False, @cache? ) is export( :DEFAULT, :to-printwidth ) {
     # no check if char_width returns -1 because no invalid characters (s:g/<:C>//)
     my Int $width = 0;
     my @graph;
@@ -62,7 +62,7 @@ sub to-printwidth( $str, Int $avail_w, Bool $dot=False, @cache? ) is export( :to
 }
 
 
-sub line-fold( $str, Int $avail_w, Str $init-tab is copy = '', Str $subseq-tab is copy = '' ) is export( :line-fold ) {
+sub line-fold( $str, Int $avail_w, Str $init-tab is copy = '', Str $subseq-tab is copy = '' ) is export( :DEFAULT, :line-fold ) {
     for $init-tab, $subseq-tab {
         if $_ { # .gist
             $_ = to-printwidth(
@@ -125,10 +125,10 @@ sub line-fold( $str, Int $avail_w, Str $init-tab is copy = '', Str $subseq-tab i
 }
 
 
-sub print-columns( $str, @cache? ) returns Int is export( :print-columns ) {
+sub print-columns( $str, @cache? ) returns Int is export( :DEFAULT, :print-columns ) {
     # no check if char_width returns -1 because invalid characters removed
     my Int $width = 0;
-    for $str.NFC {
+    for $str.Str.NFC {
         if @cache.EXISTS-POS( $_ ) {
             $width = $width + @cache.AT-POS( $_ );
         }
