@@ -1,6 +1,6 @@
 use v6;
 
-unit class Term::Choose:ver<1.5.3>;
+unit class Term::Choose:ver<1.5.4>;
 
 use Term::termios;
 
@@ -377,6 +377,9 @@ method !_choose ( Int $multiselect, @!orig_list,
           :$max-width, :$default, :$pad, :$lf, :$mark, :$meta-items, :$no-spacebar, :$info, :$prompt, :$empty, :$undef, :$hide-cursor;
     if ! %!o<prompt>.defined {
         %!o<prompt> = $multiselect.defined ?? 'Your choice' !! 'Continue with ENTER';
+    }
+    if %*ENV<TC_RESET_AUTO_UP>:exists {
+        %*ENV<TC_RESET_AUTO_UP> = 0;
     }
     self!_init_term();
     self!_wr_first_screen( $multiselect );

@@ -1,6 +1,9 @@
 Revision history for Term::Choose
 
 
+1.5.4   2019-05-11
+        - Initialize env var TC_RESET_AUTO_UP with 0 if exits env var TC_RESET_AUTO_UP.
+
 1.5.3   2019-05-07
         - print-columns: stringify the argument.
         - Term::Choose::LineFold: update export trait.
