@@ -132,7 +132,7 @@ Options which expect a number as their value expect integers.
 
 1 - on
 
-### clear_screen
+### clear-screen
 
 0 - off (default)
 
@@ -158,7 +158,7 @@ Sets the string displayed on the screen instead of an empty string.
 
 default: "ltemptygt"
 
-### hide_cursor
+### hide-cursor
 
 0 - keep the terminals highlighting of the cursor position
 

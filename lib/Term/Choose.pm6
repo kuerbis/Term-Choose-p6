@@ -1,6 +1,6 @@
 use v6;
 
-unit class Term::Choose:ver<1.5.4>;
+unit class Term::Choose:ver<1.5.5>;
 
 use Term::termios;
 
@@ -1195,7 +1195,7 @@ Options which expect a number as their value expect integers.
 
 1 - on
 
-=head3 clear_screen
+=head3 clear-screen
 
 0 - off (default)
 
@@ -1222,7 +1222,7 @@ Sets the string displayed on the screen instead of an empty string.
 
 default: "E<lt>emptyE<gt>"
 
-=head3 hide_cursor
+=head3 hide-cursor
 
 0 - keep the terminals highlighting of the cursor position
 
