@@ -2,9 +2,9 @@ use v6;
 unit module Term::Choose::Screen;
 
 
-sub      clear is export( :DEFAULT, :clear      ) { print "\e[H\e[J" }
-sub clr-to-bot is export( :DEFAULT, :clr-to-bot ) { print "\e[0J"    }
-sub clr-to-eol is export( :DEFAULT, :clr-to-eol ) { print "\e[0K"    }
+sub            clear is export( :DEFAULT, :clear            ) { print "\e[H\e[J" }
+sub clr-lines-to-bot is export( :DEFAULT, :clr-lines-to-bot ) { print "\r\e[0J"  }
+sub       clr-to-eol is export( :DEFAULT, :clr-to-eol       ) { print "\e[0K"    }
 
 sub beep is export( :DEFAULT, :beep ) { print "\a" }
 

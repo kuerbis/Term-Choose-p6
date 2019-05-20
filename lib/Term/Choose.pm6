@@ -1,6 +1,6 @@
 use v6;
 
-unit class Term::Choose:ver<1.5.5>;
+unit class Term::Choose:ver<1.5.6>;
 
 use Term::termios;
 
@@ -108,10 +108,13 @@ method !_end_term {
         restore-screen;
     }
     else {
-        print "\r";
         my $up = $!i_row + @!prompt_lines.elems;
-        print "\e[{$up}A" if $up;
-        clr-to-bot()      if ! $!loop;
+        if $up {
+            print "\e[{$up}A";
+        }
+        if ! $!loop {
+            clr-lines-to-bot();
+        }
     }
     if %!o<hide-cursor> && ! $!loop {
         show-cursor;
@@ -656,7 +659,7 @@ method !_choose ( Int $multiselect, @!orig_list,
             when '^C' {
                 self!_end_term();
                 if $!loop {
-                    clr-to-bot();
+                    clr-lines-to-bot();
                     show-cursor();
                 }
                 "^C".note;
@@ -777,7 +780,7 @@ method !_wr_first_screen ( Int $multiselect ) {
         clear;
     }
     else {
-        clr-to-bot;
+        clr-lines-to-bot;
     }
     if @!prompt_lines.elems {
         print @!prompt_lines.join( "\n\r" ) ~ "\n\r";
