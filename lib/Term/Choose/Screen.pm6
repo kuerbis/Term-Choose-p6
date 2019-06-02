@@ -8,10 +8,10 @@ my \t_down  = |run( 'tput', 'cud', '107', :out ).out.slurp.split( '107' );
 my \t_right = |run( 'tput', 'cuf', '107', :out ).out.slurp.split( '107' );
 my \t_left  = |run( 'tput', 'cub', '107', :out ).out.slurp.split( '107' );
 
-sub    up ( $steps ) is export( :DEFAULT, :up    ) {    t_up.join: $steps if $steps }
-sub  down ( $steps ) is export( :DEFAULT, :down  ) {  t_down.join: $steps if $steps }
-sub right ( $steps ) is export( :DEFAULT, :right ) { t_right.join: $steps if $steps }
-sub  left ( $steps ) is export( :DEFAULT, :left  ) {  t_left.join: $steps if $steps }
+sub    up ( $steps ) is export( :DEFAULT, :up    ) { return t_up.join: $steps    if $steps }
+sub  down ( $steps ) is export( :DEFAULT, :down  ) { return t_down.join: $steps  if $steps }
+sub right ( $steps ) is export( :DEFAULT, :right ) { return t_right.join: $steps if $steps }
+sub  left ( $steps ) is export( :DEFAULT, :left  ) { return t_left.join: $steps  if $steps }
 
 
 
@@ -26,24 +26,24 @@ my \hide-cursor    = run( 'tput', 'civis', :out, :err ).out.slurp;
 my \bell           = run( 'tput', 'bel',   :out, :err ).out.slurp;
 
 
-sub clear            is export( :DEFAULT, :clear            ) { clear }
-sub clr-lines-to-bot is export( :DEFAULT, :clr-lines-to-bot ) { "\r" ~ clr-to-bot }
-sub clr-to-eol       is export( :DEFAULT, :clr-to-eol       ) { clr-to-eol }
+sub clear            is export( :DEFAULT, :clear            ) { return clear }
+sub clr-lines-to-bot is export( :DEFAULT, :clr-lines-to-bot ) { return "\r" ~ clr-to-bot }
+sub clr-to-eol       is export( :DEFAULT, :clr-to-eol       ) { return clr-to-eol }
 
-sub    save-screen is export( :DEFAULT, :save-screen    ) { save-screen }
-sub restore-screen is export( :DEFAULT, :restore-screen ) { restore-screen  }
-sub show-cursor is export( :DEFAULT, :show-cursor ) { show-cursor }
-sub hide-cursor is export( :DEFAULT, :hide-cursor ) { hide-cursor }
-sub beep is export( :DEFAULT, :beep ) { bell }
+sub    save-screen is export( :DEFAULT, :save-screen    ) { return save-screen }
+sub restore-screen is export( :DEFAULT, :restore-screen ) { return restore-screen  }
+sub show-cursor is export( :DEFAULT, :show-cursor ) { return show-cursor }
+sub hide-cursor is export( :DEFAULT, :hide-cursor ) { return hide-cursor }
+sub beep is export( :DEFAULT, :beep ) { return bell }
 
 
 
-sub   set-mouse1003 is export( :DEFAULT, :set-mouse1003   ) { "\e[?1003h" }
-sub unset-mouse1003 is export( :DEFAULT, :unset-mouse1003 ) { "\e[?1003l" }
-sub   set-mouse1006 is export( :DEFAULT, :set-mouse1006   ) { "\e[?1006h" }
-sub unset-mouse1006 is export( :DEFAULT, :unset-mouse1006 ) { "\e[?1006l" }
+sub   set-mouse1003 is export( :DEFAULT, :set-mouse1003   ) { return "\e[?1003h" }
+sub unset-mouse1003 is export( :DEFAULT, :unset-mouse1003 ) { return "\e[?1003l" }
+sub   set-mouse1006 is export( :DEFAULT, :set-mouse1006   ) { return "\e[?1006h" }
+sub unset-mouse1006 is export( :DEFAULT, :unset-mouse1006 ) { return "\e[?1006l" }
 
-sub get-cursor-position is export( :DEFAULT, :get-cursor-position ) { "\e[6n" }
+sub get-cursor-position is export( :DEFAULT, :get-cursor-position ) { return "\e[6n" }
 
 
 

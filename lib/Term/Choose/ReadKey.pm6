@@ -29,17 +29,17 @@ sub read-key( Int $mouse ) is export( :DEFAULT, :read-key ) {
             elsif $c3 eq "D" { return 'CursorLeft' }
             elsif $c3 eq "F" { return 'CursorEnd' }
             elsif $c3 eq "H" { return 'CursorHome' }
-            elsif $c3 eq "P" { return 'F1' }
-            elsif $c3 eq "Q" { return 'F2' }
-            elsif $c3 eq "R" { return 'F3' }
-            elsif $c3 eq "S" { return 'F4' }
+            #elsif $c3 eq "P" { return 'F1' }
+            #elsif $c3 eq "Q" { return 'F2' }
+            #elsif $c3 eq "R" { return 'F3' }
+            #elsif $c3 eq "S" { return 'F4' }
             elsif $c3 eq "Z" { return 'BackTab' }
             else { return }
         }
-        elsif $c2 eq "P" { return 'F1' }
-        elsif $c2 eq "Q" { return 'F2' }
-        elsif $c2 eq "R" { return 'F3' }
-        elsif $c2 eq "S" { return 'F4' }
+        #elsif $c2 eq "P" { return 'F1' }
+        #elsif $c2 eq "Q" { return 'F2' }
+        #elsif $c2 eq "R" { return 'F3' }
+        #elsif $c2 eq "S" { return 'F4' }
         elsif $c2 eq "[" {
             my $c3 = $*IN.read(1).decode;
             if    $c3 eq "A" { return 'CursorUp' }
@@ -75,26 +75,26 @@ sub read-key( Int $mouse ) is export( :DEFAULT, :read-key ) {
                     elsif $digits eq "3" { return 'Delete' }
                     elsif $digits eq "5" { return 'PageUp' }
                     elsif $digits eq "6" { return 'PageDown' }
-                    elsif $digits eq "11" { return 'F1' }
-                    elsif $digits eq "12" { return 'F2' }
-                    elsif $digits eq "13" { return 'F3' }
-                    elsif $digits eq "14" { return 'F4' }
-                    elsif $digits eq "15" { return 'F5' }
-                    elsif $digits eq "17" { return 'F6' }
-                    elsif $digits eq "18" { return 'F7' }
-                    elsif $digits eq "19" { return 'F8' }
-                    elsif $digits eq "20" { return 'F9' }
-                    elsif $digits eq "21" { return 'F10' }
-                    elsif $digits eq "23" { return 'F11' }
-                    elsif $digits eq "24" { return 'F12' }
-                    elsif $digits eq "25" { return 'F13' }
-                    elsif $digits eq "26" { return 'F14' }
-                    elsif $digits eq "28" { return 'F15' }
-                    elsif $digits eq "29" { return 'F16' }
-                    elsif $digits eq "31" { return 'F17' }
-                    elsif $digits eq "32" { return 'F18' }
-                    elsif $digits eq "33" { return 'F19' }
-                    elsif $digits eq "34" { return 'F20' }
+                    #elsif $digits eq "11" { return 'F1' }
+                    #elsif $digits eq "12" { return 'F2' }
+                    #elsif $digits eq "13" { return 'F3' }
+                    #elsif $digits eq "14" { return 'F4' }
+                    #elsif $digits eq "15" { return 'F5' }
+                    #elsif $digits eq "17" { return 'F6' }
+                    #elsif $digits eq "18" { return 'F7' }
+                    #elsif $digits eq "19" { return 'F8' }
+                    #elsif $digits eq "20" { return 'F9' }
+                    #elsif $digits eq "21" { return 'F10' }
+                    #elsif $digits eq "23" { return 'F11' }
+                    #elsif $digits eq "24" { return 'F12' }
+                    #elsif $digits eq "25" { return 'F13' }
+                    #elsif $digits eq "26" { return 'F14' }
+                    #elsif $digits eq "28" { return 'F15' }
+                    #elsif $digits eq "29" { return 'F16' }
+                    #elsif $digits eq "31" { return 'F17' }
+                    #elsif $digits eq "32" { return 'F18' }
+                    #elsif $digits eq "33" { return 'F19' }
+                    #elsif $digits eq "34" { return 'F20' }
                     else { return };
                 }
                 else { return }
