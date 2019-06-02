@@ -9,7 +9,7 @@
   "description" : "Choose items from a list interactively.",
   "license" : "Artistic-2.0",
   "name" : "Term::Choose",
-  "perl" : "6.c",
+  "perl" : "6.d",
   "provides" : {
     "Term::Choose" : "lib/Term/Choose.pm6",
     "Term::Choose::LineFold" : "lib/Term/Choose/LineFold.pm6",
@@ -28,5 +28,5 @@
   "test-depends" : [
     "Test"
   ],
-  "version" : "1.5.6"
+  "version" : "1.5.7"
 }

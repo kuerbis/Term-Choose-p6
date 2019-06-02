@@ -1,6 +1,6 @@
 use v6;
 
-unit class Term::Choose:ver<1.5.6>;
+unit class Term::Choose:ver<1.5.7>;
 
 use Term::termios;
 
@@ -76,48 +76,41 @@ has Int   $!cursor_row;
 method !_init_term {
     $!saved_termios := Term::termios.new(fd => 1).getattr;
     my $termios := Term::termios.new(fd => 1).getattr;
-    #$termios.makeraw;
-    # like makeraw:
-    $termios.unset_iflags(<BRKINT ICRNL ISTRIP IXON>);
-    $termios.set_oflags(<ONLCR>);
-    $termios.set_cflags(<CS8>);
-    $termios.unset_lflags(<ECHO ICANON IEXTEN ISIG>);
-    # ISIG: When any of the characters INTR, QUIT, SUSP, or DSUSP are
-    #       received, generate the corresponding signal.
+    $termios.makeraw;
     $termios.setattr(:DRAIN);
     if %!o<clear-screen> == 2 {
-        save-screen;
+        print save-screen;
     }
     if %!o<hide-cursor> && ! $!loop {
-        hide-cursor;
+        print hide-cursor;
     }
     if %!o<mouse> {
-        set-mouse1003;
-        set-mouse1006;
+        print set-mouse1003;
+        print set-mouse1006;
     }
 }
 
 
 method !_end_term {
     if %!o<mouse> {
-        unset-mouse1003;
-        unset-mouse1006;
+        print unset-mouse1003;
+        print unset-mouse1006;
     }
     $!saved_termios.setattr(:DRAIN);
     if %!o<clear-screen> == 2 {
-        restore-screen;
+        print restore-screen;
     }
     else {
         my $up = $!i_row + @!prompt_lines.elems;
         if $up {
-            print "\e[{$up}A";
+            print up( $up );
         }
         if ! $!loop {
-            clr-lines-to-bot();
+            print clr-lines-to-bot;
         }
     }
     if %!o<hide-cursor> && ! $!loop {
-        show-cursor;
+        print show-cursor;
     }
 }
 
@@ -184,7 +177,7 @@ method !_prepare_new_copy_of_list {
 }
 
 method !_beep {
-    print "\a" if %!o<beep>;
+    print beep if %!o<beep>;
 }
 
 
@@ -512,7 +505,6 @@ method !_choose ( Int $multiselect, @!orig_list,
                     self!_wr_cell( $!p[R], $!p[C]     );
                 }
             }
-
             when '^I' { # Tab
                 if $!p[R] == $!rc2idx.end && $!p[C] == $!rc2idx[ $!p[R] ].end {
                     self!_beep();
@@ -659,8 +651,8 @@ method !_choose ( Int $multiselect, @!orig_list,
             when '^C' {
                 self!_end_term();
                 if $!loop {
-                    clr-lines-to-bot();
-                    show-cursor();
+                    print clr-lines-to-bot;
+                    print show-cursor;
                 }
                 "^C".note;
                 exit 1;
@@ -777,10 +769,10 @@ method !_wr_first_screen ( Int $multiselect ) {
         self!_pos_to_default();
     }
     if %!o<clear-screen> || $!page_count > 1 {
-        clear;
+        print clear;
     }
     else {
-        clr-lines-to-bot;
+        print clr-lines-to-bot;
     }
     if @!prompt_lines.elems {
         print @!prompt_lines.join( "\n\r" ) ~ "\n\r";
@@ -789,7 +781,7 @@ method !_wr_first_screen ( Int $multiselect ) {
     $!i_row = 0;
     self!_wr_screen();
     if %!o<mouse> {
-        get-cursor-position;
+      print get-cursor-position;
     }
     $!cursor_row = $!i_row;
 }
@@ -893,24 +885,20 @@ method !_wr_cell ( Int $row, Int $col ) {
 method !_goto( $newrow, $newcol ) {
     my $escape = '';
     if $newrow > $!i_row {
-        # down
         $escape = $escape ~ "\r\n" x ( $newrow - $!i_row );
         $!i_row = $!i_row + ( $newrow - $!i_row );
         $!i_col = 0;
     }
     elsif $newrow < $!i_row {
-        # up
-        $escape = $escape ~ "\e[{$!i_row - $newrow}A";
+        $escape = $escape ~ up( $!i_row - $newrow );
         $!i_row = $!i_row - ( $!i_row - $newrow );
     }
     if $newcol > $!i_col {
-        # right
-        $escape = $escape ~ "\e[{$newcol - $!i_col}C";
+        $escape = $escape ~ right( $newcol - $!i_col );
         $!i_col = $!i_col + ( $newcol - $!i_col );
     }
     elsif $newcol < $!i_col {
-        # left
-        $escape = $escape ~ "\e[{$!i_col - $newcol}D";
+        $escape = $escape ~ left( $!i_col - $newcol );
         $!i_col = $!i_col - ( $!i_col - $newcol );
     }
     return $escape;
@@ -1204,7 +1192,7 @@ Options which expect a number as their value expect integers.
 
 1 - clears the screen before printing the choices
 
-2 - use the alternate screen (uses the control sequence C<1049>)
+2 - use the alternate screen
 
 =head3 default
 
@@ -1230,8 +1218,6 @@ default: "E<lt>emptyE<gt>"
 0 - keep the terminals highlighting of the cursor position
 
 1 - hide the terminals highlighting of the cursor position (default)
-
-The control sequence C<25> is used to hide the cursor.
 
 =head3 info
 
@@ -1359,9 +1345,7 @@ Allowed values: 2 or greater
 
 0 - no mouse (default)
 
-1 - mouse enabled 
-
-To enable the mouse mode the control sequences C<1003> and C<1006> are used.
+1 - mouse enabled
 
 =head3 order
 
@@ -1434,11 +1418,13 @@ the environment variable C<TC_NUM_THREADS>.
 
 =head1 REQUIREMENTS
 
-=head2 ANSI escape sequences
+=head2 tput
 
-ANSI escape sequences are used to move the cursor, to markt and highlight cells and to clear the screen.
+The control of the cursor location, the color, and other options on the terminal is done via escape sequences.
 
-Some options use non-ANSI control sequences (I<mouse>, I<hide-cursor> and I<clear-screen> set to C<2>).
+C<tput> is used to get the appropriate escape sequences.
+
+Escape sequences to handle mouse input are hardcoded.
 
 =head2 Monospaced font
 

@@ -138,7 +138,7 @@ Options which expect a number as their value expect integers.
 
 1 - clears the screen before printing the choices
 
-2 - use the alternate screen (uses the control sequence `1049`)
+2 - use the alternate screen
 
 ### default
 
@@ -163,8 +163,6 @@ default: "ltemptygt"
 0 - keep the terminals highlighting of the cursor position
 
 1 - hide the terminals highlighting of the cursor position (default)
-
-The control sequence `25` is used to hide the cursor.
 
 ### info
 
@@ -279,9 +277,7 @@ Allowed values: 2 or greater
 
 0 - no mouse (default)
 
-1 - mouse enabled 
-
-To enable the mouse mode the control sequences `1003` and `1006` are used.
+1 - mouse enabled
 
 ### order
 
@@ -351,12 +347,14 @@ multithreading
 REQUIREMENTS
 ============
 
-ANSI escape sequences
----------------------
+tput
+----
 
-ANSI escape sequences are used to move the cursor, to markt and highlight cells and to clear the screen.
+The control of the cursor location, the color, and other options on the terminal is done via escape sequences.
 
-Some options use non-ANSI control sequences (*mouse*, *hide-cursor* and *clear-screen* set to `2`).
+`tput` is used to get the appropriate escape sequences.
+
+Escape sequences to handle mouse input are hardcoded.
 
 Monospaced font
 ---------------

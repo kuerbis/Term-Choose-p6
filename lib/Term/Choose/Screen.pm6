@@ -2,56 +2,64 @@ use v6;
 unit module Term::Choose::Screen;
 
 
-sub            clear is export( :DEFAULT, :clear            ) { print "\e[H\e[J" }
-sub clr-lines-to-bot is export( :DEFAULT, :clr-lines-to-bot ) { print "\r\e[0J"  }
-sub       clr-to-eol is export( :DEFAULT, :clr-to-eol       ) { print "\e[0K"    }
 
-sub beep is export( :DEFAULT, :beep ) { print "\a" }
+my \t_up    = |run( 'tput', 'cuu', '107', :out ).out.slurp.split( '107' );
+my \t_down  = |run( 'tput', 'cud', '107', :out ).out.slurp.split( '107' );
+my \t_right = |run( 'tput', 'cuf', '107', :out ).out.slurp.split( '107' );
+my \t_left  = |run( 'tput', 'cub', '107', :out ).out.slurp.split( '107' );
 
-sub    up ( $steps ) is export( :DEFAULT, :up    ) { print "\e[{$steps}A" if $steps }
-sub  down ( $steps ) is export( :DEFAULT, :down  ) { print "\e[{$steps}B" if $steps }
-sub right ( $steps ) is export( :DEFAULT, :right ) { print "\e[{$steps}C" if $steps }
-sub  left ( $steps ) is export( :DEFAULT, :left  ) { print "\e[{$steps}D" if $steps }
+sub    up ( $steps ) is export( :DEFAULT, :up    ) {    t_up.join: $steps if $steps }
+sub  down ( $steps ) is export( :DEFAULT, :down  ) {  t_down.join: $steps if $steps }
+sub right ( $steps ) is export( :DEFAULT, :right ) { t_right.join: $steps if $steps }
+sub  left ( $steps ) is export( :DEFAULT, :left  ) {  t_left.join: $steps if $steps }
 
-sub    save-screen is export( :DEFAULT, :save-screen    ) { print "\e[?1049h" }
-sub restore-screen is export( :DEFAULT, :restore-screen ) { print "\e[?1049l" }
 
-sub show-cursor is export( :DEFAULT, :show-cursor ) { print "\e[?25h" }
-sub hide-cursor is export( :DEFAULT, :hide-cursor ) { print "\e[?25l" }
 
-sub   set-mouse1003 is export( :DEFAULT, :set-mouse1003   ) { print "\e[?1003h" }
-sub unset-mouse1003 is export( :DEFAULT, :unset-mouse1003 ) { print "\e[?1003l" }
-sub   set-mouse1006 is export( :DEFAULT, :set-mouse1006   ) { print "\e[?1006h" }
-sub unset-mouse1006 is export( :DEFAULT, :unset-mouse1006 ) { print "\e[?1006l" }
+my \clear          = run( 'tput', 'clear', :out ).out.slurp;
+my \clr-to-bot     = run( 'tput', 'ed',    :out ).out.slurp;
+my \clr-to-eol     = run( 'tput', 'el',    :out ).out.slurp;
 
-sub get-cursor-position is export( :DEFAULT, :get-cursor-position ) { print "\e[6n" }
+my \save-screen    = run( 'tput', 'smcup', :out, :err ).out.slurp;
+my \restore-screen = run( 'tput', 'rmcup', :out, :err ).out.slurp;
+my \show-cursor    = run( 'tput', 'cnorm', :out, :err ).out.slurp;
+my \hide-cursor    = run( 'tput', 'civis', :out, :err ).out.slurp;
+my \bell           = run( 'tput', 'bel',   :out, :err ).out.slurp;
+
+
+sub clear            is export( :DEFAULT, :clear            ) { clear }
+sub clr-lines-to-bot is export( :DEFAULT, :clr-lines-to-bot ) { "\r" ~ clr-to-bot }
+sub clr-to-eol       is export( :DEFAULT, :clr-to-eol       ) { clr-to-eol }
+
+sub    save-screen is export( :DEFAULT, :save-screen    ) { save-screen }
+sub restore-screen is export( :DEFAULT, :restore-screen ) { restore-screen  }
+sub show-cursor is export( :DEFAULT, :show-cursor ) { show-cursor }
+sub hide-cursor is export( :DEFAULT, :hide-cursor ) { hide-cursor }
+sub beep is export( :DEFAULT, :beep ) { bell }
+
+
+
+sub   set-mouse1003 is export( :DEFAULT, :set-mouse1003   ) { "\e[?1003h" }
+sub unset-mouse1003 is export( :DEFAULT, :unset-mouse1003 ) { "\e[?1003l" }
+sub   set-mouse1006 is export( :DEFAULT, :set-mouse1006   ) { "\e[?1006h" }
+sub unset-mouse1006 is export( :DEFAULT, :unset-mouse1006 ) { "\e[?1006l" }
+
+sub get-cursor-position is export( :DEFAULT, :get-cursor-position ) { "\e[6n" }
+
 
 
 sub num-threads is export( :DEFAULT, :num-threads ) {
-    return %*ENV<TC_NUM_THREADS> if %*ENV<TC_NUM_THREADS>;
-    # return Kernel.cpu-cores;      # Perl 6.d
-    my $proc = run( 'nproc', :out );
-    return $proc.out.get.Int || 2;
+    return %*ENV<TC_NUM_THREADS> || Kernel.cpu-cores;
 }
 
 
 sub get-term-size is export( :DEFAULT, :get-term-size  ) {
-    my ( $width, $height );
-    my $proc = run 'stty', 'size', :out;
-    my $size = $proc.out.get.chomp.Int;
-    if $size.defined && $size ~~ / ( \d+ ) \s ( \d+ ) / {
-         $width  = $1;
-         $height = $0;
-    }
-    if ! $width {
-        my $proc = run 'tput', 'cols', :out;
-        $width = $proc.out.get.chomp.Int;
-    }
-    if ! $height {
-        my $proc = run 'tput', 'lines', :out;
-        $height = $proc.out.get.chomp.Int;
-    }
-    die "No terminal width!"  if ! $width.defined;
-    die "No terminal heigth!" if ! $height.defined;
+    my $width  = run( 'tput', 'cols',  :out ).out.get.chomp.Int or die "No terminal width!";
+    my $height = run( 'tput', 'lines', :out ).out.get.chomp.Int or die "No terminal heigth!";
     return $width - 1, $height;
+}
+
+
+sub get-term-width is export( :DEFAULT, :get-term-width  ) {
+    my $width  = run( 'tput', 'cols',  :out ).out.get.chomp.Int or die "No terminal width!";
+    return $width - 1;
 }

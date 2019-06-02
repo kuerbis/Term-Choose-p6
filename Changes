@@ -1,6 +1,12 @@
 Revision history for Term::Choose
 
 
+1.5.7   2019-06-02
+        - Bugfix in _goto.
+        - Use tput to get the escape sequences.
+        - tput test.
+        - Perl6 minimum version 6.d.
+
 1.5.6   2019-05-20
         - From clr-to-bot to clr-lines-to-bot.
 
