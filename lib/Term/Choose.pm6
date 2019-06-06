@@ -1,6 +1,6 @@
 use v6;
 
-unit class Term::Choose:ver<1.5.7>;
+unit class Term::Choose:ver<1.5.8>;
 
 use Term::termios;
 
@@ -424,7 +424,7 @@ method !_choose ( Int $multiselect, @!orig_list,
             $c = 'PageDown';
         }
         if %*ENV<TC_RESET_AUTO_UP>:exists {   # documentation
-            if $c ne '^M' {
+            if $c ne '^J' | '^M' {
                 %*ENV<TC_RESET_AUTO_UP> = 1;
             }
         }

@@ -1,6 +1,9 @@
 Revision history for Term::Choose
 
 
+1.5.8   2019-06-06
+        - Update TC_RESET_AUTO_UP.
+
 1.5.7   2019-06-02
         - Bugfix in _goto.
         - Use tput to get the escape sequences.
