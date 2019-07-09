@@ -1,6 +1,6 @@
 use v6;
 
-unit class Term::Choose:ver<1.5.8>;
+unit class Term::Choose:ver<1.5.9>;
 
 use Term::termios;
 
@@ -18,8 +18,8 @@ subset Int_0_to_2       of Int where * == 0|1|2;
 subset Int_0_or_1       of Int where * == 0|1;
 
 has Int_0_or_1       $.page                 = 0; # removed 26.03.2019 
-
 has Int_0_or_1       $.beep                 = 0;
+has Int_0_or_1       $.color                = 0;
 has Int_0_or_1       $.index                = 0;
 has Int_0_or_1       $.mouse                = 0;
 has Int_0_or_1       $.order                = 1;
@@ -59,13 +59,14 @@ has Int   $!avail_h;
 has Int   $!col_w;
 has Int   $!col_w_plus;
 has Int   @!w_list;
-has Int   $!current_layout;
+has Int   $!single_column;
+has Int   $!all_in_one_row;
 has Int   $!rest;
 has Int   $!page_count;
 has Str   $!pp_row_fmt;
 has Str   @!prompt_lines;
-has Int   $!begin_p;
-has Int   $!end_p;
+has Int   $!first_page_row;
+has Int   $!last_page_row;
 has Array $!rc2idx;
 has Array $!p;
 has Array $!marked;
@@ -152,6 +153,15 @@ method !_prepare_new_copy_of_list {
                         );
                         $i, $str, $len;
                     }
+                    elsif %!o<color> {
+                            my ( $str, $len ) = to-printwidth(
+                            @!orig_list[$i].subst( / \x[feff] /,  '', :g ).subst( / \e \[ <[\d;]>* m /, "\x[feff]", :g ).subst( / \t /,  ' ', :g ).subst( / \v+ /,  '  ', :g ).subst( / <:Cc+:Noncharacter_Code_Point+:Cs> /, '', :g ),
+                            $!avail_w,
+                            True,
+                            @cache
+                        );
+                        $i, $str, $len;
+                    }
                     else {
                         my ( $str, $len ) = to-printwidth(
                             @!orig_list[$i].subst( / \t /,  ' ', :g ).subst( / \v+ /,  '  ', :g ).subst( / <:Cc+:Noncharacter_Code_Point+:Cs> /, '', :g ),
@@ -191,7 +201,7 @@ method !_prepare_prompt {
     }
     my Int $init   = %!o<lf>[0] // 0;
     my Int $subseq = %!o<lf>[1] // 0;
-    @!prompt_lines = line-fold( @tmp.join( "\n" ), $!avail_w, ' ' x $init, ' ' x $subseq );
+    @!prompt_lines = line-fold( @tmp.join( "\n" ), $!avail_w, :init-tab( ' ' x $init ), :subseq-tab( ' ' x $subseq ), :color( %!o<color> ) );
     my Int $keep = %!o<keep>;
     $keep += 1       if $!rc2idx.elems / $!avail_h > 1; ##
     $keep = $!term_h if $keep > $!term_h;
@@ -213,9 +223,9 @@ method !_pos_to_default {
             }
         }
     }
-    $!begin_p = $!avail_h * ( $!p[R] div $!avail_h );
-    $!end_p   = $!begin_p + $!avail_h - 1;
-    $!end_p   = $!rc2idx.end if $!end_p > $!rc2idx.end;
+    $!first_page_row = $!avail_h * ( $!p[R] div $!avail_h );
+    $!last_page_row  = $!first_page_row + $!avail_h - 1;
+    $!last_page_row  = $!rc2idx.end if $!last_page_row > $!rc2idx.end;
 }
 
 
@@ -240,7 +250,7 @@ method !_set_pp_print_fmt {
 
 
 method !_pad_str_to_colwidth ( Int $i ) {
-    if %!o<ll> { # if set ll, all elements must have the same length
+    if %!o<ll> || $!all_in_one_row { # if set ll, all list elements must have the same length
         return @!list[$i];
     }
     my Int $str_w = @!w_list[$i];
@@ -282,13 +292,12 @@ method !_mouse_info_to_key ( Int $abs_cursor_Y, Int $button, Int $abs_mouse_X, I
     }
     my $matched_col;
     my $end_prev_col = 0;
-    my $row = $mouse_Y + $!begin_p;
+    my $row = $mouse_Y + $!first_page_row;
 
     COL: for ^$!rc2idx[$row] -> $col {
         my Int $end_this_col;
-        if $!current_layout == -1 {
-            my $idx = $!rc2idx[$row][$col];
-            $end_this_col = $end_prev_col + print-columns( @!list[$idx] ) + %!o<pad>;
+        if $!all_in_one_row {
+            $end_this_col = $end_prev_col + @!w_list[ $!rc2idx[$row][$col] ] + %!o<pad>;
         }
         else { #
             $end_this_col = $end_prev_col + $!col_w_plus;
@@ -338,15 +347,14 @@ method pause        ( @list, *%opt ) { self!_choose( Int, @list, |%opt ) }
 
 
 method !_choose ( Int $multiselect, @!orig_list,
-
         Int_0_or_1       :$page                 = $!page, # removed 26.03.2019
-
         Int_0_or_1       :$beep                 = $!beep,
+        Int_0_or_1       :$color                = $!color,
         Int_0_or_1       :$index                = $!index,
         Int_0_or_1       :$mouse                = $!mouse,
         Int_0_or_1       :$order                = $!order,
         Int_0_or_1       :$hide-cursor          = $!hide-cursor,
-        Int_0_to_2       :$clear-screen         = $!clear-screen, # 2
+        Int_0_to_2       :$clear-screen         = $!clear-screen,
         Int_0_to_2       :$include-highlighted  = $!include-highlighted,
         Int_0_to_2       :$justify              = $!justify,
         Int_0_to_2       :$layout               = $!layout,
@@ -369,7 +377,7 @@ method !_choose ( Int $multiselect, @!orig_list,
         return;
     }
     # %!o: make options available in methods
-    %!o = :$beep, :$include-highlighted, :$index, :$mouse, :$order, :$clear-screen, :$justify, :$layout, :$keep, :$ll, :$max-height,
+    %!o = :$beep, :$include-highlighted, :$index, :$mouse, :$order, :$clear-screen, :$justify, :$layout, :$keep, :$ll, :$max-height, :$color,
           :$max-width, :$default, :$pad, :$lf, :$mark, :$meta-items, :$no-spacebar, :$info, :$prompt, :$empty, :$undef, :$hide-cursor;
     if ! %!o<prompt>.defined {
         %!o<prompt> = $multiselect.defined ?? 'Your choice' !! 'Continue with ENTER';
@@ -412,13 +420,13 @@ method !_choose ( Int $multiselect, @!orig_list,
         }
         $!page_step = 1;
         if $c eq  'Insert' {
-            if $!begin_p - $fast_page * $!avail_h >= 0 {
+            if $!first_page_row - $fast_page * $!avail_h >= 0 {
                 $!page_step = $fast_page;
             }
             $c = 'PageUp';
         }
         elsif $c eq 'Delete' {
-            if $!end_p + $fast_page * $!avail_h <= $!rc2idx.end {
+            if $!last_page_row + $fast_page * $!avail_h <= $!rc2idx.end {
                 $!page_step = $fast_page;
             }
             $c = 'PageDown';
@@ -454,14 +462,14 @@ method !_choose ( Int $multiselect, @!orig_list,
                 else {
                     $!p[R]++;
                     self!_wr_cell( $!p[R] - 1, $!p[C] ); #
-                    if $!p[R] <= $!end_p {
+                    if $!p[R] <= $!last_page_row {
                         #self!_wr_cell( $!p[R] - 1, $!p[C] );
                         self!_wr_cell( $!p[R]    , $!p[C] );
                     }
                     else {
-                        $!begin_p = $!end_p + 1;
-                        $!end_p   = $!end_p + $!avail_h;
-                        $!end_p   = $!rc2idx.end if $!end_p > $!rc2idx.end;
+                        $!first_page_row = $!last_page_row + 1;
+                        $!last_page_row  = $!last_page_row + $!avail_h;
+                        $!last_page_row  = $!rc2idx.end if $!last_page_row > $!rc2idx.end;
                         self!_wr_screen();
                     }
                 }
@@ -473,14 +481,14 @@ method !_choose ( Int $multiselect, @!orig_list,
                 else {
                     $!p[R]--;
                     self!_wr_cell( $!p[R] + 1, $!p[C] ); #
-                    if $!p[R] >= $!begin_p {
+                    if $!p[R] >= $!first_page_row {
                         #self!_wr_cell( $!p[R] + 1, $!p[C] );
                         self!_wr_cell( $!p[R]    , $!p[C] );
                     }
                     else {
-                        $!end_p   = $!begin_p - 1;
-                        $!begin_p = $!begin_p - $!avail_h;
-                        $!begin_p = 0 if $!begin_p < 0;
+                        $!last_page_row  = $!first_page_row - 1;
+                        $!first_page_row = $!first_page_row - $!avail_h;
+                        $!first_page_row = 0 if $!first_page_row < 0;
                         self!_wr_screen();
                     }
                 }
@@ -519,14 +527,14 @@ method !_choose ( Int $multiselect, @!orig_list,
                         $!p[R]++;
                         $!p[C] = 0;
                         self!_wr_cell( $!p[R] - 1, $!rc2idx[ $!p[R]-1 ].end ); #
-                        if $!p[R] <= $!end_p {
+                        if $!p[R] <= $!last_page_row {
                             #self!_wr_cell( $!p[R] - 1, $!rc2idx[ $!p[R]-1 ].end );
                             self!_wr_cell( $!p[R]    , $!p[C]                   );
                         }
                         else {
-                            $!begin_p = $!end_p + 1;
-                            $!end_p   = $!end_p + $!avail_h;
-                            $!end_p   = $!rc2idx.end if $!end_p > $!rc2idx.end;
+                            $!first_page_row = $!last_page_row + 1;
+                            $!last_page_row  = $!last_page_row + $!avail_h;
+                            $!last_page_row  = $!rc2idx.end if $!last_page_row > $!rc2idx.end;
                             self!_wr_screen();
                         }
                     }
@@ -546,46 +554,46 @@ method !_choose ( Int $multiselect, @!orig_list,
                         $!p[R]--;
                         $!p[C] = $!rc2idx[ $!p[R] ].end;
                         self!_wr_cell( $!p[R] + 1, 0      ); #
-                        if $!p[R] >= $!begin_p {
+                        if $!p[R] >= $!first_page_row {
                             #self!_wr_cell( $!p[R] + 1, 0      );
                             self!_wr_cell( $!p[R]    , $!p[C] );
                         }
                         else {
-                            $!end_p   = $!begin_p - 1;
-                            $!begin_p = $!begin_p - $!avail_h; #
-                            $!begin_p = 0 if $!begin_p < 0;
+                            $!last_page_row  = $!first_page_row - 1;
+                            $!first_page_row = $!first_page_row - $!avail_h; #
+                            $!first_page_row = 0 if $!first_page_row < 0;
                             self!_wr_screen();
                         }
                     }
                 }
             }
             when 'PageUp' | '^B' {
-                if $!begin_p <= 0 {
+                if $!first_page_row <= 0 {
                     self!_beep();
                 }
                 else {
-                    $!begin_p    = $!avail_h * ( $!p[R] div $!avail_h - $!page_step );
-                    $!end_p = $!begin_p + $!avail_h - 1;
+                    $!first_page_row = $!avail_h * ( $!p[R] div $!avail_h - $!page_step );
+                    $!last_page_row  = $!first_page_row + $!avail_h - 1;
                     if $saved_pos {
-                        $!p[R] = $saved_pos[R] + $!begin_p;
+                        $!p[R] = $saved_pos[R] + $!first_page_row;
                         $!p[C] = $saved_pos[C];
                         $saved_pos = Array;
                     }
                     else {
-                        $!p[R] -= $!avail_h * $!page_step; # after $!begin_p
+                        $!p[R] -= $!avail_h * $!page_step; # after $!first_page_row
                     }
                     self!_wr_screen();
                 }
             }
             when 'PageDown' | '^F' {
-                if $!end_p >= $!rc2idx.end {
+                if $!last_page_row >= $!rc2idx.end {
                     self!_beep();
                 }
                 else {
-                    my $backup_row_top = $!begin_p;
-                    $!begin_p = $!avail_h * ( $!p[R] div $!avail_h + $!page_step );
-                    $!end_p   = $!begin_p + $!avail_h - 1;
-                    $!end_p   = $!rc2idx.end if $!end_p > $!rc2idx.end;
+                    my $backup_row_top = $!first_page_row;
+                    $!first_page_row = $!avail_h * ( $!p[R] div $!avail_h + $!page_step );
+                    $!last_page_row  = $!first_page_row + $!avail_h - 1;
+                    $!last_page_row  = $!rc2idx.end if $!last_page_row > $!rc2idx.end;
                     if $!p[R] + $!avail_h > $!rc2idx.end || $!p[C] > $!rc2idx[$!p[R] + $!avail_h].end {
                         $saved_pos = [ $!p[R] - $backup_row_top, $!p[C] ];
                         $!p[R] = $!rc2idx.end;
@@ -606,9 +614,9 @@ method !_choose ( Int $multiselect, @!orig_list,
                 else {
                     $!p[R] = 0;
                     $!p[C] = 0;
-                    $!begin_p = 0;
-                    $!end_p   = $!begin_p + $!avail_h - 1;
-                    $!end_p   = $!rc2idx.end if $!end_p > $!rc2idx.end;
+                    $!first_page_row = 0;
+                    $!last_page_row  = $!first_page_row + $!avail_h - 1;
+                    $!last_page_row  = $!rc2idx.end if $!last_page_row > $!rc2idx.end;
                     self!_wr_screen();
                 }
             }
@@ -620,13 +628,13 @@ method !_choose ( Int $multiselect, @!orig_list,
                     else {
                         $!p[R] = $!rc2idx.end - 1;
                         $!p[C] = $!rc2idx[ $!p[R] ].end;
-                        $!begin_p = $!rc2idx.elems - ( $!rc2idx.elems % $!avail_h || $!avail_h );
-                        if $!begin_p == $!rc2idx.end {
-                            $!begin_p = $!begin_p - $!avail_h;
-                            $!end_p   = $!begin_p + $!avail_h - 1;
+                        $!first_page_row = $!rc2idx.elems - ( $!rc2idx.elems % $!avail_h || $!avail_h );
+                        if $!first_page_row == $!rc2idx.end {
+                            $!first_page_row = $!first_page_row - $!avail_h;
+                            $!last_page_row  = $!first_page_row + $!avail_h - 1;
                         }
                         else {
-                            $!end_p = $!rc2idx.end;
+                            $!last_page_row = $!rc2idx.end;
                         }
                         self!_wr_screen();
                     }
@@ -638,8 +646,8 @@ method !_choose ( Int $multiselect, @!orig_list,
                     else {
                         $!p[R] = $!rc2idx.end;
                         $!p[C] = $!rc2idx[ $!p[R] ].end;
-                        $!begin_p = $!rc2idx.elems - ( $!rc2idx.elems % $!avail_h || $!avail_h );
-                        $!end_p   = $!rc2idx.end;
+                        $!first_page_row = $!rc2idx.elems - ( $!rc2idx.elems % $!avail_h || $!avail_h );
+                        $!last_page_row  = $!rc2idx.end;
                         self!_wr_screen();
                     }
                 }
@@ -750,16 +758,17 @@ method !_wr_first_screen ( Int $multiselect ) {
         die "Terminal width to small!";
     }
     self!_prepare_new_copy_of_list();
+    $!col_w_plus = $!col_w + %!o<pad>;
     self!_prepare_prompt();
     if %!o<max-height> && %!o<max-height> < $!avail_h {
         $!avail_h = %!o<max-height>;
     }
-    self!_current_layout();
+    self!_prepare_layout();
     self!_list_index2rowcol();
     self!_set_pp_print_fmt;
-    $!begin_p = 0;
-    $!end_p   = $!avail_h - 1;
-    $!end_p   = $!rc2idx.end if $!end_p > $!rc2idx.end;
+    $!first_page_row = 0;
+    $!last_page_row  = $!avail_h - 1;
+    $!last_page_row  = $!rc2idx.end if $!last_page_row > $!rc2idx.end;
     $!p = [ 0, 0 ];
     $!marked = [];
     if %!o<mark> && $multiselect {
@@ -788,155 +797,150 @@ method !_wr_first_screen ( Int $multiselect ) {
 
 method !_wr_screen {
     my @lines;
-    if $!current_layout == -1 {
-        my $row = 0;
-        @lines = ( 0 .. $!rc2idx[$row].end ).map({
-            $!marked[$row][$_]
-            ?? "\e[1;4m" ~ @!list[ $!rc2idx[$row][$_] ] ~ "\e[0m"
-            !!             @!list[ $!rc2idx[$row][$_] ]
-        }).join: ' ' x %!o<pad>;
+    if %!o<color> || $!all_in_one_row {
+        for $!first_page_row .. $!last_page_row -> $row {
+            @lines.push: ( 0 .. $!rc2idx[$row].end ).map({
+                self!_cell( $row, $_ )
+            }).join: ' ' x %!o<pad>;
+        }
+    }
+    elsif $!marked.elems {
+        for $!first_page_row .. $!last_page_row -> $row {
+            @lines.push: ( 0 .. $!rc2idx[$row].end ).map({
+                $!marked[$row][$_]
+                ?? bold() ~ underline() ~ self!_pad_str_to_colwidth( $!rc2idx[$row][$_] ) ~ normal()
+                !!                        self!_pad_str_to_colwidth( $!rc2idx[$row][$_] )
+            }).join: ' ' x %!o<pad>;
+        }
     }
     else {
-        if $!marked.elems {
-            for $!begin_p .. $!end_p -> $row {
-                @lines.push: ( 0 .. $!rc2idx[$row].end ).map({
-                    $!marked[$row][$_]
-                    ?? "\e[1;4m" ~ self!_pad_str_to_colwidth( $!rc2idx[$row][$_] ) ~ "\e[0m"
-                    !!             self!_pad_str_to_colwidth( $!rc2idx[$row][$_] )
-                }).join: ' ' x %!o<pad>;
-            }
+        for $!first_page_row .. $!last_page_row -> $row {
+            @lines.push: ( 0 .. $!rc2idx[$row].end ).map({
+                self!_pad_str_to_colwidth( $!rc2idx[$row][$_] )
+            }).join: ' ' x %!o<pad>;
         }
-        else {
-            for $!begin_p .. $!end_p -> $row {
-                @lines.push: ( 0 .. $!rc2idx[$row].end ).map({
-                    self!_pad_str_to_colwidth( $!rc2idx[$row][$_] )
-                }).join: ' ' x %!o<pad>;
-            }
+    }
+    if $!last_page_row == $!rc2idx.end && $!first_page_row != 0 {
+        if $!rc2idx[$!last_page_row].end < $!rc2idx[0].end {
+            @lines[@lines.end] ~= ' ' x $!col_w_plus * ( $!rc2idx[0].end - $!rc2idx[$!last_page_row].end );
         }
-        if $!end_p == $!rc2idx.end && $!begin_p != 0 {
-            if $!rc2idx[$!end_p].end < $!rc2idx[0].end {
-                @lines[@lines.end] ~= ' ' x $!col_w_plus * ( $!rc2idx[0].end - $!rc2idx[$!end_p].end );
-            }
-            if $!end_p - $!begin_p < $!avail_h {
-                for ( $!end_p + 1 - $!begin_p ) ..^ $!avail_h {
-                    @lines.push: ' ' x $!avail_w;
-                }
+        if $!last_page_row - $!first_page_row < $!avail_h {
+            for ( $!last_page_row + 1 - $!first_page_row ) ..^ $!avail_h {
+                @lines.push: ' ' x $!avail_w;
             }
         }
     }
     if $!page_count > 1 {
-        @lines.push: sprintf $!pp_row_fmt, $!begin_p div $!avail_h + 1;
+        @lines.push: sprintf $!pp_row_fmt, $!first_page_row div $!avail_h + 1;
     }
-    # 0,0 = first row (below promptlines)
-    print self!_goto( 0, 0 ) ~ @lines.join( "\n\r" ) ~ "\r";
+    print self!_goto( $!first_page_row, 0 ) ~ @lines.join( "\n\r" ) ~ "\r";
     $!i_row += @lines.end;
     $!i_col = 0;
     self!_wr_cell( $!p[R], $!p[C] );
 }
 
+
 method !_wr_cell ( Int $row, Int $col ) {
-    my Bool $is_current_pos = $row == $!p[R] && $col == $!p[C];
-    my $escape;
-    if $is_current_pos && $!marked[$row][$col] {
-        $escape := "\e[1;4;7m";
+    print self!_goto( $row, $col ) ~ self!_cell( $row, $col );
+    $!i_col += $!all_in_one_row ?? @!w_list[ $!rc2idx[$row][$col] ] !! $!col_w;
+}
+
+
+method !_cell ( Int $row, Int $col ) {
+    my Bool \is_current_pos = $row == $!p[R] && $col == $!p[C];
+    my $emphasised = is_current_pos ?? reverse() !! '';
+    if $!marked[$row][$col] {
+        $emphasised = bold() ~ underline() ~ $emphasised;
     }
-    elsif $is_current_pos {
-        $escape := "\e[7m";
-    }
-    elsif $!marked[$row][$col] {
-        $escape := "\e[1;4m";
-    }
-    my Int $i := $!rc2idx[$row][$col];
-    if $!current_layout == -1 {
-        my Int $x = 0;
-        if $col > 0 {
-            for ^$col -> $c {
-                $x += print-columns( @!list[ $!rc2idx[$row][$c] ] ) + %!o<pad>;
+    my $str = self!_pad_str_to_colwidth( $!rc2idx[$row][$col] );
+    if %!o<color> {
+        my @color = ( @!orig_list[ $!rc2idx[$row][$col] ] // '' ).comb( / \e \[ <[\d;]>* m / );
+        if $emphasised {
+            for @color {
+                # keep cell marked after color escapes
+                $_ ~= $emphasised;
+            }
+            $str = $emphasised ~ $str ~ normal();
+            if is_current_pos {
+                # no color for selected cell
+                @color = ();
+                $str.=subst( / \x[feff] /, '', :g );
             }
         }
-        if $escape {
-            print
-                self!_goto( $row - $!begin_p, $x ) ~
-                $escape ~ @!list[$i] ~ "\e[0m";
+        if @color.elems {
+            $str.=subst( / \x[feff] /, { @color.shift }, :g );
+            if ! $emphasised {
+                $str ~= normal();
+            }
         }
-        else {
-            print
-                self!_goto( $row - $!begin_p, $x ) ~
-                @!list[$i];
-        }
-        $!i_col = $!i_col + print-columns( @!list[$i] );
+        return $str;
+    }
+    elsif $emphasised {
+        return $emphasised ~ $str ~ normal();
     }
     else {
-        if $escape {
-            print
-                self!_goto( $row - $!begin_p, $!col_w_plus * $col ) ~
-                $escape ~ self!_pad_str_to_colwidth( $i ) ~ "\e[0m";
-        }
-        else {
-            print
-                self!_goto( $row - $!begin_p, $!col_w_plus * $col ) ~
-                self!_pad_str_to_colwidth( $i );
-        }
-        $!i_col = $!i_col + $!col_w;
+        return $str;
     }
 }
 
 
-method !_goto( $newrow, $newcol ) {
+method !_goto( $row, $col ) {
     my $escape = '';
-    if $newrow > $!i_row {
-        $escape = $escape ~ "\r\n" x ( $newrow - $!i_row );
-        $!i_row = $!i_row + ( $newrow - $!i_row );
-        $!i_col = 0;
+
+    # Row
+    my \new_i_row = $row - $!first_page_row;
+    if new_i_row > $!i_row {
+        $escape = $escape ~ "\r\n" x ( new_i_row - $!i_row );
+        $!i_col = 0; #!
     }
-    elsif $newrow < $!i_row {
-        $escape = $escape ~ up( $!i_row - $newrow );
-        $!i_row = $!i_row - ( $!i_row - $newrow );
+    elsif new_i_row < $!i_row {
+        $escape = $escape ~ up( $!i_row - new_i_row );
     }
-    if $newcol > $!i_col {
-        $escape = $escape ~ right( $newcol - $!i_col );
-        $!i_col = $!i_col + ( $newcol - $!i_col );
+    $!i_row = new_i_row; # p5
+
+    # Col
+    my \new_i_col = $!all_in_one_row ?? [+] @!w_list[$!rc2idx[$row][ ^$col ]].map: { $_ + %!o<pad> } !! $!col_w_plus * $col;
+    if new_i_col > $!i_col {
+        $escape = $escape ~ right( new_i_col - $!i_col );
     }
-    elsif $newcol < $!i_col {
-        $escape = $escape ~ left( $!i_col - $newcol );
-        $!i_col = $!i_col - ( $!i_col - $newcol );
+    elsif new_i_col < $!i_col {
+        $escape = $escape ~ left( $!i_col - new_i_col );
     }
+    $!i_col = new_i_col; # p5
+
     return $escape;
 }
 
-method !_current_layout {
-    my $all_in_first_row;
-    if %!o<layout> <= 1 && ! %!o<ll> {
-        my $firstrow_w = 0;
+method !_prepare_layout { # p5
+    $!all_in_one_row = 0;
+    $!single_column = 0;
+    if %!o<layout> != 2 && ! %!o<ll> {
         for ^@!list -> $idx {
-            $firstrow_w += @!w_list[$idx] + %!o<pad>;
-            if $firstrow_w - %!o<pad> > $!avail_w {
-                $firstrow_w = 0;
+            $!all_in_one_row += @!w_list[$idx] + %!o<pad>;
+            if $!all_in_one_row - %!o<pad> > $!avail_w {
+                $!all_in_one_row = 0;
                 last;
             }
         }
-        $all_in_first_row = $firstrow_w;
     }
-    if $all_in_first_row {
-        $!current_layout = -1;
+    if ! $!all_in_one_row {
+        if %!o<layout> == 2 {
+            $!single_column = 1;
+        }
+        elsif $!col_w * 2 + %!o<pad> > $!avail_w {
+            $!single_column = 1;
+        }
+        # elements longer than $!avail_w are (unlike p5) already
+        # cut to $!avail_w in _prepare_new_copy_of_list
     }
-    elsif $!col_w >= $!avail_w {
-        $!current_layout = 3;
-        $!col_w = $!avail_w;
-    }
-    else {
-        $!current_layout = %!o<layout>;
-    }
-    $!col_w_plus = $!col_w + %!o<pad>;
-    # 'col_width_plus' no effects if layout == 3
 }
 
 method !_list_index2rowcol {
     $!rc2idx = [];
-    if $!current_layout == -1 {
+    if $!all_in_one_row {
         $!rc2idx[0] = [ ^@!list ];
     }
-    elsif $!current_layout == 2 {
+    elsif $!single_column {
         for ^@!list -> $i {
             $!rc2idx[$i][0] = $i;
         }
@@ -944,7 +948,7 @@ method !_list_index2rowcol {
     else {
         my Int $tmp_avail_w = $!avail_w + %!o<pad>;
         # auto_format
-        if $!current_layout == 1 {
+        if %!o<layout> == 1 {
             my Int $tmc = @!list.elems div $!avail_h;
             $tmc++ if @!list.elems % $!avail_h;
             $tmc *= $!col_w_plus;
@@ -997,7 +1001,7 @@ method !_list_index2rowcol {
 
 
 method !_marked_idx2rc ( List $indexes, Bool $yesno ) {
-    if $!current_layout == 2 {
+    if $!single_column {
         for $indexes.list -> $i {
             next if $i > @!list.end;
             $!marked[$i][0] = $yesno;
@@ -1193,6 +1197,14 @@ Options which expect a number as their value expect integers.
 1 - clears the screen before printing the choices
 
 2 - use the alternate screen
+
+=head3 color
+
+If this option is set to C<1>, SRG ANSI escape sequences can be used to color the screen output.
+
+0 - off (default)
+
+1 - on
 
 =head3 default
 
@@ -1420,7 +1432,8 @@ the environment variable C<TC_NUM_THREADS>.
 
 =head2 tput
 
-The control of the cursor location, the color, and other options on the terminal is done via escape sequences.
+The control of the cursor location, the highlighting of the cursor position and the marked elements and other options on
+the terminal is done via escape sequences.
 
 C<tput> is used to get the appropriate escape sequences.
 

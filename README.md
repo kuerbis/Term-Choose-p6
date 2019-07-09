@@ -140,6 +140,14 @@ Options which expect a number as their value expect integers.
 
 2 - use the alternate screen
 
+### color
+
+If this option is set to `1`, SRG ANSI escape sequences can be used to color the screen output.
+
+0 - off (default)
+
+1 - on
+
 ### default
 
 With the option *default* it can be selected an element, which will be highlighted as the default instead of the first element.
@@ -350,7 +358,7 @@ REQUIREMENTS
 tput
 ----
 
-The control of the cursor location, the color, and other options on the terminal is done via escape sequences.
+The control of the cursor location, the highlighting of the cursor position and the marked elements and other options on the terminal is done via escape sequences.
 
 `tput` is used to get the appropriate escape sequences.
 

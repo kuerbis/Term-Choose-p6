@@ -15,9 +15,14 @@ sub  left ( $steps ) is export( :DEFAULT, :left  ) { return t_left.join: $steps 
 
 
 
-my \clear          = run( 'tput', 'clear', :out ).out.slurp;
-my \clr-to-bot     = run( 'tput', 'ed',    :out ).out.slurp;
-my \clr-to-eol     = run( 'tput', 'el',    :out ).out.slurp;
+my \clear      = run( 'tput', 'clear', :out ).out.slurp;
+my \clr-to-bot = run( 'tput', 'ed',    :out ).out.slurp;
+my \clr-to-eol = run( 'tput', 'el',    :out ).out.slurp;
+
+my \reverse   = run( 'tput', 'rev',   :out, :err ).out.slurp;
+my \bold      = run( 'tput', 'bold',  :out, :err ).out.slurp;
+my \underline = run( 'tput', 'smul',  :out, :err ).out.slurp;
+my \normal    = run( 'tput', 'sgr0',  :out, :err ).out.slurp;
 
 my \save-screen    = run( 'tput', 'smcup', :out, :err ).out.slurp;
 my \restore-screen = run( 'tput', 'rmcup', :out, :err ).out.slurp;
@@ -25,16 +30,20 @@ my \show-cursor    = run( 'tput', 'cnorm', :out, :err ).out.slurp;
 my \hide-cursor    = run( 'tput', 'civis', :out, :err ).out.slurp;
 my \bell           = run( 'tput', 'bel',   :out, :err ).out.slurp;
 
-
 sub clear            is export( :DEFAULT, :clear            ) { return clear }
 sub clr-lines-to-bot is export( :DEFAULT, :clr-lines-to-bot ) { return "\r" ~ clr-to-bot }
 sub clr-to-eol       is export( :DEFAULT, :clr-to-eol       ) { return clr-to-eol }
 
+sub reverse   is export( :DEFAULT, :reverse   ) { return reverse }
+sub bold      is export( :DEFAULT, :bold      ) { return bold }
+sub underline is export( :DEFAULT, :underline ) { return underline } # ### marked
+sub normal    is export( :DEFAULT, :normal    ) { return normal }
+
 sub    save-screen is export( :DEFAULT, :save-screen    ) { return save-screen }
 sub restore-screen is export( :DEFAULT, :restore-screen ) { return restore-screen  }
-sub show-cursor is export( :DEFAULT, :show-cursor ) { return show-cursor }
-sub hide-cursor is export( :DEFAULT, :hide-cursor ) { return hide-cursor }
-sub beep is export( :DEFAULT, :beep ) { return bell }
+sub show-cursor    is export( :DEFAULT, :show-cursor    ) { return show-cursor }
+sub hide-cursor    is export( :DEFAULT, :hide-cursor    ) { return hide-cursor }
+sub beep           is export( :DEFAULT, :beep           ) { return bell }
 
 
 

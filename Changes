@@ -1,6 +1,11 @@
 Revision history for Term::Choose
 
 
+1.5.9   2019-07-09
+        - New option 'color'.
+        - Code refactoring: wr_cell, goto.
+        - Bugfix current_layout.
+
 1.5.8   2019-06-06
         - Update TC_RESET_AUTO_UP.
 

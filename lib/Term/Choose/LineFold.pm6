@@ -2,6 +2,7 @@ use v6;
 unit module Term::Choose::LineFold;
 
 use Term::Choose::LineFold::CharWidthDefault;
+use Term::Choose::Screen;
 
 
 my $table = table_char_width();
@@ -62,7 +63,8 @@ sub to-printwidth( $str, Int $avail_w, Bool $dot=False, @cache? ) is export( :DE
 }
 
 
-sub line-fold( $str, Int $avail_w, Str $init-tab is copy = '', Str $subseq-tab is copy = '' ) is export( :DEFAULT, :line-fold ) {
+
+sub line-fold( $str, Int $avail_w, Str :$init-tab is copy = '', Str :$subseq-tab is copy = '', :$color = 0 ) is export( :DEFAULT, :line-fold ) {
     for $init-tab, $subseq-tab {
         if $_ { # .gist
             $_ = to-printwidth(
@@ -72,9 +74,14 @@ sub line-fold( $str, Int $avail_w, Str $init-tab is copy = '', Str $subseq-tab i
                 ).[0];
         }
     }
-    my $string = ( $str // '' );
+    my $string = ( $str // '' ); ##
     if $string ~~ Buf {
         $string = $string.gist; # perl
+    }
+    my @color;
+    if $color { # elsif
+        $string.=subst( / \x[feff] /, '', :g );
+        $string.=subst( / ( \e \[ <[\d;]>* m ) /, { @color.push( $0.Str ) && "\x[feff]" }, :g ); # msg
     }
     $string.subst( / \t /, ' ', :g );
     $string.=subst( / <:Cc+:Noncharacter_Code_Point+:Cs> && \V /, '' , :g ); #
@@ -119,6 +126,15 @@ sub line-fold( $str, Int $avail_w, Str $init-tab is copy = '', Str $subseq-tab i
                 @lines.push( $line );
             }
         }
+    }
+    if @color.elems {
+        for @lines -> $line is rw {
+            $line.=subst( / \x[feff] /, { @color.shift }, :g );
+            if ! @color.elems {
+                last;
+            }
+        }
+        @lines[*-1] ~= normal(); # ### 
     }
     @lines.push( '' ) if $string.ends-with( "\n" );
     return @lines; #
