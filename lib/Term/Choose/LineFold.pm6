@@ -74,7 +74,7 @@ sub line-fold( $str, Int $avail_w, Str :$init-tab is copy = '', Str :$subseq-tab
                 ).[0];
         }
     }
-    my $string = ( $str // '' ); ##
+    my $string = ( $str // '' ); #
     if $string ~~ Buf {
         $string = $string.gist; # perl
     }
@@ -134,7 +134,7 @@ sub line-fold( $str, Int $avail_w, Str :$init-tab is copy = '', Str :$subseq-tab
                 last;
             }
         }
-        @lines[*-1] ~= normal(); # ### 
+        @lines[*-1] ~= normal(); #
     }
     @lines.push( '' ) if $string.ends-with( "\n" );
     return @lines; #
