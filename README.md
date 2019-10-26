@@ -126,6 +126,14 @@ OPTIONS
 
 Options which expect a number as their value expect integers.
 
+### alignment
+
+0 - elements ordered in columns are aligned to the left (default)
+
+1 - elements ordered in columns are aligned to the right
+
+2 - elements ordered in columns are centered
+
 ### beep
 
 0 - off (default)
@@ -186,11 +194,7 @@ This option has no meaning for `pause`.
 
 ### justify
 
-0 - elements ordered in columns are left-justified (default)
-
-1 - elements ordered in columns are right-justified
-
-2 - elements ordered in columns are centered
+The option *justify* is now called *alignment*. Use *alignment* instead of *justify*. *justify* will be removed.
 
 ### keep
 
@@ -243,13 +247,13 @@ From broad to narrow: 0 > 1 > 2
 
 ### lf
 
-If *prompt* lines are folded, the option *lf* allows one to insert spaces at beginning of the folded lines.
+If *prompt* and *info* lines are folded, the option *lf* allows one to insert spaces at beginning of the folded lines.
 
 The option *lf* expects a list with one or two elements:
 
-- the first element (`INITIAL_TAB`) sets the number of spaces inserted at beginning of paragraphs
+- the first element (initial tab) sets the number of spaces inserted at beginning of paragraphs
 
-- a second element (`SUBSEQUENT_TAB`) sets the number of spaces inserted at the beginning of all broken lines apart from the beginning of paragraphs
+- a second element (subsequent tab) sets the number of spaces inserted at the beginning of all broken lines apart from the beginning of paragraphs
 
 Allowed values for the two elements are: 0 or greater.
 

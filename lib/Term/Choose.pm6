@@ -1,6 +1,6 @@
 use v6;
 
-unit class Term::Choose:ver<1.5.9>;
+unit class Term::Choose:ver<1.6.0>;
 
 use Term::termios;
 
@@ -17,7 +17,7 @@ subset Int_2_or_greater of Int where * > 1;
 subset Int_0_to_2       of Int where * == 0|1|2;
 subset Int_0_or_1       of Int where * == 0|1;
 
-has Int_0_or_1       $.page                 = 0; # removed 26.03.2019 
+has Int_0_or_1       $.page                 = 0; # removed 26.03.2019
 has Int_0_or_1       $.beep                 = 0;
 has Int_0_or_1       $.color                = 0;
 has Int_0_or_1       $.index                = 0;
@@ -25,9 +25,13 @@ has Int_0_or_1       $.mouse                = 0;
 has Int_0_or_1       $.order                = 1;
 has Int_0_or_1       $.loop                 = 0; # privat
 has Int_0_or_1       $.hide-cursor          = 1;
+
+#has Int_0_to_2       $.alignment            = 0; # uncomment line when 'justify' is removed
+has Int_0_to_2       $.alignment;                 # remove    line when 'justify' is removed
+
 has Int_0_to_2       $.clear-screen         = 0;
 has Int_0_to_2       $.include-highlighted  = 0;
-has Int_0_to_2       $.justify              = 0;
+has Int_0_to_2       $.justify              = 0; # DEPRECATED 1.6.0         26.10.2019
 has Int_0_to_2       $.layout               = 1;
 has Positive_Int     $.keep                 = 5;
 has Positive_Int     $.ll;                       # privat
@@ -135,41 +139,63 @@ method !_prepare_new_copy_of_list {
             my @cache;
             @promise.push: start {
                 do for $range[0] ..^ $range[1] -> $i {
-                    if ! @!orig_list[$i].defined {
-                        my ( $str, $len ) = to-printwidth(
-                            %!o<undef>.subst( / \t /,  ' ', :g ).subst( / \v+ /,  '  ', :g ).subst( / <:Cc+:Noncharacter_Code_Point+:Cs> /, '', :g ),
-                            $!avail_w,
-                            True,
-                            @cache
-                        );
-                        $i, $str, $len;
-                    }
-                    elsif @!orig_list[$i] eq '' {
-                        my ( $str, $len ) = to-printwidth(
-                            %!o<empty>.subst( / \t /,  ' ', :g ).subst( / \v+ /,  '  ', :g ).subst( / <:Cc+:Noncharacter_Code_Point+:Cs> /, '', :g ),
-                            $!avail_w,
-                            True,
-                            @cache
-                        );
-                        $i, $str, $len;
-                    }
-                    elsif %!o<color> {
+                    if %!o<color> {
+                        if ! @!orig_list[$i].defined {
                             my ( $str, $len ) = to-printwidth(
-                            @!orig_list[$i].subst( / \x[feff] /,  '', :g ).subst( / \e \[ <[\d;]>* m /, "\x[feff]", :g ).subst( / \t /,  ' ', :g ).subst( / \v+ /,  '  ', :g ).subst( / <:Cc+:Noncharacter_Code_Point+:Cs> /, '', :g ),
-                            $!avail_w,
-                            True,
-                            @cache
-                        );
-                        $i, $str, $len;
+                                %!o<undef>.subst( / \x[feff] /,  '', :g ).subst( / \e \[ <[\d;]>* m /, "\x[feff]", :g ).subst( / \t /,  ' ', :g ).subst( / \v+ /,  '  ', :g ).subst( / <:Cc+:Noncharacter_Code_Point+:Cs> /, '', :g ),
+                                $!avail_w,
+                                True,
+                                @cache
+                            );
+                            $i, $str, $len;
+                        }
+                        elsif @!orig_list[$i] eq '' {
+                            my ( $str, $len ) = to-printwidth(
+                                %!o<empty>.subst( / \x[feff] /,  '', :g ).subst( / \e \[ <[\d;]>* m /, "\x[feff]", :g ).subst( / \t /,  ' ', :g ).subst( / \v+ /,  '  ', :g ).subst( / <:Cc+:Noncharacter_Code_Point+:Cs> /, '', :g ),
+                                $!avail_w,
+                                True,
+                                @cache
+                            );
+                            $i, $str, $len;
+                        }
+                        elsif %!o<color> {
+                                my ( $str, $len ) = to-printwidth(
+                                @!orig_list[$i].subst( / \x[feff] /,  '', :g ).subst( / \e \[ <[\d;]>* m /, "\x[feff]", :g ).subst( / \t /,  ' ', :g ).subst( / \v+ /,  '  ', :g ).subst( / <:Cc+:Noncharacter_Code_Point+:Cs> /, '', :g ),
+                                $!avail_w,
+                                True,
+                                @cache
+                            );
+                            $i, $str, $len;
+                        }
                     }
                     else {
-                        my ( $str, $len ) = to-printwidth(
-                            @!orig_list[$i].subst( / \t /,  ' ', :g ).subst( / \v+ /,  '  ', :g ).subst( / <:Cc+:Noncharacter_Code_Point+:Cs> /, '', :g ),
-                            $!avail_w,
-                            True,
-                            @cache
-                        );
-                        $i, $str, $len;
+                        if ! @!orig_list[$i].defined {
+                            my ( $str, $len ) = to-printwidth(
+                                %!o<undef>.subst( / \t /,  ' ', :g ).subst( / \v+ /,  '  ', :g ).subst( / <:Cc+:Noncharacter_Code_Point+:Cs> /, '', :g ),
+                                $!avail_w,
+                                True,
+                                @cache
+                            );
+                            $i, $str, $len;
+                        }
+                        elsif @!orig_list[$i] eq '' {
+                            my ( $str, $len ) = to-printwidth(
+                                %!o<empty>.subst( / \t /,  ' ', :g ).subst( / \v+ /,  '  ', :g ).subst( / <:Cc+:Noncharacter_Code_Point+:Cs> /, '', :g ),
+                                $!avail_w,
+                                True,
+                                @cache
+                            );
+                            $i, $str, $len;
+                        }
+                        else {
+                            my ( $str, $len ) = to-printwidth(
+                                @!orig_list[$i].subst( / \t /,  ' ', :g ).subst( / \v+ /,  '  ', :g ).subst( / <:Cc+:Noncharacter_Code_Point+:Cs> /, '', :g ),
+                                $!avail_w,
+                                True,
+                                @cache
+                            );
+                            $i, $str, $len;
+                        }
                     }
                 }
             };
@@ -255,13 +281,13 @@ method !_pad_str_to_colwidth ( Int $i ) {
     }
     my Int $str_w = @!w_list[$i];
     if $str_w < $!col_w {
-        if %!o<justify> == 0 {
+        if %!o<alignment> == 0 {
             return @!list[$i] ~ " " x ( $!col_w - $str_w );
         }
-        elsif %!o<justify> == 1 {
+        elsif %!o<alignment> == 1 {
             return " " x ( $!col_w - $str_w ) ~ @!list[$i];
         }
-        elsif %!o<justify> == 2 {
+        elsif %!o<alignment> == 2 {
             my Int $fill = $!col_w - $str_w;
             my Int $half_fill = $fill div 2;
             return " " x $half_fill ~ @!list[$i] ~ " " x ( $fill - $half_fill );
@@ -354,9 +380,10 @@ method !_choose ( Int $multiselect, @!orig_list,
         Int_0_or_1       :$mouse                = $!mouse,
         Int_0_or_1       :$order                = $!order,
         Int_0_or_1       :$hide-cursor          = $!hide-cursor,
+        Int_0_to_2       :$alignment            = $!alignment,
         Int_0_to_2       :$clear-screen         = $!clear-screen,
         Int_0_to_2       :$include-highlighted  = $!include-highlighted,
-        Int_0_to_2       :$justify              = $!justify,
+        Int_0_to_2       :$justify              = $!justify, # DEPRECATED 1.6.0
         Int_0_to_2       :$layout               = $!layout,
         Positive_Int     :$keep                 = $!keep,
         Positive_Int     :$ll                   = $!ll,
@@ -377,8 +404,12 @@ method !_choose ( Int $multiselect, @!orig_list,
         return;
     }
     # %!o: make options available in methods
-    %!o = :$beep, :$include-highlighted, :$index, :$mouse, :$order, :$clear-screen, :$justify, :$layout, :$keep, :$ll, :$max-height, :$color,
-          :$max-width, :$default, :$pad, :$lf, :$mark, :$meta-items, :$no-spacebar, :$info, :$prompt, :$empty, :$undef, :$hide-cursor;
+
+    #%!o = :$beep, :$include-highlighted, :$index, :$mouse, :$order, :$clear-screen, :$alignment, :$layout, :$keep, :$ll, :$max-height, :$color,                # uncomment when 'justify' is removed
+    #      :$max-width, :$default, :$pad, :$lf, :$mark, :$meta-items, :$no-spacebar, :$info, :$prompt, :$empty, :$undef, :$hide-cursor;                         # uncomment when 'justify' is removed
+    %!o = :$beep, :$include-highlighted, :$index, :$mouse, :$order, :$clear-screen, :alignment( $alignment // $justify ), :$layout, :$keep, :$ll,               # remove    when 'justify' is removed
+          :$max-height, :$color, :$max-width, :$default, :$pad, :$lf, :$mark, :$meta-items, :$no-spacebar, :$info, :$prompt, :$empty, :$undef, :$hide-cursor;   # remove    when 'justify' is removed
+
     if ! %!o<prompt>.defined {
         %!o<prompt> = $multiselect.defined ?? 'Your choice' !! 'Continue with ENTER';
     }
@@ -854,7 +885,16 @@ method !_cell ( Int $row, Int $col ) {
     }
     my $str = self!_pad_str_to_colwidth( $!rc2idx[$row][$col] );
     if %!o<color> {
-        my @color = ( @!orig_list[ $!rc2idx[$row][$col] ] // '' ).comb( / \e \[ <[\d;]>* m / );
+        my @color;
+        if ! @!orig_list[ $!rc2idx[$row][$col] ].defined {
+            @color = %!o<undef>.comb( / \e \[ <[\d;]>* m / );
+        }
+        elsif ! @!orig_list[ $!rc2idx[$row][$col] ].chars {
+            @color = %!o<empty>.comb( / \e \[ <[\d;]>* m / );
+        }
+        else {
+            @color = @!orig_list[ $!rc2idx[$row][$col] ].comb( / \e \[ <[\d;]>* m / );
+        }
         if $emphasised {
             for @color {
                 # keep cell marked after color escapes
@@ -1184,6 +1224,14 @@ dots are attached.
 
 Options which expect a number as their value expect integers.
 
+=head3 alignment
+
+0 - elements ordered in columns are aligned to the left (default)
+
+1 - elements ordered in columns are aligned to the right
+
+2 - elements ordered in columns are centered
+
 =head3 beep
 
 0 - off (default)
@@ -1245,11 +1293,7 @@ This option has no meaning for C<pause>.
 
 =head3 justify
 
-0 - elements ordered in columns are left-justified (default)
-
-1 - elements ordered in columns are right-justified
-
-2 - elements ordered in columns are centered
+The option I<justify> is now called I<alignment>. Use I<alignment> instead of I<justify>. I<justify> will be removed.
 
 =head3 keep
 
@@ -1314,13 +1358,13 @@ From broad to narrow: 0 > 1 > 2
 
 =head3 lf
 
-If I<prompt> lines are folded, the option I<lf> allows one to insert spaces at beginning of the folded lines.
+If I<prompt> and I<info> lines are folded, the option I<lf> allows one to insert spaces at beginning of the folded lines.
 
 The option I<lf> expects a list with one or two elements:
 
-- the first element (C<INITIAL_TAB>) sets the number of spaces inserted at beginning of paragraphs
+- the first element (initial tab) sets the number of spaces inserted at beginning of paragraphs
 
-- a second element (C<SUBSEQUENT_TAB>) sets the number of spaces inserted at the beginning of all broken lines apart
+- a second element (subsequent tab) sets the number of spaces inserted at the beginning of all broken lines apart
 from the beginning of paragraphs
 
 Allowed values for the two elements are: 0 or greater.

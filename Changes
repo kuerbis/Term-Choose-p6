@@ -1,6 +1,11 @@
 Revision history for Term::Choose
 
 
+1.6.0   2019-10-26
+        - Enable colored output for the 'undef' and 'empty' string.
+        - Renamed option 'justify' to 'alignment'.
+        - Update char-width-table.
+
 1.5.9   2019-07-09
         - New option 'color'.
         - Code refactoring: wr_cell, goto.
