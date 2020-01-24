@@ -150,11 +150,13 @@ Options which expect a number as their value expect integers.
 
 ### color
 
-If this option is set to `1`, SRG ANSI escape sequences can be used to color the screen output.
+If enabled, SRG ANSI escape sequences can be used to color the screen output.
 
 0 - off (default)
 
-1 - on
+1 - on (current selected element not colored)
+
+2 - on (current selected element colored)
 
 ### default
 
@@ -245,19 +247,9 @@ From broad to narrow: 0 > 1 > 2
         |                   |   |                   |   |                   |   | ..                |
         '-------------------'   '-------------------'   '-------------------'   '-------------------'
 
-### lf
+### lf REMOVED
 
-If *prompt* and *info* lines are folded, the option *lf* allows one to insert spaces at beginning of the folded lines.
-
-The option *lf* expects a list with one or two elements:
-
-- the first element (initial tab) sets the number of spaces inserted at beginning of paragraphs
-
-- a second element (subsequent tab) sets the number of spaces inserted at the beginning of all broken lines apart from the beginning of paragraphs
-
-Allowed values for the two elements are: 0 or greater.
-
-(default: undefined)
+*lf* has been removed. Use <tabs-prompt> and *tabs-info* instead.
 
 ### max-height
 
@@ -310,6 +302,34 @@ Allowed values: 0 or greater
 If *prompt* is undefined, a default prompt-string will be shown.
 
 If the *prompt* value is an empty string (""), no prompt-line will be shown.
+
+### tabs-info
+
+If *info* lines are folded, the option *tabs-info* allows one to insert spaces at beginning of the folded lines.
+
+The option *tabs-info* expects a reference to an array with one or two elements:
+
+- the first element (initial tab) sets the number of spaces inserted at beginning of paragraphs
+
+- a second element (subsequent tab) sets the number of spaces inserted at the beginning of all broken lines apart from the beginning of paragraphs
+
+Allowed values: 0 or greater. Elements beyond the second are ignored.
+
+(default: undefined)
+
+### tabs-prompt
+
+If *prompt* lines are folded, the option *tabs-prompt* allows one to insert spaces at beginning of the folded lines.
+
+The option *tabs-prompt* expects a reference to an array with one or two elements:
+
+- the first element (initial tab) sets the number of spaces inserted at beginning of paragraphs
+
+- a second element (subsequent tab) sets the number of spaces inserted at the beginning of all broken lines apart from the beginning of paragraphs
+
+Allowed values: 0 or greater. Elements beyond the second are ignored.
+
+(default: undefined)
 
 ### undef
 
@@ -388,7 +408,7 @@ Thanks to the people from [Perl-Community.de](http://www.perl-community.de), fro
 LICENSE AND COPYRIGHT
 =====================
 
-Copyright (C) 2016-2019 Matthäus Kiem.
+Copyright (C) 2016-2020 Matthäus Kiem.
 
 This library is free software; you can redistribute it and/or modify it under the Artistic License 2.0.
 

@@ -1,6 +1,6 @@
 use v6;
 
-unit class Term::Choose:ver<1.6.0>;
+unit class Term::Choose:ver<1.6.1>;
 
 use Term::termios;
 
@@ -19,7 +19,6 @@ subset Int_0_or_1       of Int where * == 0|1;
 
 has Int_0_or_1       $.page                 = 0; # removed 26.03.2019
 has Int_0_or_1       $.beep                 = 0;
-has Int_0_or_1       $.color                = 0;
 has Int_0_or_1       $.index                = 0;
 has Int_0_or_1       $.mouse                = 0;
 has Int_0_or_1       $.order                = 1;
@@ -30,6 +29,7 @@ has Int_0_or_1       $.hide-cursor          = 1;
 has Int_0_to_2       $.alignment;                 # remove    line when 'justify' is removed
 
 has Int_0_to_2       $.clear-screen         = 0;
+has Int_0_to_2       $.color                = 0;
 has Int_0_to_2       $.include-highlighted  = 0;
 has Int_0_to_2       $.justify              = 0; # DEPRECATED 1.6.0         26.10.2019
 has Int_0_to_2       $.layout               = 1;
@@ -39,10 +39,12 @@ has Positive_Int     $.max-height;
 has Int_2_or_greater $.max-width;
 has UInt             $.default              = 0;
 has UInt             $.pad                  = 2;
-has List             $.lf; #
+has List             $.lf;                      # REMOVED 1.6.1
 has List             $.mark;
 has List             $.meta-items;
 has List             $.no-spacebar;
+has List             $.tabs-prompt;
+has List             $.tabs-info;
 has Str              $.info                 = '';
 has Str              $.prompt;
 has Str              $.empty                = '<empty>';
@@ -219,15 +221,20 @@ method !_beep {
 
 method !_prepare_prompt {
     my @tmp;
-    @tmp.push: %!o<info>   if %!o<info>.chars;
-    @tmp.push: %!o<prompt> if %!o<prompt>.chars;
-    if ! @tmp.elems {
-        @!prompt_lines = ();
+    @!prompt_lines = ();
+    if %!o<info>.chars {
+        my Int $init   = %!o<tabs-info>[0] // 0;
+        my Int $subseq = %!o<tabs-info>[1] // 0;
+        @!prompt_lines.push: |line-fold( %!o<info>, $!avail_w, :init-tab( ' ' x $init ), :subseq-tab( ' ' x $subseq ), :color( %!o<color> ) );
+    }
+    if %!o<prompt>.chars {
+        my Int $init   = %!o<tabs-prompt>[0] // 0;
+        my Int $subseq = %!o<tabs-prompt>[1] // 0;
+        @!prompt_lines.push: |line-fold( %!o<prompt>, $!avail_w, :init-tab( ' ' x $init ), :subseq-tab( ' ' x $subseq ), :color( %!o<color> ) );
+    }
+    if ! @!prompt_lines.elems {
         return;
     }
-    my Int $init   = %!o<lf>[0] // 0;
-    my Int $subseq = %!o<lf>[1] // 0;
-    @!prompt_lines = line-fold( @tmp.join( "\n" ), $!avail_w, :init-tab( ' ' x $init ), :subseq-tab( ' ' x $subseq ), :color( %!o<color> ) );
     my Int $keep = %!o<keep>;
     $keep += 1       if $!rc2idx.elems / $!avail_h > 1; ##
     $keep = $!term_h if $keep > $!term_h;
@@ -375,13 +382,13 @@ method pause        ( @list, *%opt ) { self!_choose( Int, @list, |%opt ) }
 method !_choose ( Int $multiselect, @!orig_list,
         Int_0_or_1       :$page                 = $!page, # removed 26.03.2019
         Int_0_or_1       :$beep                 = $!beep,
-        Int_0_or_1       :$color                = $!color,
         Int_0_or_1       :$index                = $!index,
         Int_0_or_1       :$mouse                = $!mouse,
         Int_0_or_1       :$order                = $!order,
         Int_0_or_1       :$hide-cursor          = $!hide-cursor,
         Int_0_to_2       :$alignment            = $!alignment,
         Int_0_to_2       :$clear-screen         = $!clear-screen,
+        Int_0_to_2       :$color                = $!color,
         Int_0_to_2       :$include-highlighted  = $!include-highlighted,
         Int_0_to_2       :$justify              = $!justify, # DEPRECATED 1.6.0
         Int_0_to_2       :$layout               = $!layout,
@@ -391,10 +398,12 @@ method !_choose ( Int $multiselect, @!orig_list,
         Int_2_or_greater :$max-width            = $!max-width,
         UInt             :$default              = $!default,
         UInt             :$pad                  = $!pad,
-        List             :$lf                   = $!lf,
+        List             :$lf                   = $!lf,     # REMOVED 1.6.1
         List             :$mark                 = $!mark,
         List             :$meta-items           = $!meta-items,
         List             :$no-spacebar          = $!no-spacebar,
+        List             :$tabs-info            = $!tabs-info,
+        List             :$tabs-prompt          = $!tabs-prompt,
         Str              :$info                 = $!info,
         Str              :$prompt               = $!prompt,
         Str              :$empty                = $!empty,
@@ -405,10 +414,10 @@ method !_choose ( Int $multiselect, @!orig_list,
     }
     # %!o: make options available in methods
 
-    #%!o = :$beep, :$include-highlighted, :$index, :$mouse, :$order, :$clear-screen, :$alignment, :$layout, :$keep, :$ll, :$max-height, :$color,                # uncomment when 'justify' is removed
-    #      :$max-width, :$default, :$pad, :$lf, :$mark, :$meta-items, :$no-spacebar, :$info, :$prompt, :$empty, :$undef, :$hide-cursor;                         # uncomment when 'justify' is removed
-    %!o = :$beep, :$include-highlighted, :$index, :$mouse, :$order, :$clear-screen, :alignment( $alignment // $justify ), :$layout, :$keep, :$ll,               # remove    when 'justify' is removed
-          :$max-height, :$color, :$max-width, :$default, :$pad, :$lf, :$mark, :$meta-items, :$no-spacebar, :$info, :$prompt, :$empty, :$undef, :$hide-cursor;   # remove    when 'justify' is removed
+    #%!o = :$beep, :$include-highlighted, :$index, :$mouse, :$order, :$clear-screen, :$alignment, :$layout, :$keep, :$ll, :$max-height, :$color, :$max-width,     # uncomment when 'justify' is removed
+    #      :$default, :$pad, :$mark, :$meta-items, :$no-spacebar, :$info, :$prompt, :$empty, :$undef, :$hide-cursor, :$tabs-info, :$tabs-prompt;                  # uncomment when 'justify' is removed
+    %!o = :$beep, :$include-highlighted, :$index, :$mouse, :$order, :$clear-screen, :alignment( $alignment // $justify ), :$layout, :$keep, :$ll, :$max-height,         # remove    when 'justify' is removed
+          :$color, :$max-width, :$default, :$pad, :$mark, :$meta-items, :$no-spacebar, :$info, :$prompt, :$empty, :$undef, :$hide-cursor, :$tabs-info, :$tabs-prompt;   # remove    when 'justify' is removed
 
     if ! %!o<prompt>.defined {
         %!o<prompt> = $multiselect.defined ?? 'Your choice' !! 'Continue with ENTER';
@@ -901,8 +910,8 @@ method !_cell ( Int $row, Int $col ) {
                 $_ ~= $emphasised;
             }
             $str = $emphasised ~ $str ~ normal();
-            if is_current_pos {
-                # no color for selected cell
+            if is_current_pos && %!o<color> == 1 {
+                # no color for selected cell if color == 1
                 @color = ();
                 $str.=subst( / \x[feff] /, '', :g );
             }
@@ -1248,11 +1257,13 @@ Options which expect a number as their value expect integers.
 
 =head3 color
 
-If this option is set to C<1>, SRG ANSI escape sequences can be used to color the screen output.
+If enabled, SRG ANSI escape sequences can be used to color the screen output.
 
 0 - off (default)
 
-1 - on
+1 - on (current selected element not colored)
+
+2 - on (current selected element colored)
 
 =head3 default
 
@@ -1356,20 +1367,9 @@ From broad to narrow: 0 > 1 > 2
 
 =end code
 
-=head3 lf
+=head3 lf REMOVED
 
-If I<prompt> and I<info> lines are folded, the option I<lf> allows one to insert spaces at beginning of the folded lines.
-
-The option I<lf> expects a list with one or two elements:
-
-- the first element (initial tab) sets the number of spaces inserted at beginning of paragraphs
-
-- a second element (subsequent tab) sets the number of spaces inserted at the beginning of all broken lines apart
-from the beginning of paragraphs
-
-Allowed values for the two elements are: 0 or greater.
-
-(default: undefined)
+I<lf> has been removed. Use <tabs-prompt> and I<tabs-info> instead.
 
 =head3 max-height
 
@@ -1422,6 +1422,36 @@ Allowed values: 0 or greater
 If I<prompt> is undefined, a default prompt-string will be shown.
 
 If the I<prompt> value is an empty string (""), no prompt-line will be shown.
+
+=head3 tabs-info
+
+If I<info> lines are folded, the option I<tabs-info> allows one to insert spaces at beginning of the folded lines.
+
+The option I<tabs-info> expects a reference to an array with one or two elements:
+
+- the first element (initial tab) sets the number of spaces inserted at beginning of paragraphs
+
+- a second element (subsequent tab) sets the number of spaces inserted at the beginning of all broken lines apart
+from the beginning of paragraphs
+
+Allowed values: 0 or greater. Elements beyond the second are ignored.
+
+(default: undefined)
+
+=head3 tabs-prompt
+
+If I<prompt> lines are folded, the option I<tabs-prompt> allows one to insert spaces at beginning of the folded lines.
+
+The option I<tabs-prompt> expects a reference to an array with one or two elements:
+
+- the first element (initial tab) sets the number of spaces inserted at beginning of paragraphs
+
+- a second element (subsequent tab) sets the number of spaces inserted at the beginning of all broken lines apart
+from the beginning of paragraphs
+
+Allowed values: 0 or greater. Elements beyond the second are ignored.
+
+(default: undefined)
 
 =head3 undef
 
@@ -1501,7 +1531,7 @@ help.
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (C) 2016-2019 Matthäus Kiem.
+Copyright (C) 2016-2020 Matthäus Kiem.
 
 This library is free software; you can redistribute it and/or modify it under the Artistic License 2.0.
 
