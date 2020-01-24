@@ -249,7 +249,7 @@ From broad to narrow: 0 > 1 > 2
 
 ### lf REMOVED
 
-*lf* has been removed. Use <tabs-prompt> and *tabs-info* instead.
+*lf* has been removed. Use *tabs-prompt* and *tabs-info* instead.
 
 ### max-height
 

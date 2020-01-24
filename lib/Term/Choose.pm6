@@ -1369,7 +1369,7 @@ From broad to narrow: 0 > 1 > 2
 
 =head3 lf REMOVED
 
-I<lf> has been removed. Use <tabs-prompt> and I<tabs-info> instead.
+I<lf> has been removed. Use I<tabs-prompt> and I<tabs-info> instead.
 
 =head3 max-height
 
