@@ -1,6 +1,6 @@
 use v6;
 
-unit class Term::Choose:ver<1.6.1>;
+unit class Term::Choose:ver<1.6.2>;
 
 use Term::termios;
 
@@ -1495,9 +1495,7 @@ marked as not selectable with the option I<no-spacebar>, the user can not remove
 
 (default: undefined)
 
-=head1 ENVIRONMET VARIABLES
-
-=head2 multithreading
+=head1 MULTITHREADING
 
 C<Term::Choose> uses multithreading when preparing the list for the output; the number of threads to use can be set with
 the environment variable C<TC_NUM_THREADS>.
@@ -1510,6 +1508,9 @@ The control of the cursor location, the highlighting of the cursor position and 
 the terminal is done via escape sequences.
 
 C<tput> is used to get the appropriate escape sequences.
+
+If the environment variable C<TERM> is not set to a true value, C<vt100> is used instead as the terminal type for
+C<tput>.
 
 Escape sequences to handle mouse input are hardcoded.
 

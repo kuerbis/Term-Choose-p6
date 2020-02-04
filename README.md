@@ -368,11 +368,8 @@ Elements greater than the last index of the list are ignored.
 
 (default: undefined)
 
-ENVIRONMET VARIABLES
-====================
-
-multithreading
---------------
+MULTITHREADING
+==============
 
 `Term::Choose` uses multithreading when preparing the list for the output; the number of threads to use can be set with the environment variable `TC_NUM_THREADS`.
 
@@ -385,6 +382,8 @@ tput
 The control of the cursor location, the highlighting of the cursor position and the marked elements and other options on the terminal is done via escape sequences.
 
 `tput` is used to get the appropriate escape sequences.
+
+If the environment variable `TERM` is not set to a true value, `vt100` is used instead as the terminal type for `tput`.
 
 Escape sequences to handle mouse input are hardcoded.
 
