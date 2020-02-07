@@ -2,7 +2,7 @@ Revision history for Term::Choose
 
 
 1.6.2   2020-02-04
-        - 'tput' terminal type defaults to vt100 if TERM is not set.
+        - 'tput' terminal type defaults to vt100 if TERM is not set. [GH #2 melezhik]
 
 1.6.1   2020-01-24
         - Replaced option 'lf' with options 'tabs-info' and 'tabs-prompt'.
