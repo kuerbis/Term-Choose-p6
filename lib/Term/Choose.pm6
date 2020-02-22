@@ -408,6 +408,7 @@ method !_choose ( Int $multiselect, @!orig_list,
         Str              :$prompt               = $!prompt,
         Str              :$empty                = $!empty,
         Str              :$undef                = $!undef,
+	Str              :$choice-prompt        = "Your choice"
     ) {
     if ! @!orig_list.elems {
         return;
@@ -420,7 +421,7 @@ method !_choose ( Int $multiselect, @!orig_list,
           :$color, :$max-width, :$default, :$pad, :$mark, :$meta-items, :$no-spacebar, :$info, :$prompt, :$empty, :$undef, :$hide-cursor, :$tabs-info, :$tabs-prompt;   # remove    when 'justify' is removed
 
     if ! %!o<prompt>.defined {
-        %!o<prompt> = $multiselect.defined ?? 'Your choice' !! 'Continue with ENTER';
+        %!o<prompt> = $multiselect.defined ?? $choice-prompt !! 'Continue with ENTER';
     }
     if %*ENV<TC_RESET_AUTO_UP>:exists {
         %*ENV<TC_RESET_AUTO_UP> = 0;
