@@ -134,7 +134,6 @@ sub line-fold( $str, Int $avail_w, Str :$init-tab is copy = '', Str :$subseq-tab
                 last;
             }
         }
-        #@lines[*-1] ~= normal();
     }
     @lines.push( '' ) if $string.ends-with( "\n" );
     return @lines.join: "\n" if $join;

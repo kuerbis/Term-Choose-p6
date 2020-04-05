@@ -280,24 +280,6 @@ method !_set_pp_print_fmt {
         $!page_count = 1;
     }
 }
-#method !_set_pp_print_fmt {
-#    if $!rc2idx.elems / $!avail_h > 1 {
-#        $!avail_h -= 1;
-#        $!page_count = $!rc2idx.end div $!avail_h + 1;
-#        my $page_count_w = $!page_count.chars;
-#        $!pp_row_fmt = "--- Page \%0{$page_count_w}d/{$!page_count} ---";
-#        if sprintf( $!pp_row_fmt, $!page_count ).chars > $!avail_w {
-#            $!pp_row_fmt = "\%0{$page_count_w}d/{$!page_count}";
-#            if sprintf( $!pp_row_fmt, $!page_count ).chars > $!avail_w {
-#                $page_count_w = $!avail_w if $page_count_w > $!avail_w;
-#                $!pp_row_fmt = "\%0{$page_count_w}.{$page_count_w}s";
-#            }
-#        }
-#    }
-#    else {
-#        $!page_count = 1;
-#    }
-#}
 
 
 method !_pad_str_to_colwidth ( Int $i ) {
