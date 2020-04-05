@@ -1,6 +1,13 @@
 Revision history for Term::Choose
 
 
+1.6.3   2020-04-05
+        - Bugfixes in line-fold.
+        - New option 'join' for line-fold.
+        - Removed deprecated options 'justify' and 'lf'.
+        - Faster CI [GH #3/1 JJ]
+        - Added experimental option 'footer-string'.
+
 1.6.2   2020-02-04
         - 'tput' terminal type defaults to vt100 if TERM is not set. [GH #2 melezhik]
 

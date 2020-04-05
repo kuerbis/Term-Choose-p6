@@ -1,6 +1,6 @@
 use v6;
 
-unit class Term::Choose:ver<1.6.2>;
+unit class Term::Choose:ver<1.6.3>;
 
 use Term::termios;
 
@@ -24,14 +24,10 @@ has Int_0_or_1       $.mouse                = 0;
 has Int_0_or_1       $.order                = 1;
 has Int_0_or_1       $.loop                 = 0; # privat
 has Int_0_or_1       $.hide-cursor          = 1;
-
-#has Int_0_to_2       $.alignment            = 0; # uncomment line when 'justify' is removed
-has Int_0_to_2       $.alignment;                 # remove    line when 'justify' is removed
-
+has Int_0_to_2       $.alignment            = 0;
 has Int_0_to_2       $.clear-screen         = 0;
 has Int_0_to_2       $.color                = 0;
 has Int_0_to_2       $.include-highlighted  = 0;
-has Int_0_to_2       $.justify              = 0; # DEPRECATED 1.6.0         26.10.2019
 has Int_0_to_2       $.layout               = 1;
 has Positive_Int     $.keep                 = 5;
 has Positive_Int     $.ll;                       # privat
@@ -39,12 +35,12 @@ has Positive_Int     $.max-height;
 has Int_2_or_greater $.max-width;
 has UInt             $.default              = 0;
 has UInt             $.pad                  = 2;
-has List             $.lf;                      # REMOVED 1.6.1
 has List             $.mark;
 has List             $.meta-items;
 has List             $.no-spacebar;
 has List             $.tabs-prompt;
 has List             $.tabs-info;
+has Str              $.footer-string;           # experimental
 has Str              $.info                 = '';
 has Str              $.prompt;
 has Str              $.empty                = '<empty>';
@@ -261,13 +257,17 @@ method !_pos_to_default {
     $!last_page_row  = $!rc2idx.end if $!last_page_row > $!rc2idx.end;
 }
 
-
 method !_set_pp_print_fmt {
-    if $!rc2idx.elems / $!avail_h > 1 {
+    if $!rc2idx.elems / $!avail_h > 1 || %!o<footer-string>.defined {
         $!avail_h -= 1;
         $!page_count = $!rc2idx.end div $!avail_h + 1;
         my $page_count_w = $!page_count.chars;
-        $!pp_row_fmt = "--- Page \%0{$page_count_w}d/{$!page_count} ---";
+        if %!o<footer-string>.defined {
+            $!pp_row_fmt = " \%0{$page_count_w}d/{$!page_count} %!o<footer-string>";
+        }
+        else {
+            $!pp_row_fmt = "--- Page \%0{$page_count_w}d/{$!page_count} ---";
+        }
         if sprintf( $!pp_row_fmt, $!page_count ).chars > $!avail_w {
             $!pp_row_fmt = "\%0{$page_count_w}d/{$!page_count}";
             if sprintf( $!pp_row_fmt, $!page_count ).chars > $!avail_w {
@@ -280,10 +280,28 @@ method !_set_pp_print_fmt {
         $!page_count = 1;
     }
 }
+#method !_set_pp_print_fmt {
+#    if $!rc2idx.elems / $!avail_h > 1 {
+#        $!avail_h -= 1;
+#        $!page_count = $!rc2idx.end div $!avail_h + 1;
+#        my $page_count_w = $!page_count.chars;
+#        $!pp_row_fmt = "--- Page \%0{$page_count_w}d/{$!page_count} ---";
+#        if sprintf( $!pp_row_fmt, $!page_count ).chars > $!avail_w {
+#            $!pp_row_fmt = "\%0{$page_count_w}d/{$!page_count}";
+#            if sprintf( $!pp_row_fmt, $!page_count ).chars > $!avail_w {
+#                $page_count_w = $!avail_w if $page_count_w > $!avail_w;
+#                $!pp_row_fmt = "\%0{$page_count_w}.{$page_count_w}s";
+#            }
+#        }
+#    }
+#    else {
+#        $!page_count = 1;
+#    }
+#}
 
 
 method !_pad_str_to_colwidth ( Int $i ) {
-    if %!o<ll> || $!all_in_one_row { # if set ll, all list elements must have the same length
+    if %!o<ll> || $!all_in_one_row { # if 'll' is set, all list elements must have the same length
         return @!list[$i];
     }
     my Int $str_w = @!w_list[$i];
@@ -390,7 +408,6 @@ method !_choose ( Int $multiselect, @!orig_list,
         Int_0_to_2       :$clear-screen         = $!clear-screen,
         Int_0_to_2       :$color                = $!color,
         Int_0_to_2       :$include-highlighted  = $!include-highlighted,
-        Int_0_to_2       :$justify              = $!justify, # DEPRECATED 1.6.0
         Int_0_to_2       :$layout               = $!layout,
         Positive_Int     :$keep                 = $!keep,
         Positive_Int     :$ll                   = $!ll,
@@ -398,12 +415,12 @@ method !_choose ( Int $multiselect, @!orig_list,
         Int_2_or_greater :$max-width            = $!max-width,
         UInt             :$default              = $!default,
         UInt             :$pad                  = $!pad,
-        List             :$lf                   = $!lf,     # REMOVED 1.6.1
         List             :$mark                 = $!mark,
         List             :$meta-items           = $!meta-items,
         List             :$no-spacebar          = $!no-spacebar,
         List             :$tabs-info            = $!tabs-info,
         List             :$tabs-prompt          = $!tabs-prompt,
+        Str              :$footer-string        = $!footer-string, # experimental
         Str              :$info                 = $!info,
         Str              :$prompt               = $!prompt,
         Str              :$empty                = $!empty,
@@ -412,13 +429,10 @@ method !_choose ( Int $multiselect, @!orig_list,
     if ! @!orig_list.elems {
         return;
     }
-    # %!o: make options available in methods
-
-    #%!o = :$beep, :$include-highlighted, :$index, :$mouse, :$order, :$clear-screen, :$alignment, :$layout, :$keep, :$ll, :$max-height, :$color, :$max-width,     # uncomment when 'justify' is removed
-    #      :$default, :$pad, :$mark, :$meta-items, :$no-spacebar, :$info, :$prompt, :$empty, :$undef, :$hide-cursor, :$tabs-info, :$tabs-prompt;                  # uncomment when 'justify' is removed
-    %!o = :$beep, :$include-highlighted, :$index, :$mouse, :$order, :$clear-screen, :alignment( $alignment // $justify ), :$layout, :$keep, :$ll, :$max-height,         # remove    when 'justify' is removed
-          :$color, :$max-width, :$default, :$pad, :$mark, :$meta-items, :$no-spacebar, :$info, :$prompt, :$empty, :$undef, :$hide-cursor, :$tabs-info, :$tabs-prompt;   # remove    when 'justify' is removed
-
+    # %!o -> make options available in methods
+    %!o = :$beep, :$include-highlighted, :$index, :$mouse, :$order, :$clear-screen, :$alignment, :$layout, :$keep, :$ll,
+          :$max-height, :$color, :$max-width, :$default, :$pad, :$mark, :$meta-items, :$no-spacebar, :$info, :$prompt,
+          :$empty, :$undef, :$hide-cursor, :$tabs-info, :$tabs-prompt, :$footer-string;
     if ! %!o<prompt>.defined {
         %!o<prompt> = $multiselect.defined ?? 'Your choice' !! 'Continue with ENTER';
     }
@@ -945,7 +959,7 @@ method !_goto( $row, $col ) {
     elsif new_i_row < $!i_row {
         $escape = $escape ~ up( $!i_row - new_i_row );
     }
-    $!i_row = new_i_row; # p5
+    $!i_row = new_i_row;
 
     # Col
     my \new_i_col = $!all_in_one_row ?? [+] @!w_list[$!rc2idx[$row][ ^$col ]].map: { $_ + %!o<pad> } !! $!col_w_plus * $col;
@@ -955,12 +969,12 @@ method !_goto( $row, $col ) {
     elsif new_i_col < $!i_col {
         $escape = $escape ~ left( $!i_col - new_i_col );
     }
-    $!i_col = new_i_col; # p5
+    $!i_col = new_i_col;
 
     return $escape;
 }
 
-method !_prepare_layout { # p5
+method !_prepare_layout {
     $!all_in_one_row = 0;
     $!single_column = 0;
     if %!o<layout> != 2 && ! %!o<ll> {
@@ -1302,10 +1316,6 @@ Expects as its value a string. The string is printed above the prompt string.
 
 This option has no meaning for C<pause>.
 
-=head3 justify
-
-The option I<justify> is now called I<alignment>. Use I<alignment> instead of I<justify>. I<justify> will be removed.
-
 =head3 keep
 
 I<keep> prevents that all the terminal rows are used by the prompt lines.
@@ -1366,10 +1376,6 @@ From broad to narrow: 0 > 1 > 2
     '-------------------'   '-------------------'   '-------------------'   '-------------------'
 
 =end code
-
-=head3 lf REMOVED
-
-I<lf> has been removed. Use I<tabs-prompt> and I<tabs-info> instead.
 
 =head3 max-height
 

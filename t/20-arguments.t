@@ -65,7 +65,7 @@ for @ge_2_int -> $key {
 
 
 
-my @int_0_2 = <justify layout clear-screen>;
+my @int_0_2 = <alignment layout clear-screen>;
 
 my @inval_int_0_2 = 3, |@inval_u_int;
 for @int_0_2 -> $key {
@@ -127,7 +127,7 @@ for @string -> $key {
 
 
 
-my @list = <lf mark no-spacebar>;
+my @list = <tabs-info tabs-prompt mark no-spacebar>;
 
 my @inval_list = 2, 3, -3, 6.6, 'hello';
 for @list -> $key {

@@ -194,10 +194,6 @@ Expects as its value a string. The string is printed above the prompt string.
 
 This option has no meaning for `pause`.
 
-### justify
-
-The option *justify* is now called *alignment*. Use *alignment* instead of *justify*. *justify* will be removed.
-
 ### keep
 
 *keep* prevents that all the terminal rows are used by the prompt lines.
@@ -246,10 +242,6 @@ From broad to narrow: 0 > 1 > 2
         |                   |   |                   |   | ..                |   | ..                |
         |                   |   |                   |   |                   |   | ..                |
         '-------------------'   '-------------------'   '-------------------'   '-------------------'
-
-### lf REMOVED
-
-*lf* has been removed. Use *tabs-prompt* and *tabs-info* instead.
 
 ### max-height
 

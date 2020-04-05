@@ -64,7 +64,7 @@ sub to-printwidth( $str, Int $avail_w, Bool $dot=False, @cache? ) is export( :DE
 
 
 
-sub line-fold( $str, Int $avail_w, Str :$init-tab is copy = '', Str :$subseq-tab is copy = '', :$color = 0 ) is export( :DEFAULT, :line-fold ) {
+sub line-fold( $str, Int $avail_w, Str :$init-tab is copy = '', Str :$subseq-tab is copy = '', :$color = 0, :$join = 0 ) is export( :DEFAULT, :line-fold ) {
     for $init-tab, $subseq-tab {
         if $_ { # .gist
             $_ = to-printwidth(
@@ -81,9 +81,9 @@ sub line-fold( $str, Int $avail_w, Str :$init-tab is copy = '', Str :$subseq-tab
     my @color;
     if $color { # elsif
         $string.=subst( / \x[feff] /, '', :g );
-        $string.=subst( / ( \e \[ <[\d;]>* m ) /, { @color.push( $0.Str ) && "\x[feff]" }, :g ); # msg
+        $string.=subst( / ( \e \[ <[\d;]>* m ) /, { @color.push( $0.Str ) && "\x[feff]" }, :g );
     }
-    $string.subst( / \t /, ' ', :g );
+    $string.=subst( / \t /, ' ', :g );
     $string.=subst( / <:Cc+:Noncharacter_Code_Point+:Cs> && \V /, '' , :g ); #
     if $string !~~ / \R / && print-columns( $init-tab ~ $string ) <= $avail_w {
         return $init-tab ~ $string;
@@ -134,9 +134,10 @@ sub line-fold( $str, Int $avail_w, Str :$init-tab is copy = '', Str :$subseq-tab
                 last;
             }
         }
-        @lines[*-1] ~= normal(); #
+        #@lines[*-1] ~= normal();
     }
     @lines.push( '' ) if $string.ends-with( "\n" );
+    return @lines.join: "\n" if $join;
     return @lines; #
 }
 
