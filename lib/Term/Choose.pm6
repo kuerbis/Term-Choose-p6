@@ -263,7 +263,7 @@ method !_set_pp_print_fmt {
         $!page_count = $!rc2idx.end div $!avail_h + 1;
         my $page_count_w = $!page_count.chars;
         if %!o<footer-string>.defined {
-            $!pp_row_fmt = "\%0{$page_count_w}d/{$!page_count} %!o<footer-string>"; # bugfix %0 -> \%0 ### 
+            $!pp_row_fmt = "\%0{$page_count_w}d/{$!page_count} %!o<footer-string>";
         }
         else {
             $!pp_row_fmt = "--- Page \%0{$page_count_w}d/{$!page_count} ---";
