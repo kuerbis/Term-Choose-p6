@@ -1,6 +1,9 @@
 Revision history for Term::Choose
 
 
+1.6.5   2020-04-26
+        - Bugfix sprintf format footer-string.
+
 1.6.4   2020-04-21
         - Update unicode table to unicode 13.0.
         - Update footer-string format.

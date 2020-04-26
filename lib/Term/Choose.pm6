@@ -1,6 +1,6 @@
 use v6;
 
-unit class Term::Choose:ver<1.6.4>;
+unit class Term::Choose:ver<1.6.5>;
 
 use Term::termios;
 
@@ -263,7 +263,7 @@ method !_set_pp_print_fmt {
         $!page_count = $!rc2idx.end div $!avail_h + 1;
         my $page_count_w = $!page_count.chars;
         if %!o<footer-string>.defined {
-            $!pp_row_fmt = "%0{$page_count_w}d/{$!page_count} %!o<footer-string>";
+            $!pp_row_fmt = "\%0{$page_count_w}d/{$!page_count} %!o<footer-string>"; # bugfix %0 -> \%0 ### 
         }
         else {
             $!pp_row_fmt = "--- Page \%0{$page_count_w}d/{$!page_count} ---";
@@ -760,10 +760,10 @@ method !_choose ( Int $multiselect, @!orig_list,
                         }
                     }
                     if %!o<no-spacebar> {
-                        self!_marked_idx2rc( $no-spacebar, False );
+                        self!_marked_idx2rc( %!o<no-spacebar>, False );
                     }
                     if %!o<meta-items> {
-                        self!_marked_idx2rc( $meta-items, False );
+                        self!_marked_idx2rc( %!o<meta-items>, False );
                     }
                     self!_wr_screen();
                 }
