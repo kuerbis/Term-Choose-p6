@@ -4,110 +4,120 @@ unit module Term::Choose::ReadKey;
 
 my Int $abs_cursor_Y;
 
-
 sub read-key( Int $mouse ) is export( :DEFAULT, :read-key ) {
-    my $buf = Buf.new;
-    my $c1;
-    while ! try $c1 = $buf.decode {
-        # Terminal::Print::RawInput
-        my $b = $*IN.read(1) or return;
-        $buf.push: $b;
-    }
-    if $c1 eq "\e" {
-        my $c2 = $*IN.read(1).decode;
-        if ! $c2.defined { return 'Escape' }
-        elsif $c2 eq "A" { return 'CursorUp' }
-        elsif $c2 eq "B" { return 'CursorDown' }
-        elsif $c2 eq "C" { return 'CursorRight' }
-        elsif $c2 eq "D" { return 'CursorLeft' }
-        elsif $c2 eq "H" { return 'CursorHome' }
-        elsif $c2 eq "O" {
-            my $c3 = $*IN.read(1).decode;
-            if    $c3 eq "A" { return 'CursorUp' }
-            elsif $c3 eq "B" { return 'CursorDown' }
-            elsif $c3 eq "C" { return 'CursorRight' }
-            elsif $c3 eq "D" { return 'CursorLeft' }
-            elsif $c3 eq "F" { return 'CursorEnd' }
-            elsif $c3 eq "H" { return 'CursorHome' }
-            #elsif $c3 eq "P" { return 'F1' }
-            #elsif $c3 eq "Q" { return 'F2' }
-            #elsif $c3 eq "R" { return 'F3' }
-            #elsif $c3 eq "S" { return 'F4' }
-            elsif $c3 eq "Z" { return 'BackTab' }
-            else { return }
-        }
-        #elsif $c2 eq "P" { return 'F1' }
-        #elsif $c2 eq "Q" { return 'F2' }
-        #elsif $c2 eq "R" { return 'F3' }
-        #elsif $c2 eq "S" { return 'F4' }
-        elsif $c2 eq "[" {
-            my $c3 = $*IN.read(1).decode;
-            if    $c3 eq "A" { return 'CursorUp' }
-            elsif $c3 eq "B" { return 'CursorDown' }
-            elsif $c3 eq "C" { return 'CursorRight' }
-            elsif $c3 eq "D" { return 'CursorLeft' }
-            elsif $c3 eq "F" { return 'CursorEnd' }
-            elsif $c3 eq "H" { return 'CursorHome' }
-            elsif $c3 eq "Z" { return 'BackTab' }
-            elsif $c3 ~~ / ^ <[ 0..9 ]> $ / {
-                my $digits = $c3;
-                my $next_c = $*IN.read(1).decode;
-                while $next_c ~~ / ^ <[ 0..9 ]> $ / {
-                    $digits ~= $next_c;
-                    $next_c = $*IN.read(1).decode;
-                }
-                if $next_c eq ";" {
-                    my $abs_curs_y = $digits;
-                    my $abs_curs_x = '';
-                    my $rx = $*IN.read(1).decode;
-                    while $rx ~~ / ^ <[ 0..9 ]> $ / {
-                        $abs_curs_x ~= $rx;
-                        $rx = $*IN.read(1).decode;
-                    }
-                    if $rx eq "R" {
-                        #$!abs_cursor_x = $abs_curs_x; # unused
-                        $abs_cursor_Y = $abs_curs_y.Int;
-                    }
-                    return;
-                }
-                elsif $next_c eq "~" {
-                    if    $digits eq "2" { return 'Insert' }
-                    elsif $digits eq "3" { return 'Delete' }
-                    elsif $digits eq "5" { return 'PageUp' }
-                    elsif $digits eq "6" { return 'PageDown' }
-                    #elsif $digits eq "11" { return 'F1' }
-                    #elsif $digits eq "12" { return 'F2' }
-                    #elsif $digits eq "13" { return 'F3' }
-                    #elsif $digits eq "14" { return 'F4' }
-                    #elsif $digits eq "15" { return 'F5' }
-                    #elsif $digits eq "17" { return 'F6' }
-                    #elsif $digits eq "18" { return 'F7' }
-                    #elsif $digits eq "19" { return 'F8' }
-                    #elsif $digits eq "20" { return 'F9' }
-                    #elsif $digits eq "21" { return 'F10' }
-                    #elsif $digits eq "23" { return 'F11' }
-                    #elsif $digits eq "24" { return 'F12' }
-                    #elsif $digits eq "25" { return 'F13' }
-                    #elsif $digits eq "26" { return 'F14' }
-                    #elsif $digits eq "28" { return 'F15' }
-                    #elsif $digits eq "29" { return 'F16' }
-                    #elsif $digits eq "31" { return 'F17' }
-                    #elsif $digits eq "32" { return 'F18' }
-                    #elsif $digits eq "33" { return 'F19' }
-                    #elsif $digits eq "34" { return 'F20' }
-                    else { return };
-                }
-                else { return }
+    my $s = Supplier::Preserving.new;
+    my $done = False;
+    start {
+        LOOP: until $done {
+            my $buf = Buf.new;
+            my $c1;
+            while ! try $c1 = $buf.decode {
+                # Terminal::Print::RawInput
+                my $b = $*IN.read(1) or return;
+                $buf.push: $b;
             }
-            elsif $c3 eq "<" && $mouse { return _mouse_tracking_SRG_1006() }
-            else { return }
+            my $pressed_key;
+            if $c1 eq "\e" {
+                my $c2 = $*IN.read(1).decode;
+                if ! $c2.defined { $pressed_key = 'Escape' }
+                elsif $c2 eq "A" { $pressed_key = 'CursorUp' }
+                elsif $c2 eq "B" { $pressed_key = 'CursorDown' }
+                elsif $c2 eq "C" { $pressed_key = 'CursorRight' }
+                elsif $c2 eq "D" { $pressed_key = 'CursorLeft' }
+                elsif $c2 eq "H" { $pressed_key = 'CursorHome' }
+                elsif $c2 eq "O" {
+                    my $c3 = $*IN.read(1).decode;
+                    if    $c3 eq "A" { $pressed_key = 'CursorUp' }
+                    elsif $c3 eq "B" { $pressed_key = 'CursorDown' }
+                    elsif $c3 eq "C" { $pressed_key = 'CursorRight' }
+                    elsif $c3 eq "D" { $pressed_key = 'CursorLeft' }
+                    elsif $c3 eq "F" { $pressed_key = 'CursorEnd' }
+                    elsif $c3 eq "H" { $pressed_key = 'CursorHome' }
+                    #elsif $c3 eq "P" { $pressed_key = 'F1' }
+                    #elsif $c3 eq "Q" { $pressed_key = 'F2' }
+                    #elsif $c3 eq "R" { $pressed_key = 'F3' }
+                    #elsif $c3 eq "S" { $pressed_key = 'F4' }
+                    elsif $c3 eq "Z" { $pressed_key = 'BackTab' }
+                    else {}
+                }
+                #elsif $c2 eq "P" { $pressed_key = 'F1' }
+                #elsif $c2 eq "Q" { $pressed_key = 'F2' }
+                #elsif $c2 eq "R" { $pressed_key = 'F3' }
+                #elsif $c2 eq "S" { $pressed_key = 'F4' }
+                elsif $c2 eq "[" {
+                    my $c3 = $*IN.read(1).decode;
+                    if    $c3 eq "A" { $pressed_key = 'CursorUp' }
+                    elsif $c3 eq "B" { $pressed_key = 'CursorDown' }
+                    elsif $c3 eq "C" { $pressed_key = 'CursorRight' }
+                    elsif $c3 eq "D" { $pressed_key = 'CursorLeft' }
+                    elsif $c3 eq "F" { $pressed_key = 'CursorEnd' }
+                    elsif $c3 eq "H" { $pressed_key = 'CursorHome' }
+                    elsif $c3 eq "Z" { $pressed_key = 'BackTab' }
+                    elsif $c3 ~~ / ^ <[ 0..9 ]> $ / {
+                        my $digits = $c3;
+                        my $next_c = $*IN.read(1).decode;
+                        while $next_c ~~ / ^ <[ 0..9 ]> $ / {
+                            $digits ~= $next_c;
+                            $next_c = $*IN.read(1).decode;
+                        }
+                        if $next_c eq ";" {
+                            my $abs_curs_y = $digits;
+                            my $abs_curs_x = '';
+                            my $rx = $*IN.read(1).decode;
+                            while $rx ~~ / ^ <[ 0..9 ]> $ / {
+                                $abs_curs_x ~= $rx;
+                                $rx = $*IN.read(1).decode;
+                            }
+                            if $rx eq "R" {
+                                #$!abs_cursor_x = $abs_curs_x; # unused
+                                $abs_cursor_Y = $abs_curs_y.Int;
+                            }
+                            # ...;
+                        }
+                        elsif $next_c eq "~" {
+                            if    $digits eq "2" { $pressed_key = 'Insert' }
+                            elsif $digits eq "3" { $pressed_key = 'Delete' }
+                            elsif $digits eq "5" { $pressed_key = 'PageUp' }
+                            elsif $digits eq "6" { $pressed_key = 'PageDown' }
+                            #elsif $digits eq "11" { $pressed_key = 'F1' }
+                            #elsif $digits eq "12" { $pressed_key = 'F2' }
+                            #elsif $digits eq "13" { $pressed_key = 'F3' }
+                            #elsif $digits eq "14" { $pressed_key = 'F4' }
+                            #elsif $digits eq "15" { $pressed_key = 'F5' }
+                            #elsif $digits eq "17" { $pressed_key = 'F6' }
+                            #elsif $digits eq "18" { $pressed_key = 'F7' }
+                            #elsif $digits eq "19" { $pressed_key = 'F8' }
+                            #elsif $digits eq "20" { $pressed_key = 'F9' }
+                            #elsif $digits eq "21" { $pressed_key = 'F10' }
+                            #elsif $digits eq "23" { $pressed_key = 'F11' }
+                            #elsif $digits eq "24" { $pressed_key = 'F12' }
+                            #elsif $digits eq "25" { $pressed_key = 'F13' }
+                            #elsif $digits eq "26" { $pressed_key = 'F14' }
+                            #elsif $digits eq "28" { $pressed_key = 'F15' }
+                            #elsif $digits eq "29" { $pressed_key = 'F16' }
+                            #elsif $digits eq "31" { $pressed_key = 'F17' }
+                            #elsif $digits eq "32" { $pressed_key = 'F18' }
+                            #elsif $digits eq "33" { $pressed_key = 'F19' }
+                            #elsif $digits eq "34" { $pressed_key = 'F20' }
+                            else {};
+                        }
+                        else {}
+                    }
+                    elsif $c3 eq "<" && $mouse { $pressed_key = _mouse_tracking_SRG_1006() }
+                    else {}
+                }
+                else {}
+            }
+            else {
+                if    $c1.ord == 127 { $pressed_key = 'Backspace'                }
+                elsif $c1.ord < 32   { $pressed_key = '^' ~ ( $c1.ord + 64 ).chr }
+                else                 { $pressed_key = $c1                        }
+            }
+            $s.emit( $pressed_key ) unless $done;
         }
-        else { return }
     }
-    else {
-        if    $c1.ord == 127 { return 'Backspace'                }
-        elsif $c1.ord < 32   { return '^' ~ ( $c1.ord + 64 ).chr }
-        else                 { return $c1                        }
+    $s.Supply.on-close: {
+        $done = True;
     }
 }
 

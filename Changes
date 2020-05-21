@@ -1,6 +1,9 @@
 Revision history for Term::Choose
 
 
+1.6.6   2020-05-21
+        - React whenever a press key is emitted.
+
 1.6.5   2020-04-26
         - Bugfix sprintf format footer-string.
 
