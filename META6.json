@@ -16,7 +16,8 @@
     "Term::Choose::LineFold::CharWidthAmbiguousWide" : "lib/Term/Choose/LineFold/CharWidthAmbiguousWide.pm6",
     "Term::Choose::LineFold::CharWidthDefault" : "lib/Term/Choose/LineFold/CharWidthDefault.pm6",
     "Term::Choose::ReadKey" : "lib/Term/Choose/ReadKey.pm6",
-    "Term::Choose::Screen" : "lib/Term/Choose/Screen.pm6"
+    "Term::Choose::Screen" : "lib/Term/Choose/Screen.pm6",
+    "Term::Choose::SetTerm" : "lib/Term/Choose/SetTerm.pm6"
   },
   "resources" : [ ],
   "source-url" : "git://github.com/kuerbis/Term-Choose-p6.git",
@@ -28,5 +29,5 @@
   "test-depends" : [
     "Test"
   ],
-  "version" : "1.6.6"
+  "version" : "1.6.7"
 }
