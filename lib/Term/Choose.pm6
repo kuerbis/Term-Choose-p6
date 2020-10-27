@@ -1,6 +1,6 @@
 use v6;
 
-unit class Term::Choose:ver<1.6.7>;
+unit class Term::Choose:ver<1.6.8>;
 
 use Term::termios;
 
@@ -41,7 +41,7 @@ has List             $.meta-items;
 has List             $.no-spacebar;
 has List             $.tabs-prompt;
 has List             $.tabs-info;
-has Str              $.footer-string;           # experimental
+has Str              $.footer               = '';
 has Str              $.info                 = '';
 has Str              $.prompt;
 has Str              $.empty                = '<empty>';
@@ -218,12 +218,12 @@ method !_pos_to_default {
 }
 
 method !_set_pp_print_fmt {
-    if $!rc2idx.elems / $!avail_h > 1 || %!o<footer-string>.defined {
+    if $!rc2idx.elems / $!avail_h > 1 || %!o<footer>.chars {
         $!avail_h -= 1;
         $!page_count = $!rc2idx.end div $!avail_h + 1;
         my $page_count_w = $!page_count.chars;
-        if %!o<footer-string>.defined {
-            $!pp_row_fmt = "\%0{$page_count_w}d/{$!page_count} %!o<footer-string>";
+        if %!o<footer>.chars {
+            $!pp_row_fmt = "\%0{$page_count_w}d/{$!page_count} %!o<footer>";
         }
         else {
             $!pp_row_fmt = "--- Page \%0{$page_count_w}d/{$!page_count} ---";
@@ -361,7 +361,7 @@ method !_choose ( Int $multiselect, @!orig_list,
         List             :$no-spacebar          = $!no-spacebar,
         List             :$tabs-info            = $!tabs-info,
         List             :$tabs-prompt          = $!tabs-prompt,
-        Str              :$footer-string        = $!footer-string, # experimental
+        Str              :$footer               = $!footer,
         Str              :$info                 = $!info,
         Str              :$prompt               = $!prompt,
         Str              :$empty                = $!empty,
@@ -373,7 +373,7 @@ method !_choose ( Int $multiselect, @!orig_list,
     # %!o -> make options available in methods
     %!o = :$beep, :$include-highlighted, :$index, :$mouse, :$order, :$clear-screen, :$alignment, :$layout, :$keep, :$ll,
           :$max-height, :$color, :$max-width, :$default, :$pad, :$mark, :$meta-items, :$no-spacebar, :$info, :$prompt,
-          :$empty, :$undef, :$hide-cursor, :$tabs-info, :$tabs-prompt, :$footer-string;
+          :$empty, :$undef, :$hide-cursor, :$tabs-info, :$tabs-prompt, :$footer;
     if ! %!o<prompt>.defined {
         %!o<prompt> = $multiselect.defined ?? 'Your choice' !! 'Continue with ENTER';
     }
@@ -841,7 +841,11 @@ method !_wr_screen {
             }
         }
     }
-    if $!page_count > 1 {
+    #if $!page_count > 1 {
+    if $!pp_row_fmt.defined {
+        if @lines.elems < $!avail_h {
+            @lines.append: '' xx $!avail_h - @lines.elems;
+        }
         @lines.push: sprintf $!pp_row_fmt, $!first_page_row div $!avail_h + 1;
     }
     print self!_goto( $!first_page_row, 0 ) ~ @lines.join( "\n\r" ) ~ "\r";
@@ -1097,7 +1101,7 @@ Term::Choose - Choose items from a list interactively.
 
     # OO interface:
  
-    my $tc = Term::Choose.new( :1mouse, :0order ) );
+    my $tc = Term::Choose.new( :1mouse, :0order );
 
     $chosen = $tc.choose( @list, :1layout, :2default );
 
@@ -1159,8 +1163,8 @@ C<choose> returns nothing if the C<q> or C<Ctrl-Q> is pressed.
 
 The user can choose many items.
 
-To choose an item mark the item with the C<SpaceBar>. When C<Return> is pressed C<choose-multi> then returns the list of
-the marked items. If the option I<include-highlighted> is set to C<1>, the highlighted item is also returned.
+To choose an item mark the item with the C<SpaceBar>. When C<Return> is pressed C<choose-multi> then returns the marked
+items as an Array. If the option I<include-highlighted> is set to C<1>, the highlighted item is also returned.
 
 If C<Return> is pressed with no marked items and L<#include-highlighted> is set to C<2>, the highlighted item is
 returned.
@@ -1253,7 +1257,13 @@ Allowed values: 0 or greater
 
 Sets the string displayed on the screen instead of an empty string.
 
-default: "E<lt>emptyE<gt>"
+(default: "E<lt>emptyE<gt>")
+
+=head3 footer
+
+Add a string in the bottom line.
+
+(default: undefined)
 
 =head3 hide-cursor
 

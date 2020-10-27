@@ -20,7 +20,7 @@ SYNOPSIS
 
     # OO interface:
      
-    my $tc = Term::Choose.new( :1mouse, :0order ) );
+    my $tc = Term::Choose.new( :1mouse, :0order );
 
     $chosen = $tc.choose( @list, :1layout, :2default );
 
@@ -83,7 +83,7 @@ choose-multi
 
 The user can choose many items.
 
-To choose an item mark the item with the `SpaceBar`. When `Return` is pressed `choose-multi` then returns the list of the marked items. If the option *include-highlighted* is set to `1`, the highlighted item is also returned.
+To choose an item mark the item with the `SpaceBar`. When `Return` is pressed `choose-multi` then returns the marked items as an Array. If the option *include-highlighted* is set to `1`, the highlighted item is also returned.
 
 If `Return` is pressed with no marked items and [include-highlighted](#include-highlighted) is set to `2`, the highlighted item is returned.
 
@@ -174,7 +174,13 @@ Allowed values: 0 or greater
 
 Sets the string displayed on the screen instead of an empty string.
 
-default: "ltemptygt"
+(default: "ltemptygt")
+
+### footer
+
+Add a string in the bottom line.
+
+(default: undefined)
 
 ### hide-cursor
 

@@ -1,8 +1,12 @@
 Revision history for Term::Choose
 
 
+1.6.8   2020-10-27
+        - Rename 'footer-string' to 'footer'
+        - New option 'footer'.
+
 1.6.7   2020-05-24
-        - Bugfix: add SetTerm.pm6 to META6.json/provides.
+        - Bugfix: add SetTerm.pm6 to META6.json/provides. [GH #4 melezhik]
 
 1.6.6   2020-05-21
         - React whenever a press key is emitted.
