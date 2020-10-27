@@ -237,6 +237,7 @@ method !_set_pp_print_fmt {
         }
     }
     else {
+        $!pp_row_fmt = Str;
         $!page_count = 1;
     }
 }
@@ -841,7 +842,6 @@ method !_wr_screen {
             }
         }
     }
-    #if $!page_count > 1 {
     if $!pp_row_fmt.defined {
         if @lines.elems < $!avail_h {
             @lines.append: '' xx $!avail_h - @lines.elems;
