@@ -8,11 +8,11 @@ use Term::Choose::Screen;
 
 
 has Int $.mouse;
-has Int $.loop;
 has Int $.hide-cursor;
 has Int $.clear-screen;
-has Int $.i_row;
-has Int $.count-prompt-lines;
+has Int $.loop is rw;
+#has Int $.i_row;
+#has Int $.count-prompt-lines;
 
 has $!saved_termios;
 

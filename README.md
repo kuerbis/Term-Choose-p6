@@ -63,6 +63,8 @@ For the usage of `SpaceBar`, `Ctrl-SpaceBar`, `Return` and the `q`-key see [choo
 
 With *mouse* enabled use the the left mouse key instead the `Return` key and the right mouse key instead of the `SpaceBar` key. Instead of `PageUp` and `PageDown` it can be used the mouse wheel. See [mouse](#mouse)
 
+Pressing the `F3` allows one to enter a regular expression so that only the items that match the regular expression are displayed. When going back to the unfiltered menu (`Enter`) the item highlighted in the filtered menu keeps the highlighting. Also (in *list context*) marked items retain there markings. The Raku function `prompt` is used to read the regular expression if [Readline](Readline) is not available. See option [f3](#f3).
+
 CONSTRUCTOR
 ===========
 
@@ -181,6 +183,16 @@ Sets the string displayed on the screen instead of an empty string.
 Add a string in the bottom line.
 
 (default: undefined)
+
+### f3
+
+Set the behavior of the `F3` key.
+
+0 - off
+
+1 - case-insensitive search (default)
+
+2 - case-sensitive search
 
 ### hide-cursor
 

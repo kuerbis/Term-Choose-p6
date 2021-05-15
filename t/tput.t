@@ -5,7 +5,7 @@ use Test;
 my $term = %*ENV<TERM> || 'vt100'; # Screen.pm6
 
 
-ok run( 'tput', '-T', $term, '-V', :out ).out.slurp, 'tput available';
+#ok run( 'tput', '-T', $term, '-V', :out ).out.slurp, 'tput available';     # OpenBSD: tput: unknown option -- V    (#5)
 
 
 for <cuu cud cuf cub> -> $cap {

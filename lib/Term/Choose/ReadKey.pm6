@@ -35,14 +35,14 @@ sub read-key( Int $mouse ) is export( :DEFAULT, :read-key ) {
                     elsif $c3 eq "H" { $pressed_key = 'CursorHome' }
                     #elsif $c3 eq "P" { $pressed_key = 'F1' }
                     #elsif $c3 eq "Q" { $pressed_key = 'F2' }
-                    #elsif $c3 eq "R" { $pressed_key = 'F3' }
+                    elsif $c3 eq "R" { $pressed_key = 'F3' }
                     #elsif $c3 eq "S" { $pressed_key = 'F4' }
                     elsif $c3 eq "Z" { $pressed_key = 'BackTab' }
                     else {}
                 }
                 #elsif $c2 eq "P" { $pressed_key = 'F1' }
                 #elsif $c2 eq "Q" { $pressed_key = 'F2' }
-                #elsif $c2 eq "R" { $pressed_key = 'F3' }
+                elsif $c2 eq "R" { $pressed_key = 'F3' }
                 #elsif $c2 eq "S" { $pressed_key = 'F4' }
                 elsif $c2 eq "[" {
                     my $c3 = $*IN.read(1).decode;
@@ -75,13 +75,13 @@ sub read-key( Int $mouse ) is export( :DEFAULT, :read-key ) {
                             # ...;
                         }
                         elsif $next_c eq "~" {
-                            if    $digits eq "2" { $pressed_key = 'Insert' }
-                            elsif $digits eq "3" { $pressed_key = 'Delete' }
-                            elsif $digits eq "5" { $pressed_key = 'PageUp' }
-                            elsif $digits eq "6" { $pressed_key = 'PageDown' }
+                            if    $digits eq "2"  { $pressed_key = 'Insert' }
+                            elsif $digits eq "3"  { $pressed_key = 'Delete' }
+                            elsif $digits eq "5"  { $pressed_key = 'PageUp' }
+                            elsif $digits eq "6"  { $pressed_key = 'PageDown' }
                             #elsif $digits eq "11" { $pressed_key = 'F1' }
                             #elsif $digits eq "12" { $pressed_key = 'F2' }
-                            #elsif $digits eq "13" { $pressed_key = 'F3' }
+                            elsif $digits eq "13" { $pressed_key = 'F3' }
                             #elsif $digits eq "14" { $pressed_key = 'F4' }
                             #elsif $digits eq "15" { $pressed_key = 'F5' }
                             #elsif $digits eq "17" { $pressed_key = 'F6' }

@@ -1,6 +1,6 @@
 use v6;
 
-unit class Term::Choose:ver<1.6.9>;
+unit class Term::Choose:ver<1.7.0>;
 
 use Term::termios;
 
@@ -28,6 +28,7 @@ has Int_0_or_1       $.hide-cursor          = 1;
 has Int_0_to_2       $.alignment            = 0;
 has Int_0_to_2       $.clear-screen         = 0;
 has Int_0_to_2       $.color                = 0;
+has Int_0_to_2       $.f3                   = 1;
 has Int_0_to_2       $.include-highlighted  = 0;
 has Int_0_to_2       $.layout               = 1;
 has Positive_Int     $.keep                 = 5;
@@ -74,6 +75,14 @@ has Array $!p;
 has Array $!marked;
 has Int   $!page_step;
 has Int   $!cursor_row;
+
+has Int   $!search;
+has Array $!map_search_list_index;
+has Hash  $!search_backup_data;
+has Hash  $!search_backup_opt;
+
+
+
 
 has Term::Choose::SetTerm $!setterm;
 
@@ -192,13 +201,13 @@ method !_prepare_prompt {
         return;
     }
     my Int $keep = %!o<keep>;
-    $keep += 1       if $!rc2idx.elems / $!avail_h > 1; ##
-    $keep = $!term_h if $keep > $!term_h;
-    if @!prompt_lines.elems + $keep > $!avail_h {
-        @!prompt_lines.splice( 0, @!prompt_lines.elems + $keep - $!avail_h );
+    $keep += 1; # page row
+    if $keep > $!term_h {
+        $keep = $!term_h;
     }
-    if @!prompt_lines.elems {
-        $!avail_h -= @!prompt_lines.elems;
+    my $limit_prompt_lines = $!avail_h - $keep;
+    if @!prompt_lines.elems > $limit_prompt_lines {
+        @!prompt_lines.splice( 0, $limit_prompt_lines );
     }
 }
 
@@ -219,7 +228,7 @@ method !_pos_to_default {
 
 method !_set_pp_print_fmt {
     if $!rc2idx.elems / $!avail_h > 1 || %!o<footer>.chars {
-        $!avail_h -= 1;
+        $!avail_h -= 1; #
         $!page_count = $!rc2idx.end div $!avail_h + 1;
         my $page_count_w = $!page_count.chars;
         if %!o<footer>.chars {
@@ -349,6 +358,7 @@ method !_choose ( Int $multiselect, @!orig_list,
         Int_0_to_2       :$alignment            = $!alignment,
         Int_0_to_2       :$clear-screen         = $!clear-screen,
         Int_0_to_2       :$color                = $!color,
+        Int_0_to_2       :$f3                   = $!f3,
         Int_0_to_2       :$include-highlighted  = $!include-highlighted,
         Int_0_to_2       :$layout               = $!layout,
         Positive_Int     :$keep                 = $!keep,
@@ -372,9 +382,9 @@ method !_choose ( Int $multiselect, @!orig_list,
         return;
     }
     # %!o -> make options available in methods
-    %!o = :$beep, :$include-highlighted, :$index, :$mouse, :$order, :$clear-screen, :$alignment, :$layout, :$keep, :$ll,
-          :$max-height, :$color, :$max-width, :$default, :$pad, :$mark, :$meta-items, :$no-spacebar, :$info, :$prompt,
-          :$empty, :$undef, :$hide-cursor, :$tabs-info, :$tabs-prompt, :$footer;
+    %!o = :$page, :$beep, :$index, :$mouse, :$order, :$hide-cursor, :$alignment, :$clear-screen, :$color, :$f3,
+          :$include-highlighted, :$layout, :$keep, :$ll, :$max-height, :$max-width, :$default, :$pad, :$mark,
+          :$meta-items, :$no-spacebar, :$tabs-info, :$tabs-prompt, :$footer, :$info, :$prompt, :$empty, :$undef;
     if ! %!o<prompt>.defined {
         %!o<prompt> = $multiselect.defined ?? 'Your choice' !! 'Continue with ENTER';
     }
@@ -383,6 +393,8 @@ method !_choose ( Int $multiselect, @!orig_list,
     }
     $!setterm = Term::Choose::SetTerm.new( :$mouse :$hide-cursor, :$clear-screen );
     $!setterm.init-term();
+    self!_avail_screen_size();
+    self!_prepare_new_copy_of_list();
     self!_wr_first_screen( $multiselect );
     my $fast_page = 10;
     if $!page_count > 10_000 {
@@ -420,6 +432,8 @@ method !_choose ( Int $multiselect, @!orig_list,
                 }
                 $!setterm.restore-term( $!i_row + @!prompt_lines );
                 $!setterm.init-term();
+                self!_avail_screen_size();
+                self!_prepare_new_copy_of_list();
                 self!_wr_first_screen( $multiselect );
                 next;
             }
@@ -672,6 +686,10 @@ method !_choose ( Int $multiselect, @!orig_list,
                     exit 1;
                 }
                 when '^M' { # Enter/Return
+                    if $!search {
+                        self!_search_end( $multiselect );
+                        next;
+                    }
                     $!setterm.restore-term( $!i_row + @!prompt_lines );
                     if ! $multiselect.defined {
                         done();
@@ -744,6 +762,21 @@ method !_choose ( Int $multiselect, @!orig_list,
                         self!_beep();
                     }
                 }
+                when 'F3' {
+                    if %!o<f3> {
+                        if %!o<ll> {
+                            $!setterm.restore-term( $!i_row + @!prompt_lines );
+                            return -13;
+                        }
+                        if $!search {
+                            self!_search_end( $multiselect );
+                        }
+                        self!_search_begin( $multiselect );
+                    }
+                    else {
+                        self!_beep();
+                    }
+                }
                 default {
                     self!_beep();
                 }
@@ -753,8 +786,7 @@ method !_choose ( Int $multiselect, @!orig_list,
     return $return;
 }
 
-
-method !_wr_first_screen ( Int $multiselect ) {
+method !_avail_screen_size {
     ( $!term_w, $!term_h ) = get-term-size();
     ( $!avail_w, $!avail_h ) = ( $!term_w, $!term_h );
     if  %!o<ll>.defined &&  %!o<ll> > $!avail_w {
@@ -768,12 +800,18 @@ method !_wr_first_screen ( Int $multiselect ) {
     if $!avail_w < 2 {
         die "Terminal width to small!";
     }
-    self!_prepare_new_copy_of_list();
-    $!col_w_plus = $!col_w + %!o<pad>;
     self!_prepare_prompt();
+    if @!prompt_lines.elems {
+        $!avail_h -= @!prompt_lines.elems;
+    }
     if %!o<max-height> && %!o<max-height> < $!avail_h {
         $!avail_h = %!o<max-height>;
     }
+}
+
+
+method !_wr_first_screen ( Int $multiselect ) {
+    $!col_w_plus = $!col_w + %!o<pad>;
     self!_prepare_layout();
     self!_list_index2rowcol();
     self!_set_pp_print_fmt;
@@ -935,6 +973,7 @@ method !_goto( $row, $col ) {
     return $escape;
 }
 
+
 method !_prepare_layout {
     $!all_in_one_row = 0;
     $!single_column = 0;
@@ -958,6 +997,7 @@ method !_prepare_layout {
         # cut to $!avail_w in _prepare_new_copy_of_list
     }
 }
+
 
 method !_list_index2rowcol {
     $!rc2idx = [];
@@ -1061,6 +1101,7 @@ method !_marked_idx2rc ( List $indexes, Bool $yesno ) {
     }
 }
 
+
 method !_marked_rc2idx {
     my Int @idx;
     if %!o<order> == 1 {
@@ -1079,6 +1120,127 @@ method !_marked_rc2idx {
     }
     return @idx;
 }
+
+
+
+method !_search_user_input ( $prompt ) {
+    my $backup_loop = $!setterm.loop;
+    $!setterm.loop = 1;
+    $!setterm.restore-term( 0 );
+    print "\r", clr-to-eol();
+    print show-cursor() if ! %!o<hide_cursor>;
+    my $string;
+    if ( try require Readline ) === Nil {
+        $string = prompt( $prompt );
+    }
+    else {
+        require Readline;
+        my $rl = ::('Readline').new;
+        $string = $rl.readline( $prompt );
+    }
+    print hide-cursor() if ! %!o<hide_cursor>;
+    $!setterm.init-term();
+    $!setterm.loop = $backup_loop;
+    return $string;
+}
+
+
+method !_search_begin ( $multiselect ) {
+    $!map_search_list_index = [];
+    my $search_str = self!_search_user_input( '> search-pattern: ' );
+    if ! $search_str.chars {
+        self!_search_end( $multiselect );
+        return;
+    }
+    my $regex;
+    if %!o<f3> == 1 {
+        $regex = rx:i/<$search_str>/;
+    }
+    else {
+        $regex = rx/<$search_str>/;
+    }
+    my $filtered_list = [];
+    my $filtered_w_list = [];
+    for ^@!list -> $i {
+        if @!list[$i] ~~ $regex {
+            $!map_search_list_index.push: $i;
+            $filtered_list.push: @!list[$i];
+            $filtered_w_list.push: @!w_list[$i];
+        }
+    }
+    if ! $filtered_list.elems {
+        my $message = 'No matches found.';
+        $filtered_list = [ $message ];
+        $filtered_w_list = [ print-columns( $message ) ];
+        #$!map_search_list_index = [ $!rc2idx[ $!p[R] ][ $!p[C] ] ];
+        $!map_search_list_index = [ 0 ];
+    }
+    %!o<mark> = self!_marked_rc2idx();
+    $!search_backup_data<list> = [ @!list ];
+    @!list = |$filtered_list;
+    $!search_backup_data<w_list> = [ @!w_list ];
+    @!w_list = |$filtered_w_list;
+    $!search_backup_data<col_w> = $!col_w;
+    $!col_w = $filtered_w_list.max;
+    %!o<default> = 0;
+    for <meta_items no_spacebar mark> -> $opt {
+        if %!o{$opt}.defined {
+            $!search_backup_opt{$opt} = [ |%!o{$opt} ];
+            my $tmp = [];
+            for |%!o{$opt} -> $orig_idx {
+                for ^$!map_search_list_index -> $i {
+                    if $!map_search_list_index[$i] == $orig_idx {
+                        $tmp.push: $i;
+                    }
+                }
+            }
+            %!o{$opt} = $tmp;
+        }
+    }
+    $!search = 1;
+    my $up = $!i_row + @!prompt_lines + 1; # + 1 => readline
+    print up( $up ) if $up;
+    self!_avail_screen_size();
+    self!_wr_first_screen( $multiselect );
+}
+
+
+method !_search_end ( $multiselect ) {
+    if $!search_backup_data<list>.defined && $!search_backup_data<list>.elems {
+        %!o<default> = $!map_search_list_index[ $!rc2idx[ $!p[R] ][ $!p[C] ] ];
+        %!o<mark> = self!_marked_rc2idx();
+        my $tmp_mark = [];
+        for |%!o<mark> -> $i {
+            $tmp_mark.push: $!map_search_list_index[$i];
+        }
+        %!o<mark> = [ |$!search_backup_opt<mark>.unique ];
+        $!map_search_list_index = [];
+        $!search_backup_opt<mark>:delete;
+        for <meta_items no_spacebar> -> $key {
+            if $!search_backup_opt{$key}.defined {
+                %!o{$key} = $!search_backup_opt{$key};
+            }
+        }
+        @!list = |$!search_backup_data<list>;
+        @!w_list = |$!search_backup_data<w_list>;
+        $!col_w  = $!search_backup_data<col_w>;
+    }
+    #else {
+    #    %!o<default> = $!rc2idx[ $!p[R] ][ $!p[C] ];
+    #}
+    $!search_backup_opt = {};
+    $!search_backup_data = {};
+    $!search = 0;
+    my $up = $!i_row + @!prompt_lines;
+    print up( $up ) if $up;
+    print "\r" ~ clr-lines-to-bot;
+    self!_avail_screen_size();
+    self!_wr_first_screen( $multiselect );
+}
+
+
+
+
 
 
 =begin pod
@@ -1144,6 +1306,11 @@ L<#pause>.
 
 With I<mouse> enabled use the the left mouse key instead the C<Return> key and the right mouse key instead of the
 C<SpaceBar> key. Instead of C<PageUp> and C<PageDown> it can be used the mouse wheel. See L<#mouse>
+
+Pressing the C<F3> allows one to enter a regular expression so that only the items that match the regular expression
+are displayed. When going back to the unfiltered menu (C<Enter>) the item highlighted in the filtered menu keeps the
+highlighting. Also (in I<list context>) marked items retain there markings. The Raku function C<prompt> is used to
+read the regular expression if L<Readline> is not available. See option L<#f3>.
 
 =head1 CONSTRUCTOR
 
@@ -1264,6 +1431,16 @@ Sets the string displayed on the screen instead of an empty string.
 Add a string in the bottom line.
 
 (default: undefined)
+
+=head3 f3
+
+Set the behavior of the C<F3> key.
+
+0 - off
+
+1 - case-insensitive search (default)
+
+2 - case-sensitive search
 
 =head3 hide-cursor
 

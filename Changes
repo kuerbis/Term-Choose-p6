@@ -1,11 +1,15 @@
 Revision history for Term::Choose
 
 
+1.7.0   2021-05-15
+        - Filter choices with the F3 key.
+        - Fixed test failure: Test 'tput available' fails on OpenBSD. [GH #5 andinus]
+
 1.6.9   2020-10-27
         - No changes.
 
 1.6.8   2020-10-27
-        - Rename 'footer-string' to 'footer'
+        - Rename 'footer-string' to 'footer'.
         - New option 'footer'.
 
 1.6.7   2020-05-24
