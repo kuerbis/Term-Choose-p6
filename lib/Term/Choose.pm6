@@ -1,6 +1,6 @@
 use v6;
 
-unit class Term::Choose:ver<1.7.0>;
+unit class Term::Choose:ver<1.7.1>;
 
 use Term::termios;
 
@@ -64,7 +64,7 @@ has Int   $!col_w_plus;
 has Int   @!w_list;
 has Int   $!single_column;
 has Int   $!all_in_one_row;
-has Int   $!rest;
+has Int   $!idx_of_last_col_in_last_row;
 has Int   $!page_count;
 has Str   $!pp_row_fmt;
 has Str   @!prompt_lines;
@@ -459,7 +459,7 @@ method !_choose ( Int $multiselect, @!orig_list,
                 $saved_pos = Array;
             }
 
-            # $!rc2idx holds the new list (AoA) formatted in "_list_index2rowcol" appropriate to the chosen layout.
+            # $!rc2idx holds the new list (AoA) formatted in "_list_idx2rc" appropriate to the chosen layout.
             # $!rc2idx does not hold the values directly but the respective list indexes from the original list.
             # If the original list would be ( 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h' ) and the new formatted list should be
             #     a d g
@@ -640,7 +640,7 @@ method !_choose ( Int $multiselect, @!orig_list,
                     }
                 }
                 when 'CursorEnd' | '^E' {
-                    if %!o<order> == 1 && $!rest {
+                    if %!o<order> == 1 && $!idx_of_last_col_in_last_row < $!rc2idx[0].end {
                         if $!p[R] == $!rc2idx.end - 1 && $!p[C] == $!rc2idx[ $!p[R] ].end {
                             self!_beep();
                         }
@@ -813,7 +813,7 @@ method !_avail_screen_size {
 method !_wr_first_screen ( Int $multiselect ) {
     $!col_w_plus = $!col_w + %!o<pad>;
     self!_prepare_layout();
-    self!_list_index2rowcol();
+    self!_list_idx2rc();
     self!_set_pp_print_fmt;
     $!first_page_row = 0;
     $!last_page_row  = $!avail_h - 1;
@@ -999,15 +999,17 @@ method !_prepare_layout {
 }
 
 
-method !_list_index2rowcol {
+method !_list_idx2rc {
     $!rc2idx = [];
     if $!all_in_one_row {
         $!rc2idx[0] = [ ^@!list ];
+        $!idx_of_last_col_in_last_row = @!list.end;
     }
     elsif $!single_column {
         for ^@!list -> $i {
             $!rc2idx[$i][0] = $i;
         }
+        $!idx_of_last_col_in_last_row = 0;
     }
     else {
         my Int $tmp_avail_w = $!avail_w + %!o<pad>;
@@ -1023,14 +1025,14 @@ method !_list_index2rowcol {
         }
         # order
         my Int $cols_per_row = $tmp_avail_w div $!col_w_plus || 1;
-        $!rest = @!list.elems % $cols_per_row; #
+        $!idx_of_last_col_in_last_row = ( @!list.elems % $cols_per_row || $cols_per_row ) - 1;
         if %!o<order> == 1 {
             my Int $nr_of_rows = ( @!list.elems - 1 + $cols_per_row ) div $cols_per_row; #
             my Array @rearranged_idx;
             my Int $begin = 0;
             my Int $end = $nr_of_rows - 1;
-            for ^$cols_per_row -> $col {
-                if $!rest && $col >= $!rest {
+            for ^$cols_per_row -> $col { # idx
+                if $col > $!idx_of_last_col_in_last_row {
                     --$end;
                 }
                 @rearranged_idx[$col] = [ $begin .. $end ];
@@ -1040,7 +1042,7 @@ method !_list_index2rowcol {
             for ^$nr_of_rows -> $row {
                 my Int @temp_idx;
                 for ^$cols_per_row -> $col {
-                    if $row == $nr_of_rows - 1 && $!rest && $col >= $!rest {
+                    if $row == $nr_of_rows - 1 && $col > $!idx_of_last_col_in_last_row {
                         next;
                     }
                     @temp_idx.push( @rearranged_idx[$col][$row] );
@@ -1066,35 +1068,37 @@ method !_list_index2rowcol {
 
 method !_marked_idx2rc ( List $indexes, Bool $yesno ) {
     if $!single_column {
-        for $indexes.list -> $i {
-            next if $i > @!list.end;
-            $!marked[$i][0] = $yesno;
+        for $indexes.list -> $list_idx {
+            next if $list_idx > @!list.end;
+            $!marked[$list_idx][0] = $yesno;
         }
         return;
     }
     my ( Int $row, Int $col );
     my Int $cols_per_row = $!rc2idx[0].elems;
     if %!o<order> == 0 {
-        for $indexes.list -> $i {
-            next if $i > @!list.end;
-            $row = $i div $cols_per_row;
-            $col = $i % $cols_per_row;
+        for $indexes.list -> $list_idx {
+            next if $list_idx > @!list.end;
+            $row = $list_idx div $cols_per_row;
+            $col = $list_idx % $cols_per_row;
             $!marked[$row][$col] = $yesno;
         }
     }
     elsif %!o<order> == 1 {
         my Int $rows_per_col = $!rc2idx.elems;
-        my Int $end_last_full_col = $rows_per_col * ( $!rest || $cols_per_row );
-        for $indexes.list -> $i {
-            next if $i > @!list.end;
-            if $i <= $end_last_full_col {
-                $row = $i % $rows_per_col;
-                $col = $i div $rows_per_col;
+        my $col_count_last_row = $!idx_of_last_col_in_last_row + 1;
+        my $last_list_idx_in_cols_full = $rows_per_col * $col_count_last_row - 1;
+        my $first_list_idx_in_cols_short = $last_list_idx_in_cols_full + 1;
+        for $indexes.list -> $list_idx {
+            next if $list_idx > @!list.end;
+            if $list_idx < $last_list_idx_in_cols_full {
+                $row = $list_idx % $rows_per_col;
+                $col = $list_idx div $rows_per_col;
             }
             else {
                 my Int $rows_per_short_col = $rows_per_col - 1;
-                $row = ( $i - $end_last_full_col ) % $rows_per_short_col;
-                $col = ( $i - $!rest ) div $rows_per_short_col;
+                $row = ( $list_idx - $first_list_idx_in_cols_short ) % $rows_per_short_col;
+                $col = ( $list_idx - $col_count_last_row ) div $rows_per_short_col;
             }
             $!marked[$row][$col] = $yesno;
         }
@@ -1145,8 +1149,10 @@ method !_search_user_input ( $prompt ) {
 }
 
 
-method !_search_begin ( $multiselect ) {
+method !_search_begin ( $multiselect is copy ) {
     $!map_search_list_index = [];
+    $!search_backup_opt = {};
+    $!search_backup_data = {};
     my $search_str = self!_search_user_input( '> search-pattern: ' );
     if ! $search_str.chars {
         self!_search_end( $multiselect );
@@ -1161,21 +1167,45 @@ method !_search_begin ( $multiselect ) {
     }
     my $filtered_list = [];
     my $filtered_w_list = [];
-    for ^@!list -> $i {
-        if @!list[$i] ~~ $regex {
-            $!map_search_list_index.push: $i;
-            $filtered_list.push: @!list[$i];
-            $filtered_w_list.push: @!w_list[$i];
+    try { 'Teststring' ~~ $regex }
+    if $! {
+        my @lines = $!.Str.split( "\n" ).map: { |line-fold( $_, $!avail_w ) };
+        $filtered_list = [ @lines ];
+        $filtered_w_list = [ $!avail_w xx @lines.elems ];
+        $multiselect = 0;
+    }
+    else {
+        for ^@!list -> $i {
+            if @!list[$i] ~~ $regex {
+                $!map_search_list_index.push: $i;
+                $filtered_list.push: @!list[$i];
+                $filtered_w_list.push: @!w_list[$i];
+            }
+        }
+        if ! $filtered_list.elems {
+            my $message = 'No matches found.';
+            $filtered_list = [ $message ];
+            $filtered_w_list = [ print-columns( $message ) ];
+            $multiselect = 0;
+        }
+        else {
+            %!o<mark> = self!_marked_rc2idx();
+            for <meta_items no_spacebar mark> -> $opt {
+                if %!o{$opt}.defined {
+                    $!search_backup_opt{$opt} = [ |%!o{$opt} ];
+                    my $tmp = [];
+                    for |%!o{$opt} -> $orig_idx {
+                        for ^$!map_search_list_index -> $i {
+                            if $!map_search_list_index[$i] == $orig_idx {
+                                $tmp.push: $i;
+                            }
+                        }
+                    }
+                    %!o{$opt} = $tmp;
+                }
+            }
         }
     }
-    if ! $filtered_list.elems {
-        my $message = 'No matches found.';
-        $filtered_list = [ $message ];
-        $filtered_w_list = [ print-columns( $message ) ];
-        #$!map_search_list_index = [ $!rc2idx[ $!p[R] ][ $!p[C] ] ];
-        $!map_search_list_index = [ 0 ];
-    }
-    %!o<mark> = self!_marked_rc2idx();
     $!search_backup_data<list> = [ @!list ];
     @!list = |$filtered_list;
     $!search_backup_data<w_list> = [ @!w_list ];
@@ -1183,20 +1213,6 @@ method !_search_begin ( $multiselect ) {
     $!search_backup_data<col_w> = $!col_w;
     $!col_w = $filtered_w_list.max;
     %!o<default> = 0;
-    for <meta_items no_spacebar mark> -> $opt {
-        if %!o{$opt}.defined {
-            $!search_backup_opt{$opt} = [ |%!o{$opt} ];
-            my $tmp = [];
-            for |%!o{$opt} -> $orig_idx {
-                for ^$!map_search_list_index -> $i {
-                    if $!map_search_list_index[$i] == $orig_idx {
-                        $tmp.push: $i;
-                    }
-                }
-            }
-            %!o{$opt} = $tmp;
-        }
-    }
     $!search = 1;
     my $up = $!i_row + @!prompt_lines + 1; # + 1 => readline
     print up( $up ) if $up;
@@ -1206,30 +1222,27 @@ method !_search_begin ( $multiselect ) {
 
 
 method !_search_end ( $multiselect ) {
-    if $!search_backup_data<list>.defined && $!search_backup_data<list>.elems {
+    if $!map_search_list_index.elems {
         %!o<default> = $!map_search_list_index[ $!rc2idx[ $!p[R] ][ $!p[C] ] ];
-        %!o<mark> = self!_marked_rc2idx();
         my $tmp_mark = [];
-        for |%!o<mark> -> $i {
+        for |self!_marked_rc2idx() -> $i {
             $tmp_mark.push: $!map_search_list_index[$i];
         }
-        %!o<mark> = [ |$!search_backup_opt<mark>.unique ];
-        $!map_search_list_index = [];
-        $!search_backup_opt<mark>:delete;
+        if $!search_backup_opt<mark>.defined {
+            $tmp_mark.push: |$!search_backup_opt<mark>;
+        }
+        %!o<mark> = [ |$tmp_mark.unique ];
         for <meta_items no_spacebar> -> $key {
             if $!search_backup_opt{$key}.defined {
                 %!o{$key} = $!search_backup_opt{$key};
             }
         }
+    }
+    if $!search_backup_data.keys {
         @!list = |$!search_backup_data<list>;
         @!w_list = |$!search_backup_data<w_list>;
         $!col_w  = $!search_backup_data<col_w>;
     }
-    #else {
-    #    %!o<default> = $!rc2idx[ $!p[R] ][ $!p[C] ];
-    #}
-    $!search_backup_opt = {};
-    $!search_backup_data = {};
     $!search = 0;
     my $up = $!i_row + @!prompt_lines;
     print up( $up ) if $up;
@@ -1237,9 +1250,6 @@ method !_search_end ( $multiselect ) {
     self!_avail_screen_size();
     self!_wr_first_screen( $multiselect );
 }
-
-
-
 
 
 

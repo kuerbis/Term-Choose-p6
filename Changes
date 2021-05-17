@@ -1,6 +1,11 @@
 Revision history for Term::Choose
 
 
+1.7.1   2021-05-17
+        - F3: evaluate entred regex string.
+        - Bugfix in list_idx2rc.
+        - Code refactoring.
+
 1.7.0   2021-05-15
         - Filter choices with the F3 key.
         - Fixed test failure: Test 'tput available' fails on OpenBSD. [GH #5 andinus]

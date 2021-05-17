@@ -11,8 +11,6 @@ has Int $.mouse;
 has Int $.hide-cursor;
 has Int $.clear-screen;
 has Int $.loop is rw;
-#has Int $.i_row;
-#has Int $.count-prompt-lines;
 
 has $!saved_termios;
 
