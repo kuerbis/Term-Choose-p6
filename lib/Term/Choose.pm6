@@ -229,7 +229,7 @@ method !_pos_to_default {
 }
 
 method !_set_pp_print_fmt {
-    if $!rc2idx.elems / $!avail_h > 1 || %!o<clear-screen> { # || %!o<footer>.chars {
+    if $!rc2idx.elems / $!avail_h > 1 || %!o<clear-screen> {
         $!avail_h -= 1;
         $!page_count = $!rc2idx.end div $!avail_h + 1;
         my $page_count_w = $!page_count.chars;
