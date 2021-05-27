@@ -1,6 +1,6 @@
 use v6;
 
-unit class Term::Choose:ver<1.7.1>;
+unit class Term::Choose:ver<1.7.2>;
 
 use Term::termios;
 
@@ -20,13 +20,15 @@ subset Int_0_or_1       of Int where * == 0|1;
 
 has Int_0_or_1       $.page                 = 0; # removed 26.03.2019
 has Int_0_or_1       $.beep                 = 0;
+#has Int_0_or_1       $.clear-screen         = 1; # uncomment after removing  `has Int_0_to_2 $.clear-screen = 1;`
+has Int_0_or_1       $.hide-cursor          = 1;
 has Int_0_or_1       $.index                = 0;
+has Int_0_or_1       $.loop                 = 0; # privat
 has Int_0_or_1       $.mouse                = 0;
 has Int_0_or_1       $.order                = 1;
-has Int_0_or_1       $.loop                 = 0; # privat
-has Int_0_or_1       $.hide-cursor          = 1;
+has Int_0_or_1       $.save-screen          = 0;
 has Int_0_to_2       $.alignment            = 0;
-has Int_0_to_2       $.clear-screen         = 0;
+has Int_0_to_2       $.clear-screen         = 1; # 27.05.2021 - remove this and uncomment `has Int_0_or_1 $.clear-screen = 1;`
 has Int_0_to_2       $.color                = 0;
 has Int_0_to_2       $.f3                   = 1;
 has Int_0_to_2       $.include-highlighted  = 0;
@@ -227,8 +229,8 @@ method !_pos_to_default {
 }
 
 method !_set_pp_print_fmt {
-    if $!rc2idx.elems / $!avail_h > 1 || %!o<footer>.chars {
-        $!avail_h -= 1; #
+    if $!rc2idx.elems / $!avail_h > 1 || %!o<clear-screen> { # || %!o<footer>.chars {
+        $!avail_h -= 1;
         $!page_count = $!rc2idx.end div $!avail_h + 1;
         my $page_count_w = $!page_count.chars;
         if %!o<footer>.chars {
@@ -246,6 +248,9 @@ method !_set_pp_print_fmt {
         }
     }
     else {
+        if %!o<footer> {
+            $!avail_h -= 1;
+        }
         $!pp_row_fmt = Str;
         $!page_count = 1;
     }
@@ -351,12 +356,14 @@ method pause        ( @list, *%opt ) { self!_choose( Int, @list, |%opt ) }
 method !_choose ( Int $multiselect, @!orig_list,
         Int_0_or_1       :$page                 = $!page, # removed 26.03.2019
         Int_0_or_1       :$beep                 = $!beep,
+        #Int_0_or_1       :$clear-screen         = $!clear-screen, # uncomment after removing `Int_0_to_2 :$clear-screen = $!clear-screen,`
+        Int_0_or_1       :$hide-cursor          = $!hide-cursor,
         Int_0_or_1       :$index                = $!index,
         Int_0_or_1       :$mouse                = $!mouse,
         Int_0_or_1       :$order                = $!order,
-        Int_0_or_1       :$hide-cursor          = $!hide-cursor,
+        Int_0_or_1       :$save-screen          = $!save-screen,
         Int_0_to_2       :$alignment            = $!alignment,
-        Int_0_to_2       :$clear-screen         = $!clear-screen,
+        Int_0_to_2       :$clear-screen         = $!clear-screen, # 27.05.2021 - remove this and uncomment `Int_0_or_1 :$clear-screen = $!clear-screen,`
         Int_0_to_2       :$color                = $!color,
         Int_0_to_2       :$f3                   = $!f3,
         Int_0_to_2       :$include-highlighted  = $!include-highlighted,
@@ -382,16 +389,28 @@ method !_choose ( Int $multiselect, @!orig_list,
         return;
     }
     # %!o -> make options available in methods
-    %!o = :$page, :$beep, :$index, :$mouse, :$order, :$hide-cursor, :$alignment, :$clear-screen, :$color, :$f3,
-          :$include-highlighted, :$layout, :$keep, :$ll, :$max-height, :$max-width, :$default, :$pad, :$mark,
+    %!o = :$page, :$beep, :$clear-screen, :$index, :$mouse, :$order, :$hide-cursor, :$save-screen, :$alignment, :$color,
+          :$f3, :$include-highlighted, :$layout, :$keep, :$ll, :$max-height, :$max-width, :$default, :$pad, :$mark,
           :$meta-items, :$no-spacebar, :$tabs-info, :$tabs-prompt, :$footer, :$info, :$prompt, :$empty, :$undef;
+    
+    ############################ # 27.05.2021 - remove this
+    if %!o<clear-screen> == 2 {
+        %!o<save-screen> = 1;
+        %!o<clear-screen> = 1;
+        prompt( 'To save the screen use the option `save-screen`. Setting `clear-screen` to `2` is no longer valid. Press ENTER to contiune:' );
+    }
+    ############################
+    
     if ! %!o<prompt>.defined {
         %!o<prompt> = $multiselect.defined ?? 'Your choice' !! 'Continue with ENTER';
+    }
+    if %!o<save-screen> {
+        %!o<clear-screen> = 1;
     }
     if %*ENV<TC_RESET_AUTO_UP>:exists {
         %*ENV<TC_RESET_AUTO_UP> = 0;
     }
-    $!setterm = Term::Choose::SetTerm.new( :$mouse :$hide-cursor, :$clear-screen );
+    $!setterm = Term::Choose::SetTerm.new( :$mouse :$hide-cursor, :$save-screen );
     $!setterm.init-term();
     self!_avail_screen_size();
     self!_prepare_new_copy_of_list();
@@ -422,8 +441,8 @@ method !_choose ( Int $multiselect, @!orig_list,
             my ( Int $new_term_w, Int $new_term_h ) = get-term-size();
             if $new_term_w != $!term_w || $new_term_h != $!term_h { #
                 if %!o<ll> {
-                    #return -1;
                     $return = -1;
+                    $!setterm.restore-term( $!i_row + @!prompt_lines );
                     done();
                 }
                 %!o<default> = $!rc2idx[ $!p[R] ][ $!p[C] ];
@@ -766,7 +785,8 @@ method !_choose ( Int $multiselect, @!orig_list,
                     if %!o<f3> {
                         if %!o<ll> {
                             $!setterm.restore-term( $!i_row + @!prompt_lines );
-                            return -13;
+                            $return = -13;
+                            done();
                         }
                         if $!search {
                             self!_search_end( $multiselect );
@@ -783,7 +803,7 @@ method !_choose ( Int $multiselect, @!orig_list,
             }
         }
     }
-    return $return;
+    return $return; # No `return` inside the `react`-block!
 }
 
 method !_avail_screen_size {
@@ -816,8 +836,10 @@ method !_wr_first_screen ( Int $multiselect ) {
     self!_list_idx2rc();
     self!_set_pp_print_fmt;
     $!first_page_row = 0;
-    $!last_page_row  = $!avail_h - 1;
-    $!last_page_row  = $!rc2idx.end if $!last_page_row > $!rc2idx.end;
+    $!last_page_row = $!avail_h - 1;
+    if $!last_page_row > $!rc2idx.end {
+        $!last_page_row = $!rc2idx.end;
+    }
     $!p = [ 0, 0 ];
     $!marked = [];
     if %!o<mark> && $multiselect {
@@ -839,7 +861,7 @@ method !_wr_first_screen ( Int $multiselect ) {
     $!i_row = 0;
     self!_wr_screen();
     if %!o<mouse> {
-      print get-cursor-position;
+        print get-cursor-position;
     }
     $!cursor_row = $!i_row;
 }
@@ -885,6 +907,9 @@ method !_wr_screen {
             @lines.append: '' xx $!avail_h - @lines.elems;
         }
         @lines.push: sprintf $!pp_row_fmt, $!first_page_row div $!avail_h + 1;
+    }
+    elsif %!o<footer>.chars {
+        @lines.push: %!o<footer>;
     }
     print self!_goto( $!first_page_row, 0 ) ~ @lines.join( "\n\r" ) ~ "\r";
     $!i_row += @lines.end;
@@ -1124,7 +1149,6 @@ method !_marked_rc2idx {
     }
     return @idx;
 }
-
 
 
 method !_search_user_input ( $prompt ) {
@@ -1401,11 +1425,11 @@ Options which expect a number as their value expect integers.
 
 =head3 clear-screen
 
-0 - off (default)
+0 - off
 
-1 - clears the screen before printing the choices
+1 - clears the screen before printing the choices (default)
 
-2 - use the alternate screen
+Setting clear-screen to 2 is no longer valid. See option L<#save-screen> instead.
 
 =head3 color
 
@@ -1582,6 +1606,13 @@ Allowed values: 0 or greater
 If I<prompt> is undefined, a default prompt-string will be shown.
 
 If the I<prompt> value is an empty string (""), no prompt-line will be shown.
+
+
+=head3 save-screen
+
+0 - off (default)
+
+1 - use the alternate screen
 
 =head3 tabs-info
 

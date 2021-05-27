@@ -144,11 +144,11 @@ Options which expect a number as their value expect integers.
 
 ### clear-screen
 
-0 - off (default)
+0 - off
 
-1 - clears the screen before printing the choices
+1 - clears the screen before printing the choices (default)
 
-2 - use the alternate screen
+Setting clear-screen to 2 is no longer valid. See option [save-screen](#save-screen) instead.
 
 ### color
 
@@ -312,6 +312,12 @@ Allowed values: 0 or greater
 If *prompt* is undefined, a default prompt-string will be shown.
 
 If the *prompt* value is an empty string (""), no prompt-line will be shown.
+
+### save-screen
+
+0 - off (default)
+
+1 - use the alternate screen
 
 ### tabs-info
 

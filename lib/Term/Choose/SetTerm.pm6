@@ -9,7 +9,7 @@ use Term::Choose::Screen;
 
 has Int $.mouse;
 has Int $.hide-cursor;
-has Int $.clear-screen;
+has Int $.save-screen;
 has Int $.loop is rw;
 
 has $!saved_termios;
@@ -22,7 +22,7 @@ method init-term {
     $termios.makeraw;
     #$termios.set_lflags(<ISIG>); # SIGINT (Ctrl-c), SIGQUIT (Ctrl-\),  SIGSUSP (Ctrl-z), SIGDSUSP
     $termios.setattr(:DRAIN);
-    if $!clear-screen == 2 {
+    if $!save-screen {
         print save-screen;
     }
     if $!hide-cursor && ! $!loop {
@@ -43,7 +43,7 @@ method restore-term ( $up ) {
     if $!saved_termios.defined { # ### 
         $!saved_termios.setattr(:DRAIN);
     }
-    if $!clear-screen == 2 {
+    if $!save-screen {
         print restore-screen;
     }
     else {
