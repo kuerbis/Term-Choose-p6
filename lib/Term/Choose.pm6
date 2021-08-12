@@ -1722,7 +1722,7 @@ Allowed values: 0 or greater. Elements beyond the second are ignored.
 
 Sets the string displayed on the screen instead of an undefined element.
 
-(default: "ltundefgt")
+(default: "E<lt>undefE<gt>")
 
 =head2 options choose-multi
 
