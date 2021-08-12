@@ -1,6 +1,6 @@
 use v6;
 
-unit class Term::Choose:ver<1.7.2>;
+unit class Term::Choose:ver<1.7.3>;
 
 use Term::termios;
 
@@ -12,43 +12,44 @@ use Term::Choose::SetTerm;
 
 constant R  = 0;
 constant C  = 1;
+constant WIDTH_CURSOR = 1;
 
-subset Positive_Int     of Int where * > 0;
-subset Int_2_or_greater of Int where * > 1;
-subset Int_0_to_2       of Int where * == 0|1|2;
-subset Int_0_or_1       of Int where * == 0|1;
+subset Positive_Int of Int where * > 0;
+subset Int_0_to_2   of Int where * == 0|1|2;
+subset Int_0_or_1   of Int where * == 0|1;
 
-has Int_0_or_1       $.page                 = 0; # removed 26.03.2019
-has Int_0_or_1       $.beep                 = 0;
-#has Int_0_or_1       $.clear-screen         = 1; # uncomment after removing  `has Int_0_to_2 $.clear-screen = 1;`
-has Int_0_or_1       $.hide-cursor          = 1;
-has Int_0_or_1       $.index                = 0;
-has Int_0_or_1       $.loop                 = 0; # privat
-has Int_0_or_1       $.mouse                = 0;
-has Int_0_or_1       $.order                = 1;
-has Int_0_or_1       $.save-screen          = 0;
-has Int_0_to_2       $.alignment            = 0;
-has Int_0_to_2       $.clear-screen         = 1; # 27.05.2021 - remove this and uncomment `has Int_0_or_1 $.clear-screen = 1;`
-has Int_0_to_2       $.color                = 0;
-has Int_0_to_2       $.f3                   = 1;
-has Int_0_to_2       $.include-highlighted  = 0;
-has Int_0_to_2       $.layout               = 1;
-has Positive_Int     $.keep                 = 5;
-has Positive_Int     $.ll;                       # privat
-has Positive_Int     $.max-height;
-has Int_2_or_greater $.max-width;
-has UInt             $.default              = 0;
-has UInt             $.pad                  = 2;
-has List             $.mark;
-has List             $.meta-items;
-has List             $.no-spacebar;
-has List             $.tabs-prompt;
-has List             $.tabs-info;
-has Str              $.footer               = '';
-has Str              $.info                 = '';
-has Str              $.prompt;
-has Str              $.empty                = '<empty>';
-has Str              $.undef                = '<undef>';
+has Int_0_or_1   $.beep                 = 0;
+#has Int_0_or_1   $.clear-screen         = 1; # uncomment after removing  `has Int_0_to_2 $.clear-screen = 1;`
+has Int_0_or_1   $.hide-cursor          = 1;
+has Int_0_or_1   $.index                = 0;
+has Int_0_or_1   $.loop                 = 0; # privat
+has Int_0_or_1   $.mouse                = 0;
+has Int_0_or_1   $.order                = 1;
+has Int_0_or_1   $.save-screen          = 0;
+has Int_0_to_2   $.alignment            = 0;
+has Int_0_to_2   $.clear-screen         = 1; # 27.05.2021 - remove this and uncomment `has Int_0_or_1 $.clear-screen = 1;`
+has Int_0_to_2   $.color                = 0;
+has Int_0_to_2   $.f3                   = 1;
+has Int_0_to_2   $.include-highlighted  = 0;
+has Int_0_to_2   $.layout               = 1;
+has Int_0_to_2   $.page                 = 1;
+has Positive_Int $.keep                 = 5;
+has Positive_Int $.ll;                       # privat
+has Positive_Int $.max-cols;
+has Positive_Int $.max-height;
+has Positive_Int $.max-width;
+has UInt         $.default              = 0;
+has UInt         $.pad                  = 2;
+has List         $.mark;
+has List         $.meta-items;
+has List         $.no-spacebar;
+has List         $.tabs-prompt;
+has List         $.tabs-info;
+has Str          $.empty                = '<empty>';
+has Str          $.footer               = '';
+has Str          $.info                 = '';
+has Str          $.prompt;              # undef because: undef => default prompt-line, '' => no prompt-line
+has Str          $.undef                = '<undef>';
 
 has Int $!i_col;
 has Int $!i_row;
@@ -63,13 +64,14 @@ has Int   $!avail_w;
 has Int   $!avail_h;
 has Int   $!col_w;
 has Int   $!col_w_plus;
-has Int   @!w_list;
+has Int   @!w_list_items;
 has Int   $!single_column;
 has Int   $!all_in_one_row;
 has Int   $!idx_of_last_col_in_last_row;
 has Int   $!page_count;
 has Str   $!pp_row_fmt;
 has Str   @!prompt_lines;
+has Str   $!spare_prompt_line;
 has Int   $!first_page_row;
 has Int   $!last_page_row;
 has Array $!rc2idx;
@@ -82,9 +84,6 @@ has Int   $!search;
 has Array $!map_search_list_index;
 has Hash  $!search_backup_data;
 has Hash  $!search_backup_opt;
-
-
-
 
 has Term::Choose::SetTerm $!setterm;
 
@@ -127,7 +126,7 @@ method !_prepare_new_copy_of_list {
                             );
                             $i, $str, $len;
                         }
-                        elsif %!o<color> {
+                        else {
                                 my ( $str, $len ) = to-printwidth(
                                 @!orig_list[$i].subst( / \x[feff] /,  '', :g ).subst( / \e \[ <[\d;]>* m /, "\x[feff]", :g ).subst( / \t /,  ' ', :g ).subst( / \v+ /,  '  ', :g ).subst( / <:Cc+:Noncharacter_Code_Point+:Cs> /, '', :g ),
                                 $!avail_w,
@@ -170,14 +169,14 @@ method !_prepare_new_copy_of_list {
             };
         }
         @!list = ();
-        @!w_list = ();
+        @!w_list_items = ();
         for await @promise -> @portion {
             for @portion {
                 @!list[.[0]] := .[1];
-                @!w_list[.[0]] := .[2];
+                @!w_list_items[.[0]] := .[2];
             }
         }
-        $!col_w = @!w_list.max;
+        $!col_w = @!w_list_items.max;
     }
 }
 
@@ -186,18 +185,25 @@ method !_beep {
 }
 
 
-method !_prepare_prompt {
+method !_prepare_prompt_and_info {
     my @tmp;
     @!prompt_lines = ();
+    my Int $info_w = $!term_w;
+    #if $*KERNEL ne any 'MSWin32', 'cygwin' {
+        $info_w += WIDTH_CURSOR;
+    #}
+    if %!o<max_width> && $info_w > %!o<max_width> { #
+        $info_w = %!o<max_width>;
+    }
     if %!o<info>.chars {
         my Int $init   = %!o<tabs-info>[0] // 0;
         my Int $subseq = %!o<tabs-info>[1] // 0;
-        @!prompt_lines.push: |line-fold( %!o<info>, $!avail_w, :init-tab( ' ' x $init ), :subseq-tab( ' ' x $subseq ), :color( %!o<color> ) );
+        @!prompt_lines.push: |line-fold( %!o<info>, $info_w, :init-tab( ' ' x $init ), :subseq-tab( ' ' x $subseq ), :color( %!o<color> ) );
     }
     if %!o<prompt>.chars {
         my Int $init   = %!o<tabs-prompt>[0] // 0;
         my Int $subseq = %!o<tabs-prompt>[1] // 0;
-        @!prompt_lines.push: |line-fold( %!o<prompt>, $!avail_w, :init-tab( ' ' x $init ), :subseq-tab( ' ' x $subseq ), :color( %!o<color> ) );
+        @!prompt_lines.push: |line-fold( %!o<prompt>, $info_w, :init-tab( ' ' x $init ), :subseq-tab( ' ' x $subseq ), :color( %!o<color> ) );
     }
     if ! @!prompt_lines.elems {
         return;
@@ -209,6 +215,7 @@ method !_prepare_prompt {
     }
     my $limit_prompt_lines = $!avail_h - $keep;
     if @!prompt_lines.elems > $limit_prompt_lines {
+        $!spare_prompt_line = @!prompt_lines[$limit_prompt_lines];
         @!prompt_lines.splice( 0, $limit_prompt_lines );
     }
 }
@@ -228,31 +235,34 @@ method !_pos_to_default {
     $!last_page_row  = $!rc2idx.end if $!last_page_row > $!rc2idx.end;
 }
 
-method !_set_pp_print_fmt {
-    if $!rc2idx.elems / $!avail_h > 1 || %!o<clear-screen> {
-        $!avail_h -= 1;
-        $!page_count = $!rc2idx.end div $!avail_h + 1;
-        my $page_count_w = $!page_count.chars;
-        if %!o<footer>.chars {
-            $!pp_row_fmt = "\%0{$page_count_w}d/{$!page_count} %!o<footer>";
+
+method !_set_pp_row_fmt {
+    $!page_count = $!rc2idx.end div $!avail_h + 1;
+    if  ! %!o<page> {
+        $!pp_row_fmt = Str;
+    }
+    elsif %!o<page> == 1 && $!page_count == 1 {
+        if $!spare_prompt_line {
+            @!prompt_lines.push: $!spare_prompt_line;
         }
         else {
-            $!pp_row_fmt = "--- Page \%0{$page_count_w}d/{$!page_count} ---";
-        }
-        if sprintf( $!pp_row_fmt, $!page_count ).chars > $!avail_w {
-            $!pp_row_fmt = "\%0{$page_count_w}d/{$!page_count}";
-            if sprintf( $!pp_row_fmt, $!page_count ).chars > $!avail_w {
-                $page_count_w = $!avail_w if $page_count_w > $!avail_w;
-                $!pp_row_fmt = "\%0{$page_count_w}.{$page_count_w}s";
-            }
-        }
-    }
-    else {
-        if %!o<footer> {
-            $!avail_h -= 1;
+            $!avail_h++;
         }
         $!pp_row_fmt = Str;
-        $!page_count = 1;
+    }
+    else {
+        my $page_count_w = $!page_count.chars;
+        $!pp_row_fmt = '--- %0' ~ $page_count_w ~ 'd/' ~ $!page_count ~ ' ---';
+        if %!o<footer>.chars {
+            $!pp_row_fmt ~= %!o<footer>;
+        }
+        if sprintf( $!pp_row_fmt, $!page_count ).chars > $!avail_w { # color
+            $!pp_row_fmt = '%0' ~ $page_count_w ~ 'd/' ~ $!page_count;
+            if sprintf( $!pp_row_fmt, $!page_count ).chars > $!avail_w {
+                $page_count_w = $!avail_w if $page_count_w > $!avail_w;
+                $!pp_row_fmt = '%0' ~ $page_count_w ~ '.' ~ $page_count_w ~ 's';
+            }
+        }
     }
 }
 
@@ -261,7 +271,7 @@ method !_pad_str_to_colwidth ( Int $i ) {
     if %!o<ll> || $!all_in_one_row { # if 'll' is set, all list elements must have the same length
         return @!list[$i];
     }
-    my Int $str_w = @!w_list[$i];
+    my Int $str_w = @!w_list_items[$i];
     if $str_w < $!col_w {
         if %!o<alignment> == 0 {
             return @!list[$i] ~ " " x ( $!col_w - $str_w );
@@ -305,7 +315,7 @@ method !_mouse_info_to_key ( Int $abs_cursor_Y, Int $button, Int $abs_mouse_X, I
     COL: for ^$!rc2idx[$row] -> $col {
         my Int $end_this_col;
         if $!all_in_one_row {
-            $end_this_col = $end_prev_col + @!w_list[ $!rc2idx[$row][$col] ] + %!o<pad>;
+            $end_this_col = $end_prev_col + @!w_list_items[ $!rc2idx[$row][$col] ] + %!o<pad>;
         }
         else { #
             $end_this_col = $end_prev_col + $!col_w_plus;
@@ -345,6 +355,38 @@ method !_mouse_info_to_key ( Int $abs_cursor_Y, Int $button, Int $abs_mouse_X, I
 }
 
 
+method !_modify_options ( $multiselect ) {
+    if %!o<save-screen> {
+        %!o<clear-screen> = 1;
+    }
+    ############################ # 27.05.2021 - remove this
+    if %!o<clear-screen> == 2 {
+        %!o<save-screen> = 1;
+        %!o<clear-screen> = 1;
+        prompt( 'To save the screen use the option `save-screen`. Setting `clear-screen` to `2` is no longer valid. Press ENTER to contiune:' );
+    }
+    ############################
+    if %!o<max-cols>.defined && %!o<max-cols> == 1 {
+        %!o<layout> = 2;
+    }
+    if %!o<footer>.chars && %!o<page> != 2 {
+        %!o<page> = 2;
+    }
+    if %!o<page> == 2 && ! %!o<clear-screen> {
+        %!o<clear-screen> = 1;
+    }
+    if %!o<max-cols> && %!o<layout> != 0 && %!o<layout> != 2 { ##
+        %!o<layout> = 0;
+    }
+    if %!o<ll> && ! %!o<index> {
+        %!o<index> = 1;
+    }
+    if ! %!o<prompt>.defined {
+        %!o<prompt> = $multiselect.defined ?? 'Your choice' !! 'Continue with ENTER';
+    }
+}
+
+
 sub choose       ( @list, *%opt ) is export( :DEFAULT, :choose )       { Term::Choose.new().choose(       @list, |%opt ) }
 sub choose-multi ( @list, *%opt ) is export( :DEFAULT, :choose-multi ) { Term::Choose.new().choose-multi( @list, |%opt ) }
 sub pause        ( @list, *%opt ) is export( :DEFAULT, :pause )        { Term::Choose.new().pause(        @list, |%opt ) }
@@ -354,58 +396,54 @@ method choose-multi ( @list, *%opt ) { self!_choose( 1,   @list, |%opt ) }
 method pause        ( @list, *%opt ) { self!_choose( Int, @list, |%opt ) }
 
 method !_choose ( Int $multiselect, @!orig_list,
-        Int_0_or_1       :$page                 = $!page, # removed 26.03.2019
-        Int_0_or_1       :$beep                 = $!beep,
-        #Int_0_or_1       :$clear-screen         = $!clear-screen, # uncomment after removing `Int_0_to_2 :$clear-screen = $!clear-screen,`
-        Int_0_or_1       :$hide-cursor          = $!hide-cursor,
-        Int_0_or_1       :$index                = $!index,
-        Int_0_or_1       :$mouse                = $!mouse,
-        Int_0_or_1       :$order                = $!order,
-        Int_0_or_1       :$save-screen          = $!save-screen,
-        Int_0_to_2       :$alignment            = $!alignment,
-        Int_0_to_2       :$clear-screen         = $!clear-screen, # 27.05.2021 - remove this and uncomment `Int_0_or_1 :$clear-screen = $!clear-screen,`
-        Int_0_to_2       :$color                = $!color,
-        Int_0_to_2       :$f3                   = $!f3,
-        Int_0_to_2       :$include-highlighted  = $!include-highlighted,
-        Int_0_to_2       :$layout               = $!layout,
-        Positive_Int     :$keep                 = $!keep,
-        Positive_Int     :$ll                   = $!ll,
-        Positive_Int     :$max-height           = $!max-height,
-        Int_2_or_greater :$max-width            = $!max-width,
-        UInt             :$default              = $!default,
-        UInt             :$pad                  = $!pad,
-        List             :$mark                 = $!mark,
-        List             :$meta-items           = $!meta-items,
-        List             :$no-spacebar          = $!no-spacebar,
-        List             :$tabs-info            = $!tabs-info,
-        List             :$tabs-prompt          = $!tabs-prompt,
-        Str              :$footer               = $!footer,
-        Str              :$info                 = $!info,
-        Str              :$prompt               = $!prompt,
-        Str              :$empty                = $!empty,
-        Str              :$undef                = $!undef,
+        Int_0_or_1   :$beep                 = $!beep,
+        #Int_0_or_1   :$clear-screen         = $!clear-screen, # uncomment after removing `Int_0_to_2 :$clear-screen = $!clear-screen,`
+        Int_0_or_1   :$hide-cursor          = $!hide-cursor,
+        Int_0_or_1   :$index                = $!index,
+        Int_0_or_1   :$mouse                = $!mouse,
+        Int_0_or_1   :$order                = $!order,
+        Int_0_or_1   :$save-screen          = $!save-screen,
+        Int_0_to_2   :$alignment            = $!alignment,
+        Int_0_to_2   :$clear-screen         = $!clear-screen, # 27.05.2021 - remove this and uncomment `Int_0_or_1 :$clear-screen = $!clear-screen,`
+        Int_0_to_2   :$color                = $!color,
+        Int_0_to_2   :$f3                   = $!f3,
+        Int_0_to_2   :$include-highlighted  = $!include-highlighted,
+        Int_0_to_2   :$layout               = $!layout,
+        Int_0_to_2   :$page                 = $!page,
+        Positive_Int :$keep                 = $!keep,
+        Positive_Int :$ll                   = $!ll,
+        Positive_Int :$max-cols             = $!max-cols,
+        Positive_Int :$max-height           = $!max-height,
+        Positive_Int :$max-width            = $!max-width,
+        UInt         :$default              = $!default,
+        UInt         :$pad                  = $!pad,
+        List         :$mark                 = $!mark,
+        List         :$meta-items           = $!meta-items,
+        List         :$no-spacebar          = $!no-spacebar,
+        List         :$tabs-info            = $!tabs-info,
+        List         :$tabs-prompt          = $!tabs-prompt,
+        Str          :$empty                = $!empty,
+        Str          :$footer               = $!footer,
+        Str          :$info                 = $!info,
+        Str          :$prompt               = $!prompt,
+        Str          :$undef                = $!undef,
     ) {
-    if ! @!orig_list.elems {
-        return;
-    }
     # %!o -> make options available in methods
-    %!o = :$page, :$beep, :$clear-screen, :$index, :$mouse, :$order, :$hide-cursor, :$save-screen, :$alignment, :$color,
-          :$f3, :$include-highlighted, :$layout, :$keep, :$ll, :$max-height, :$max-width, :$default, :$pad, :$mark,
-          :$meta-items, :$no-spacebar, :$tabs-info, :$tabs-prompt, :$footer, :$info, :$prompt, :$empty, :$undef;
-    
-    ############################ # 27.05.2021 - remove this
-    if %!o<clear-screen> == 2 {
-        %!o<save-screen> = 1;
-        %!o<clear-screen> = 1;
-        prompt( 'To save the screen use the option `save-screen`. Setting `clear-screen` to `2` is no longer valid. Press ENTER to contiune:' );
-    }
-    ############################
-    
-    if ! %!o<prompt>.defined {
-        %!o<prompt> = $multiselect.defined ?? 'Your choice' !! 'Continue with ENTER';
-    }
-    if %!o<save-screen> {
-        %!o<clear-screen> = 1;
+    %!o = :$alignment, :$beep, :$clear-screen, :$color, :$default, :$empty, :$f3, :$footer, :$hide-cursor,
+          :$include-highlighted, :$index, :$info, :$keep, :$layout, :$ll, :$mark, :$max-cols, :$max-height, :$max-width,
+          :$meta-items, :$mouse, :$no-spacebar, :$order, :$pad, :$page, :$prompt, :$save-screen, :$tabs-info,
+          :$tabs-prompt, :$undef;
+    self!_modify_options( $multiselect );
+    if ! @!orig_list.elems {
+        if ! $multiselect.defined {
+            return;
+        }
+        elsif ( ! $multiselect ) {
+            return %!o<index> ?? Int !! Str;
+        }
+        else {
+            return %!o<index> ?? Array[Int].new() !! Array.new();
+        }
     }
     if %*ENV<TC_RESET_AUTO_UP>:exists {
         %*ENV<TC_RESET_AUTO_UP> = 0;
@@ -690,19 +728,27 @@ method !_choose ( Int $multiselect, @!orig_list,
                         }
                     }
                 }
-                when 'q' | '^Q' {
-                    $!setterm.restore-term( $!i_row + @!prompt_lines );
-                    done();
-                    #return;
-                }
                 when '^C' {
                     $!setterm.restore-term( $!i_row + @!prompt_lines );
                     if $!loop {
-                        print clr-lines-to-bot;
+                        print clear-to-end-of-screen;
                         print show-cursor;
                     }
                     "^C".note;
                     exit 1;
+                }
+                when 'q' | '^Q' {
+                    $!setterm.restore-term( $!i_row + @!prompt_lines );
+                    if ! $multiselect.defined {
+                        $return = Any;
+                    }
+                    elsif ( ! $multiselect ) {
+                        $return = %!o<index> ?? Int !! Str;
+                    }
+                    else {
+                        $return = %!o<index> ?? Array[Int].new() !! Array.new();
+                    }
+                    done();
                 }
                 when '^M' { # Enter/Return
                     if $!search {
@@ -716,7 +762,7 @@ method !_choose ( Int $multiselect, @!orig_list,
                     }
                     elsif $multiselect == 0 {
                         my Int $i = $!rc2idx[ $!p[R] ][ $!p[C] ];
-                        $return = %!o<index> || %!o<ll> ?? $i !! @!orig_list[$i];
+                        $return = %!o<index> ?? $i !! @!orig_list[$i];
                         done();
                     }
                     else {
@@ -735,7 +781,7 @@ method !_choose ( Int $multiselect, @!orig_list,
                             }
                         }
                         my $indexes = self!_marked_rc2idx();
-                        $return = %!o<index> || %!o<ll> ?? $indexes.list !! @!orig_list[$indexes.list];
+                        $return = %!o<index> ?? $indexes !! [ @!orig_list[|$indexes] ];
                         done();
                     }
                 }
@@ -784,6 +830,7 @@ method !_choose ( Int $multiselect, @!orig_list,
                 when 'F3' {
                     if %!o<f3> {
                         if %!o<ll> {
+                            %*ENV<TC_POS_AT_F3> = $!rc2idx[ $!p[R] ][ $!p[C] ];
                             $!setterm.restore-term( $!i_row + @!prompt_lines );
                             $return = -13;
                             done();
@@ -803,7 +850,13 @@ method !_choose ( Int $multiselect, @!orig_list,
             }
         }
     }
-    return $return; # No `return` inside the `react`-block!
+    # No `return` inside the `react`-block!
+    if $multiselect {
+        return @$return;
+    }
+    else {
+        return $return;
+    }
 }
 
 method !_avail_screen_size {
@@ -820,9 +873,12 @@ method !_avail_screen_size {
     if $!avail_w < 2 {
         die "Terminal width to small!";
     }
-    self!_prepare_prompt();
+    self!_prepare_prompt_and_info();
     if @!prompt_lines.elems {
         $!avail_h -= @!prompt_lines.elems;
+    }
+   if %!o<page> {
+        $!avail_h--;
     }
     if %!o<max-height> && %!o<max-height> < $!avail_h {
         $!avail_h = %!o<max-height>;
@@ -834,7 +890,7 @@ method !_wr_first_screen ( Int $multiselect ) {
     $!col_w_plus = $!col_w + %!o<pad>;
     self!_prepare_layout();
     self!_list_idx2rc();
-    self!_set_pp_print_fmt;
+    self!_set_pp_row_fmt;
     $!first_page_row = 0;
     $!last_page_row = $!avail_h - 1;
     if $!last_page_row > $!rc2idx.end {
@@ -849,10 +905,10 @@ method !_wr_first_screen ( Int $multiselect ) {
         self!_pos_to_default();
     }
     if %!o<clear-screen> || $!page_count > 1 {
-        print clear;
+        print clear-screen();
     }
     else {
-        print clr-lines-to-bot;
+        print clear-to-end-of-screen;
     }
     if @!prompt_lines.elems {
         print @!prompt_lines.join( "\n\r" ) ~ "\n\r";
@@ -908,9 +964,6 @@ method !_wr_screen {
         }
         @lines.push: sprintf $!pp_row_fmt, $!first_page_row div $!avail_h + 1;
     }
-    elsif %!o<footer>.chars {
-        @lines.push: %!o<footer>;
-    }
     print self!_goto( $!first_page_row, 0 ) ~ @lines.join( "\n\r" ) ~ "\r";
     $!i_row += @lines.end;
     $!i_col = 0;
@@ -920,7 +973,7 @@ method !_wr_screen {
 
 method !_wr_cell ( Int $row, Int $col ) {
     print self!_goto( $row, $col ) ~ self!_cell( $row, $col );
-    $!i_col += $!all_in_one_row ?? @!w_list[ $!rc2idx[$row][$col] ] !! $!col_w;
+    $!i_col += $!all_in_one_row ?? @!w_list_items[ $!rc2idx[$row][$col] ] !! $!col_w;
 }
 
 
@@ -986,7 +1039,7 @@ method !_goto( $row, $col ) {
     $!i_row = new_i_row;
 
     # Col
-    my \new_i_col = $!all_in_one_row ?? [+] @!w_list[$!rc2idx[$row][ ^$col ]].map: { $_ + %!o<pad> } !! $!col_w_plus * $col;
+    my \new_i_col = $!all_in_one_row ?? [+] @!w_list_items[$!rc2idx[$row][ ^$col ]].map: { $_ + %!o<pad> } !! $!col_w_plus * $col;
     if new_i_col > $!i_col {
         $escape = $escape ~ right( new_i_col - $!i_col );
     }
@@ -1004,7 +1057,7 @@ method !_prepare_layout {
     $!single_column = 0;
     if %!o<layout> != 2 && ! %!o<ll> {
         for ^@!list -> $idx {
-            $!all_in_one_row += @!w_list[$idx] + %!o<pad>;
+            $!all_in_one_row += @!w_list_items[$idx] + %!o<pad>;
             if $!all_in_one_row - %!o<pad> > $!avail_w {
                 $!all_in_one_row = 0;
                 last;
@@ -1155,8 +1208,9 @@ method !_search_user_input ( $prompt ) {
     my $backup_loop = $!setterm.loop;
     $!setterm.loop = 1;
     $!setterm.restore-term( 0 );
-    print "\r", clr-to-eol();
-    print show-cursor() if ! %!o<hide_cursor>;
+    #print "\r", clear-to-end-of-line();
+    print clear-screen();
+    print show-cursor() if %!o<hide-cursor>;
     my $string;
     if ( try require Readline ) === Nil {
         $string = prompt( $prompt );
@@ -1166,9 +1220,8 @@ method !_search_user_input ( $prompt ) {
         my $rl = ::('Readline').new;
         $string = $rl.readline( $prompt );
     }
-    print hide-cursor() if ! %!o<hide_cursor>;
+    print hide-cursor() if %!o<hide-cursor>;
     $!setterm.init-term();
-    $!setterm.loop = $backup_loop;
     return $string;
 }
 
@@ -1190,12 +1243,12 @@ method !_search_begin ( $multiselect is copy ) {
         $regex = rx/<$search_str>/;
     }
     my $filtered_list = [];
-    my $filtered_w_list = [];
+    my $filtered_w_list_items = [];
     try { 'Teststring' ~~ $regex }
     if $! {
         my @lines = $!.Str.split( "\n" ).map: { |line-fold( $_, $!avail_w ) };
         $filtered_list = [ @lines ];
-        $filtered_w_list = [ $!avail_w xx @lines.elems ];
+        $filtered_w_list_items = [ $!avail_w xx @lines.elems ];
         $multiselect = 0;
     }
     else {
@@ -1203,13 +1256,13 @@ method !_search_begin ( $multiselect is copy ) {
             if @!list[$i] ~~ $regex {
                 $!map_search_list_index.push: $i;
                 $filtered_list.push: @!list[$i];
-                $filtered_w_list.push: @!w_list[$i];
+                $filtered_w_list_items.push: @!w_list_items[$i];
             }
         }
         if ! $filtered_list.elems {
             my $message = 'No matches found.';
             $filtered_list = [ $message ];
-            $filtered_w_list = [ print-columns( $message ) ];
+            $filtered_w_list_items = [ print-columns( $message ) ];
             $multiselect = 0;
         }
         else {
@@ -1232,10 +1285,10 @@ method !_search_begin ( $multiselect is copy ) {
     }
     $!search_backup_data<list> = [ @!list ];
     @!list = |$filtered_list;
-    $!search_backup_data<w_list> = [ @!w_list ];
-    @!w_list = |$filtered_w_list;
+    $!search_backup_data<w_list_items> = [ @!w_list_items ];
+    @!w_list_items = |$filtered_w_list_items;
     $!search_backup_data<col_w> = $!col_w;
-    $!col_w = $filtered_w_list.max;
+    $!col_w = $filtered_w_list_items.max;
     %!o<default> = 0;
     $!search = 1;
     my $up = $!i_row + @!prompt_lines + 1; # + 1 => readline
@@ -1264,13 +1317,13 @@ method !_search_end ( $multiselect ) {
     }
     if $!search_backup_data.keys {
         @!list = |$!search_backup_data<list>;
-        @!w_list = |$!search_backup_data<w_list>;
+        @!w_list_items = |$!search_backup_data<w_list_items>;
         $!col_w  = $!search_backup_data<col_w>;
     }
     $!search = 0;
     my $up = $!i_row + @!prompt_lines;
     print up( $up ) if $up;
-    print "\r" ~ clr-lines-to-bot;
+    print "\r" ~ clear-to-end-of-screen;
     self!_avail_screen_size();
     self!_wr_first_screen( $multiselect );
 }
@@ -1460,12 +1513,6 @@ Sets the string displayed on the screen instead of an empty string.
 
 (default: "E<lt>emptyE<gt>")
 
-=head3 footer
-
-Add a string in the bottom line.
-
-(default: undefined)
-
 =head3 f3
 
 Set the behavior of the C<F3> key.
@@ -1476,15 +1523,19 @@ Set the behavior of the C<F3> key.
 
 2 - case-sensitive search
 
+=head3 footer
+
+Add a string in the bottom line.
+
+If a footer string is passed with this option, the option page is automatically set to C<2>.
+
+(default: undefined)
+
 =head3 hide-cursor
 
 0 - keep the terminals highlighting of the cursor position
 
 1 - hide the terminals highlighting of the cursor position (default)
-
-=head3 info
-
-Expects as its value a string. The string is printed above the prompt string.
 
 =head3 index
 
@@ -1493,6 +1544,10 @@ Expects as its value a string. The string is printed above the prompt string.
 1 - return the indices of the chosen elements instead of the chosen elements.
 
 This option has no meaning for C<pause>.
+
+=head3 info
+
+Expects as its value a string. The string is printed above the prompt string.
 
 =head3 keep
 
@@ -1555,6 +1610,14 @@ From broad to narrow: 0 > 1 > 2
 
 =end code
 
+=head3 max-cols
+
+Limit the number of columns to I<max-cols>.
+
+Allowed values: 1 or greater
+
+(default: undefined)
+
 =head3 max-height
 
 If defined sets the maximal number of rows used for printing list items.
@@ -1601,12 +1664,21 @@ Sets the number of whitespaces between columns. (default: 2)
 
 Allowed values: 0 or greater
 
+=head3 page
+
+0 - off
+
+1 - print the page number on the bottom of the screen. If all the choices fit into one page, the page number is not
+displayed. (default)
+
+2 - the page number is always displayed even with only one page. Setting page to 2 automatically enables the option
+clear_screen.
+
 =head3 prompt
 
 If I<prompt> is undefined, a default prompt-string will be shown.
 
 If the I<prompt> value is an empty string (""), no prompt-line will be shown.
-
 
 =head3 save-screen
 

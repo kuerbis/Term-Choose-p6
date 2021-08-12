@@ -24,7 +24,7 @@ for @unsigned_int -> $key {
 
 
 
-my @positive_int = <keep ll max-height>;
+my @positive_int = <keep ll max-cols max-height max-width>;
 
 my @inval_p_int = 0, |@inval_u_int;
 for @positive_int -> $key {
@@ -41,27 +41,6 @@ for @positive_int -> $key {
         lives-ok { my $n = Term::Choose.new( |$p ) }, "invalid value $value for option $key lives ok";
     }
 }
-
-
-
-my @ge_2_int = <max-width>;
-
-my @inval_ge_2 = 1, |@inval_p_int;
-for @ge_2_int -> $key {
-    for @inval_ge_2 -> $value {
-        my $p = Pair.new($key, $value);
-        dies-ok { my $n = Term::Choose.new( |$p ) }, "invalid value $value for option $key dies ok";
-    }
-}
-
-my @val_ge_2 = 2, 17, 1000;
-for @ge_2_int -> $key {
-    for @val_ge_2 -> $value {
-        my $p = Pair.new($key, $value);
-        lives-ok { my $n = Term::Choose.new( |$p ) }, "invalid value $value for option $key lives ok";
-    }
-}
-
 
 
 
@@ -82,7 +61,6 @@ for @int_0_2 -> $key {
         lives-ok { my $n = Term::Choose.new( |$p ) }, "invalid value $value for option $key lives ok";
     }
 }
-
 
 
 

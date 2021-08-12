@@ -17,9 +17,9 @@ sub  left ( $steps ) is export( :DEFAULT, :left  ) { return t_left.join: $steps 
 
 
 
-my \clear      = run( 'tput', '-T', $term, 'clear', :out ).out.slurp;
-my \clr-to-bot = run( 'tput', '-T', $term, 'ed',    :out ).out.slurp;
-my \clr-to-eol = run( 'tput', '-T', $term, 'el',    :out ).out.slurp;
+my \clear-screen           = run( 'tput', '-T', $term, 'clear', :out ).out.slurp;
+my \clear-to-end-of-screen = run( 'tput', '-T', $term, 'ed',    :out ).out.slurp;
+my \clear-to-end-of-line   = run( 'tput', '-T', $term, 'el',    :out ).out.slurp;
 
 my \reverse   = run( 'tput', '-T', $term, 'rev',   :out, :err ).out.slurp;
 my \bold      = run( 'tput', '-T', $term, 'bold',  :out, :err ).out.slurp;
@@ -32,9 +32,9 @@ my \show-cursor    = run( 'tput', '-T', $term, 'cnorm', :out, :err ).out.slurp;
 my \hide-cursor    = run( 'tput', '-T', $term, 'civis', :out, :err ).out.slurp;
 my \bell           = run( 'tput', '-T', $term, 'bel',   :out, :err ).out.slurp;
 
-sub clear            is export( :DEFAULT, :clear            ) { return clear }
-sub clr-lines-to-bot is export( :DEFAULT, :clr-lines-to-bot ) { return "\r" ~ clr-to-bot }
-sub clr-to-eol       is export( :DEFAULT, :clr-to-eol       ) { return clr-to-eol }
+sub clear-screen           is export( :DEFAULT, :clear            ) { return clear-screen }
+sub clear-to-end-of-screen is export( :DEFAULT, :clr-lines-to-bot ) { return "\r" ~ clear-to-end-of-screen }
+sub clear-to-end-of-line   is export( :DEFAULT, :clr-to-eol       ) { return clear-to-end-of-line }
 
 sub reverse   is export( :DEFAULT, :reverse   ) { return reverse }
 sub bold      is export( :DEFAULT, :bold      ) { return bold }

@@ -176,13 +176,7 @@ Allowed values: 0 or greater
 
 Sets the string displayed on the screen instead of an empty string.
 
-(default: "ltemptygt")
-
-### footer
-
-Add a string in the bottom line.
-
-(default: undefined)
+(default: "<empty>")
 
 ### f3
 
@@ -194,15 +188,19 @@ Set the behavior of the `F3` key.
 
 2 - case-sensitive search
 
+### footer
+
+Add a string in the bottom line.
+
+If a footer string is passed with this option, the option page is automatically set to `2`.
+
+(default: undefined)
+
 ### hide-cursor
 
 0 - keep the terminals highlighting of the cursor position
 
 1 - hide the terminals highlighting of the cursor position (default)
-
-### info
-
-Expects as its value a string. The string is printed above the prompt string.
 
 ### index
 
@@ -211,6 +209,10 @@ Expects as its value a string. The string is printed above the prompt string.
 1 - return the indices of the chosen elements instead of the chosen elements.
 
 This option has no meaning for `pause`.
+
+### info
+
+Expects as its value a string. The string is printed above the prompt string.
 
 ### keep
 
@@ -261,6 +263,14 @@ From broad to narrow: 0 > 1 > 2
         |                   |   |                   |   |                   |   | ..                |
         '-------------------'   '-------------------'   '-------------------'   '-------------------'
 
+### max-cols
+
+Limit the number of columns to *max-cols*.
+
+Allowed values: 1 or greater
+
+(default: undefined)
+
 ### max-height
 
 If defined sets the maximal number of rows used for printing list items.
@@ -307,6 +317,14 @@ Sets the number of whitespaces between columns. (default: 2)
 
 Allowed values: 0 or greater
 
+### page
+
+0 - off
+
+1 - print the page number on the bottom of the screen. If all the choices fit into one page, the page number is not displayed. (default)
+
+2 - the page number is always displayed even with only one page. Setting page to 2 automatically enables the option clear_screen.
+
 ### prompt
 
 If *prompt* is undefined, a default prompt-string will be shown.
@@ -351,7 +369,7 @@ Allowed values: 0 or greater. Elements beyond the second are ignored.
 
 Sets the string displayed on the screen instead of an undefined element.
 
-default: "ltundefgt"
+default: "<undef>"
 
 options choose-multi
 --------------------

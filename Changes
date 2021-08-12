@@ -1,6 +1,13 @@
 Revision history for Term::Choose
 
 
+1.7.3   2021-08-12
+        - Update term width for info and prompt output.
+        - Reintroduced the option 'page'.
+        - New option 'max-cols'.
+        - 'choose-multi' returns a decontainerized Array.
+        - Empty list and 'quit': fixed return values.
+
 1.7.2   2021-05-27
         - Bugfix in 'F3'.
         - Save screen: use the new option 'save-screen' instead of 'clear-screen'.

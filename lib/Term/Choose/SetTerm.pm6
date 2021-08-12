@@ -15,7 +15,6 @@ has Int $.loop is rw;
 has $!saved_termios;
 
 
-
 method init-term {
     $!saved_termios := Term::termios.new(fd => 1).getattr;
     my $termios := Term::termios.new(fd => 1).getattr;
@@ -25,7 +24,7 @@ method init-term {
     if $!save-screen {
         print save-screen;
     }
-    if $!hide-cursor && ! $!loop {
+    if $!hide-cursor {
         print hide-cursor;
     }
     if $!mouse {
@@ -40,7 +39,7 @@ method restore-term ( $up ) {
         print unset-mouse1003;
         print unset-mouse1006;
     }
-    if $!saved_termios.defined { # ### 
+    if $!saved_termios.defined { ##
         $!saved_termios.setattr(:DRAIN);
     }
     if $!save-screen {
@@ -51,10 +50,10 @@ method restore-term ( $up ) {
             print up( $up );
         }
         if ! $!loop {
-            print clr-lines-to-bot;
+            print clear-to-end-of-screen();
         }
     }
-    if $!hide-cursor && ! $!loop {
+    if $!hide-cursor {
         print show-cursor;
     }
 }

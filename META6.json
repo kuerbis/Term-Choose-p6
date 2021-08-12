@@ -1,33 +1,35 @@
 {
-  "authors" : [
+  "authors": [
     "kuerbis"
   ],
-  "build-depends" : [ ],
-  "depends" : [
+  "build-depends": [
+  ],
+  "depends": [
     "Term::termios"
   ],
-  "description" : "Choose items from a list interactively.",
-  "license" : "Artistic-2.0",
-  "name" : "Term::Choose",
-  "perl" : "6.d",
-  "provides" : {
-    "Term::Choose" : "lib/Term/Choose.pm6",
-    "Term::Choose::LineFold" : "lib/Term/Choose/LineFold.pm6",
-    "Term::Choose::LineFold::CharWidthAmbiguousWide" : "lib/Term/Choose/LineFold/CharWidthAmbiguousWide.pm6",
-    "Term::Choose::LineFold::CharWidthDefault" : "lib/Term/Choose/LineFold/CharWidthDefault.pm6",
-    "Term::Choose::ReadKey" : "lib/Term/Choose/ReadKey.pm6",
-    "Term::Choose::Screen" : "lib/Term/Choose/Screen.pm6",
-    "Term::Choose::SetTerm" : "lib/Term/Choose/SetTerm.pm6"
+  "description": "Choose items from a list interactively.",
+  "license": "Artistic-2.0",
+  "name": "Term::Choose",
+  "perl": "6.d",
+  "provides": {
+    "Term::Choose": "lib/Term/Choose.pm6",
+    "Term::Choose::LineFold": "lib/Term/Choose/LineFold.pm6",
+    "Term::Choose::LineFold::CharWidthAmbiguousWide": "lib/Term/Choose/LineFold/CharWidthAmbiguousWide.pm6",
+    "Term::Choose::LineFold::CharWidthDefault": "lib/Term/Choose/LineFold/CharWidthDefault.pm6",
+    "Term::Choose::ReadKey": "lib/Term/Choose/ReadKey.pm6",
+    "Term::Choose::Screen": "lib/Term/Choose/Screen.pm6",
+    "Term::Choose::SetTerm": "lib/Term/Choose/SetTerm.pm6"
   },
-  "resources" : [ ],
-  "source-url" : "git://github.com/kuerbis/Term-Choose-p6.git",
-  "tags" : [
+  "resources": [
+  ],
+  "source-url": "git://github.com/kuerbis/Term-Choose-p6.git",
+  "tags": [
     "cli",
     "terminal",
     "text"
   ],
-  "test-depends" : [
+  "test-depends": [
     "Test"
   ],
-  "version" : "1.7.2"
+  "version": "1.7.3"
 }
