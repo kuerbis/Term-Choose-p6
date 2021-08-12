@@ -1680,6 +1680,8 @@ If I<prompt> is undefined, a default prompt-string will be shown.
 
 If the I<prompt> value is an empty string (""), no prompt-line will be shown.
 
+(default: undefined)
+
 =head3 save-screen
 
 0 - off (default)
@@ -1720,7 +1722,7 @@ Allowed values: 0 or greater. Elements beyond the second are ignored.
 
 Sets the string displayed on the screen instead of an undefined element.
 
-default: "E<lt>undefE<gt>"
+(default: "ltundefgt")
 
 =head2 options choose-multi
 

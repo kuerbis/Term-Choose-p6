@@ -331,6 +331,8 @@ If *prompt* is undefined, a default prompt-string will be shown.
 
 If the *prompt* value is an empty string (""), no prompt-line will be shown.
 
+(default: undefined)
+
 ### save-screen
 
 0 - off (default)
@@ -369,7 +371,7 @@ Allowed values: 0 or greater. Elements beyond the second are ignored.
 
 Sets the string displayed on the screen instead of an undefined element.
 
-default: "<undef>"
+(default: "ltundefgt")
 
 options choose-multi
 --------------------
