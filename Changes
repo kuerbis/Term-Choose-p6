@@ -1,6 +1,10 @@
 Revision history for Term::Choose
 
 
+1.7.4   2021-08-16
+        - Code refactoring.
+        - Update F3.
+
 1.7.3   2021-08-12
         - Update term width for info and prompt output.
         - Reintroduced the option 'page'.

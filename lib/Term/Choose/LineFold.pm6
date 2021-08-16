@@ -7,12 +7,11 @@ use Term::Choose::Screen;
 
 my $table = table_char_width();
 
-my $cache = [];
 
 sub char_width( Int $ord_char ) {
-    my $min = 0;
-    my $mid;
-    my $max = $table.end;
+    my Int $min = 0;
+    my Int $mid;
+    my Int $max = $table.end;
     if $ord_char < $table[0][0] || $ord_char > $table[$max][1] {
         return 1;
     }
@@ -35,7 +34,7 @@ sub char_width( Int $ord_char ) {
 sub to-printwidth( $str, Int $avail_w, Bool $dot=False, @cache? ) is export( :DEFAULT, :to-printwidth ) {
     # no check if char_width returns -1 because no invalid characters (s:g/<:C>//)
     my Int $width = 0;
-    my @graph;
+    my Str @graph;
     for $str.NFC {
         my $w;
         if @cache.EXISTS-POS( $_ ) {
@@ -78,10 +77,10 @@ sub line-fold( $str, Int $avail_w, Str :$init-tab is copy = '', Str :$subseq-tab
     if $string ~~ Buf {
         $string = $string.gist; # perl
     }
-    my @color;
+    my Str @colors;
     if $color { # elsif
         $string.=subst( / \x[feff] /, '', :g );
-        $string.=subst( / ( \e \[ <[\d;]>* m ) /, { @color.push( $0.Str ) && "\x[feff]" }, :g );
+        $string.=subst( / ( \e \[ <[\d;]>* m ) /, { @colors.push( $0.Str ) && "\x[feff]" }, :g );
     }
     $string.=subst( / \t /, ' ', :g );
     $string.=subst( / <:Cc+:Noncharacter_Code_Point+:Cs> && \V /, '' , :g ); #
@@ -127,10 +126,10 @@ sub line-fold( $str, Int $avail_w, Str :$init-tab is copy = '', Str :$subseq-tab
             }
         }
     }
-    if @color.elems {
+    if @colors.elems {
         for @lines -> $line is rw {
-            $line.=subst( / \x[feff] /, { @color.shift }, :g );
-            if ! @color.elems {
+            $line.=subst( / \x[feff] /, { @colors.shift }, :g );
+            if ! @colors.elems {
                 last;
             }
         }

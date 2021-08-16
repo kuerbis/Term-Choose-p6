@@ -9,7 +9,7 @@ use Term::Choose::Screen;
 
 has Int $.mouse;
 has Int $.hide-cursor;
-has Int $.save-screen;
+has Int $.save-screen is rw;
 has Int $.loop is rw;
 
 has $!saved_termios;

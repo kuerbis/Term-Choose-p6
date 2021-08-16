@@ -1,6 +1,6 @@
 use v6;
 
-unit class Term::Choose:ver<1.7.3>;
+unit class Term::Choose:ver<1.7.4>;
 
 use Term::termios;
 
@@ -80,7 +80,7 @@ has Array $!marked;
 has Int   $!page_step;
 has Int   $!cursor_row;
 
-has Int   $!search;
+has Str   $!filter_string = '';
 has Array $!map_search_list_index;
 has Hash  $!search_backup_data;
 has Hash  $!search_backup_opt;
@@ -99,12 +99,12 @@ method !_prepare_new_copy_of_list {
             last if $threads < 2;
             $threads = $threads div 2;
         }
-        my $size = @!orig_list.elems div $threads;
-        my @portions = ( ^$threads ).map: { [ $size * $_, $size * ( $_ + 1 ) ] };
+        my Int $size = @!orig_list.elems div $threads;
+        my Array @portions = ( ^$threads ).map: { [ $size * $_, $size * ( $_ + 1 ) ] }; ##
         @portions[*-1][1] = @!orig_list.elems;
-        my @promise;
+        my Promise @promise;
         for @portions -> $range {
-            my @cache;
+            my Int @cache;
             @promise.push: start {
                 do for $range[0] ..^ $range[1] -> $i {
                     if %!o<color> {
@@ -186,7 +186,6 @@ method !_beep {
 
 
 method !_prepare_prompt_and_info {
-    my @tmp;
     @!prompt_lines = ();
     my Int $info_w = $!term_w;
     #if $*KERNEL ne any 'MSWin32', 'cygwin' {
@@ -205,6 +204,9 @@ method !_prepare_prompt_and_info {
         my Int $subseq = %!o<tabs-prompt>[1] // 0;
         @!prompt_lines.push: |line-fold( %!o<prompt>, $info_w, :init-tab( ' ' x $init ), :subseq-tab( ' ' x $subseq ), :color( %!o<color> ) );
     }
+    if $!filter_string.chars {
+        @!prompt_lines.push: ( %!o<f3> == 1 ?? 'Filter rx:i/' !! 'Filter rx/' ) ~ $!filter_string ~ '/:';
+    }
     if ! @!prompt_lines.elems {
         return;
     }
@@ -213,7 +215,7 @@ method !_prepare_prompt_and_info {
     if $keep > $!term_h {
         $keep = $!term_h;
     }
-    my $limit_prompt_lines = $!avail_h - $keep;
+    my Int $limit_prompt_lines = $!avail_h - $keep;
     if @!prompt_lines.elems > $limit_prompt_lines {
         $!spare_prompt_line = @!prompt_lines[$limit_prompt_lines];
         @!prompt_lines.splice( 0, $limit_prompt_lines );
@@ -251,8 +253,8 @@ method !_set_pp_row_fmt {
         $!pp_row_fmt = Str;
     }
     else {
-        my $page_count_w = $!page_count.chars;
-        $!pp_row_fmt = '--- %0' ~ $page_count_w ~ 'd/' ~ $!page_count ~ ' ---';
+        my Int $page_count_w = $!page_count.chars;
+        $!pp_row_fmt = '--- %0' ~ $page_count_w ~ 'd/' ~ $!page_count ~ ' ---'; ##
         if %!o<footer>.chars {
             $!pp_row_fmt ~= %!o<footer>;
         }
@@ -308,9 +310,9 @@ method !_mouse_info_to_key ( Int $abs_cursor_Y, Int $button, Int $abs_mouse_X, I
     if $mouse_Y > $!rc2idx.end {
         return;
     }
-    my $matched_col;
-    my $end_prev_col = 0;
-    my $row = $mouse_Y + $!first_page_row;
+    my Int $matched_col;
+    my Int $end_prev_col = 0;
+    my Int $row = $mouse_Y + $!first_page_row;
 
     COL: for ^$!rc2idx[$row] -> $col {
         my Int $end_this_col;
@@ -341,7 +343,7 @@ method !_mouse_info_to_key ( Int $abs_cursor_Y, Int $button, Int $abs_mouse_X, I
         return '^M';
     }
     if $row != $!p[R] || $matched_col != $!p[C] {
-        my $tmp_p = $!p;
+        my Array $tmp_p = $!p;
         $!p = [ $row, $matched_col ];
         self!_wr_cell( $tmp_p[R], $tmp_p[C] );
         self!_wr_cell( $!p[R], $!p[C] );
@@ -453,7 +455,7 @@ method !_choose ( Int $multiselect, @!orig_list,
     self!_avail_screen_size();
     self!_prepare_new_copy_of_list();
     self!_wr_first_screen( $multiselect );
-    my $fast_page = 10;
+    my Int $fast_page = 10;
     if $!page_count > 10_000 {
         $fast_page = 20;
     }
@@ -666,7 +668,7 @@ method !_choose ( Int $multiselect, @!orig_list,
                         self!_beep();
                     }
                     else {
-                        my $backup_row_top = $!first_page_row;
+                        my Int $backup_row_top = $!first_page_row;
                         $!first_page_row = $!avail_h * ( $!p[R] div $!avail_h + $!page_step );
                         $!last_page_row  = $!first_page_row + $!avail_h - 1;
                         $!last_page_row  = $!rc2idx.end if $!last_page_row > $!rc2idx.end;
@@ -751,7 +753,7 @@ method !_choose ( Int $multiselect, @!orig_list,
                     done();
                 }
                 when '^M' { # Enter/Return
-                    if $!search {
+                    if $!filter_string.chars {
                         self!_search_end( $multiselect );
                         next;
                     }
@@ -780,7 +782,7 @@ method !_choose ( Int $multiselect, @!orig_list,
                                 }
                             }
                         }
-                        my $indexes = self!_marked_rc2idx();
+                        my Array[Int] $indexes = self!_marked_rc2idx();
                         $return = %!o<index> ?? $indexes !! [ @!orig_list[|$indexes] ];
                         done();
                     }
@@ -835,7 +837,7 @@ method !_choose ( Int $multiselect, @!orig_list,
                             $return = -13;
                             done();
                         }
-                        if $!search {
+                        if $!filter_string.chars {
                             self!_search_end( $multiselect );
                         }
                         self!_search_begin( $multiselect );
@@ -924,7 +926,7 @@ method !_wr_first_screen ( Int $multiselect ) {
 
 
 method !_wr_screen {
-    my @lines;
+    my Str @lines;
     if %!o<color> || $!all_in_one_row {
         for $!first_page_row .. $!last_page_row -> $row {
             @lines.push: ( 0 .. $!rc2idx[$row].end ).map({
@@ -979,13 +981,13 @@ method !_wr_cell ( Int $row, Int $col ) {
 
 method !_cell ( Int $row, Int $col ) {
     my Bool \is_current_pos = $row == $!p[R] && $col == $!p[C];
-    my $emphasised = is_current_pos ?? reverse() !! '';
+    my Str $emphasised = is_current_pos ?? reverse() !! '';
     if $!marked[$row][$col] {
         $emphasised = bold() ~ underline() ~ $emphasised;
     }
-    my $str = self!_pad_str_to_colwidth( $!rc2idx[$row][$col] );
+    my Str $str = self!_pad_str_to_colwidth( $!rc2idx[$row][$col] );
     if %!o<color> {
-        my @color;
+        my Str @color;
         if ! @!orig_list[ $!rc2idx[$row][$col] ].defined {
             @color = %!o<undef>.comb( / \e \[ <[\d;]>* m / );
         }
@@ -1025,7 +1027,7 @@ method !_cell ( Int $row, Int $col ) {
 
 
 method !_goto( $row, $col ) {
-    my $escape = '';
+    my Str $escape = '';
 
     # Row
     my \new_i_row = $row - $!first_page_row;
@@ -1164,9 +1166,9 @@ method !_marked_idx2rc ( List $indexes, Bool $yesno ) {
     }
     elsif %!o<order> == 1 {
         my Int $rows_per_col = $!rc2idx.elems;
-        my $col_count_last_row = $!idx_of_last_col_in_last_row + 1;
-        my $last_list_idx_in_cols_full = $rows_per_col * $col_count_last_row - 1;
-        my $first_list_idx_in_cols_short = $last_list_idx_in_cols_full + 1;
+        my Int $col_count_last_row = $!idx_of_last_col_in_last_row + 1;
+        my Int $last_list_idx_in_cols_full = $rows_per_col * $col_count_last_row - 1;
+        my Int $first_list_idx_in_cols_short = $last_list_idx_in_cols_full + 1;
         for $indexes.list -> $list_idx {
             next if $list_idx > @!list.end;
             if $list_idx < $last_list_idx_in_cols_full {
@@ -1205,13 +1207,17 @@ method !_marked_rc2idx {
 
 
 method !_search_user_input ( $prompt ) {
-    my $backup_loop = $!setterm.loop;
+    my Int $backup_loop = $!setterm.loop;
+    my Int $backup_save_screen = $!setterm.save-screen;
     $!setterm.loop = 1;
+    $!setterm.save-screen = 0;
     $!setterm.restore-term( 0 );
-    #print "\r", clear-to-end-of-line();
     print clear-screen();
+    if @!prompt_lines.elems {
+        print @!prompt_lines.join( "\n\r" ) ~ "\n\r";
+    }
     print show-cursor() if %!o<hide-cursor>;
-    my $string;
+    my Str $string;
     if ( try require Readline ) === Nil {
         $string = prompt( $prompt );
     }
@@ -1221,6 +1227,8 @@ method !_search_user_input ( $prompt ) {
         $string = $rl.readline( $prompt );
     }
     print hide-cursor() if %!o<hide-cursor>;
+    $!setterm.loop = $backup_loop;
+    $!setterm.save-screen = $backup_save_screen;
     $!setterm.init-term();
     return $string;
 }
@@ -1230,23 +1238,24 @@ method !_search_begin ( $multiselect is copy ) {
     $!map_search_list_index = [];
     $!search_backup_opt = {};
     $!search_backup_data = {};
-    my $search_str = self!_search_user_input( '> search-pattern: ' );
+    my Str $search_str = self!_search_user_input( '> search-pattern: ' );
     if ! $search_str.chars {
         self!_search_end( $multiselect );
         return;
     }
-    my $regex;
+    $!filter_string = $search_str;
+    my Regex $regex;
     if %!o<f3> == 1 {
         $regex = rx:i/<$search_str>/;
     }
     else {
         $regex = rx/<$search_str>/;
     }
-    my $filtered_list = [];
-    my $filtered_w_list_items = [];
+    my Array $filtered_list = [];
+    my Array[Int] $filtered_w_list_items = Array[Int].new();
     try { 'Teststring' ~~ $regex }
     if $! {
-        my @lines = $!.Str.split( "\n" ).map: { |line-fold( $_, $!avail_w ) };
+        my Str @lines = $!.Str.split( "\n" ).map: { |line-fold( $_, $!avail_w ) };
         $filtered_list = [ @lines ];
         $filtered_w_list_items = [ $!avail_w xx @lines.elems ];
         $multiselect = 0;
@@ -1260,7 +1269,7 @@ method !_search_begin ( $multiselect is copy ) {
             }
         }
         if ! $filtered_list.elems {
-            my $message = 'No matches found.';
+            my Str $message = 'No matches found.';
             $filtered_list = [ $message ];
             $filtered_w_list_items = [ print-columns( $message ) ];
             $multiselect = 0;
@@ -1270,7 +1279,7 @@ method !_search_begin ( $multiselect is copy ) {
             for <meta_items no_spacebar mark> -> $opt {
                 if %!o{$opt}.defined {
                     $!search_backup_opt{$opt} = [ |%!o{$opt} ];
-                    my $tmp = [];
+                    my Array $tmp = [];
                     for |%!o{$opt} -> $orig_idx {
                         for ^$!map_search_list_index -> $i {
                             if $!map_search_list_index[$i] == $orig_idx {
@@ -1290,8 +1299,7 @@ method !_search_begin ( $multiselect is copy ) {
     $!search_backup_data<col_w> = $!col_w;
     $!col_w = $filtered_w_list_items.max;
     %!o<default> = 0;
-    $!search = 1;
-    my $up = $!i_row + @!prompt_lines + 1; # + 1 => readline
+    my Int $up = $!i_row + @!prompt_lines + 1; # + 1 => readline
     print up( $up ) if $up;
     self!_avail_screen_size();
     self!_wr_first_screen( $multiselect );
@@ -1301,14 +1309,14 @@ method !_search_begin ( $multiselect is copy ) {
 method !_search_end ( $multiselect ) {
     if $!map_search_list_index.elems {
         %!o<default> = $!map_search_list_index[ $!rc2idx[ $!p[R] ][ $!p[C] ] ];
-        my $tmp_mark = [];
+        my Int @tmp_mark;
         for |self!_marked_rc2idx() -> $i {
-            $tmp_mark.push: $!map_search_list_index[$i];
+            @tmp_mark.push: $!map_search_list_index[$i];
         }
         if $!search_backup_opt<mark>.defined {
-            $tmp_mark.push: |$!search_backup_opt<mark>;
+            @tmp_mark.push: |$!search_backup_opt<mark>;
         }
-        %!o<mark> = [ |$tmp_mark.unique ];
+        %!o<mark> = [ |@tmp_mark.unique ]; ##
         for <meta_items no_spacebar> -> $key {
             if $!search_backup_opt{$key}.defined {
                 %!o{$key} = $!search_backup_opt{$key};
@@ -1320,8 +1328,8 @@ method !_search_end ( $multiselect ) {
         @!w_list_items = |$!search_backup_data<w_list_items>;
         $!col_w  = $!search_backup_data<col_w>;
     }
-    $!search = 0;
-    my $up = $!i_row + @!prompt_lines;
+    $!filter_string ='';
+    my Int $up = $!i_row + @!prompt_lines;
     print up( $up ) if $up;
     print "\r" ~ clear-to-end-of-screen;
     self!_avail_screen_size();
@@ -1797,7 +1805,7 @@ help.
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (C) 2016-2020 Matthäus Kiem.
+Copyright (C) 2016-2021 Matthäus Kiem.
 
 This library is free software; you can redistribute it and/or modify it under the Artistic License 2.0.
 

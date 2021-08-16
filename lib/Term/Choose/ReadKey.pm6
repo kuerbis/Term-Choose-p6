@@ -6,19 +6,19 @@ my Int $abs_cursor_Y;
 
 sub read-key( Int $mouse ) is export( :DEFAULT, :read-key ) {
     my $s = Supplier::Preserving.new;
-    my $done = False;
+    my Bool $done = False;
     start {
         LOOP: until $done {
-            my $buf = Buf.new;
-            my $c1;
+            my Buf $buf = Buf.new;
+            my Str $c1;
             while ! try $c1 = $buf.decode {
                 # Terminal::Print::RawInput
-                my $b = $*IN.read(1) or return;
+                my Buf $b = $*IN.read(1) or return;
                 $buf.push: $b;
             }
-            my $pressed_key;
+            my $pressed_key; # Str or Array
             if $c1 eq "\e" {
-                my $c2 = $*IN.read(1).decode;
+                my Str $c2 = $*IN.read(1).decode;
                 if ! $c2.defined { $pressed_key = 'Escape' }
                 elsif $c2 eq "A" { $pressed_key = 'CursorUp' }
                 elsif $c2 eq "B" { $pressed_key = 'CursorDown' }
@@ -26,7 +26,7 @@ sub read-key( Int $mouse ) is export( :DEFAULT, :read-key ) {
                 elsif $c2 eq "D" { $pressed_key = 'CursorLeft' }
                 elsif $c2 eq "H" { $pressed_key = 'CursorHome' }
                 elsif $c2 eq "O" {
-                    my $c3 = $*IN.read(1).decode;
+                    my Str $c3 = $*IN.read(1).decode;
                     if    $c3 eq "A" { $pressed_key = 'CursorUp' }
                     elsif $c3 eq "B" { $pressed_key = 'CursorDown' }
                     elsif $c3 eq "C" { $pressed_key = 'CursorRight' }
@@ -45,7 +45,7 @@ sub read-key( Int $mouse ) is export( :DEFAULT, :read-key ) {
                 elsif $c2 eq "R" { $pressed_key = 'F3' }
                 #elsif $c2 eq "S" { $pressed_key = 'F4' }
                 elsif $c2 eq "[" {
-                    my $c3 = $*IN.read(1).decode;
+                    my Str $c3 = $*IN.read(1).decode;
                     if    $c3 eq "A" { $pressed_key = 'CursorUp' }
                     elsif $c3 eq "B" { $pressed_key = 'CursorDown' }
                     elsif $c3 eq "C" { $pressed_key = 'CursorRight' }
@@ -54,16 +54,16 @@ sub read-key( Int $mouse ) is export( :DEFAULT, :read-key ) {
                     elsif $c3 eq "H" { $pressed_key = 'CursorHome' }
                     elsif $c3 eq "Z" { $pressed_key = 'BackTab' }
                     elsif $c3 ~~ / ^ <[ 0..9 ]> $ / {
-                        my $digits = $c3;
-                        my $next_c = $*IN.read(1).decode;
+                        my Str $digits = $c3;
+                        my Str $next_c = $*IN.read(1).decode;
                         while $next_c ~~ / ^ <[ 0..9 ]> $ / {
                             $digits ~= $next_c;
                             $next_c = $*IN.read(1).decode;
                         }
                         if $next_c eq ";" {
-                            my $abs_curs_y = $digits;
-                            my $abs_curs_x = '';
-                            my $rx = $*IN.read(1).decode;
+                            my Str $abs_curs_y = $digits;
+                            my Str $abs_curs_x = '';
+                            my Str $rx = $*IN.read(1).decode;
                             while $rx ~~ / ^ <[ 0..9 ]> $ / {
                                 $abs_curs_x ~= $rx;
                                 $rx = $*IN.read(1).decode;
@@ -122,39 +122,38 @@ sub read-key( Int $mouse ) is export( :DEFAULT, :read-key ) {
 }
 
 
-
 # http://invisible-island.net/xterm/ctlseqs/ctlseqs.html
 
 sub _mouse_tracking_SRG_1006 {
-    my $event_type = '';
-    my $m1;
+    my Str $event_type = '';
+    my Str $m1;
     while ( $m1 = $*IN.read(1).decode ) ~~ / ^ <[ 0..9 ]> $ / {
         $event_type ~= $m1;
     }
     if $m1 ne ";" {
         return;
     }
-    my $x = '';
-    my $m2;
+    my Str $x = '';
+    my Str $m2;
     while ( $m2 = $*IN.read(1).decode ) ~~ / ^ <[ 0..9 ]> $ / {
         $x ~= $m2;
     }
     if $m2 ne ";" {
         return;
     }
-    my $y = '';
-    my $m3;
+    my Str $y = '';
+    my Str $m3;
     while ( $m3 = $*IN.read(1).decode ) ~~ / ^ <[ 0..9 ]> $ / {
         $y ~= $m3;
     }
     if $m3 !~~ / ^ <[ mM ]> $ / {
         return;
     }
-    my $button_released = $m3 eq "m" ?? 1 !! 0;
+    my Int $button_released = $m3 eq "m" ?? 1 !! 0;
     if $button_released {
         return;
     }
-    my $button = _mouse_event_to_button( $event_type );
+    my Int $button = _mouse_event_to_button( $event_type );
     if ! $button.defined {
         return;
     }
@@ -162,13 +161,13 @@ sub _mouse_tracking_SRG_1006 {
 }
 
 
-sub _mouse_event_to_button( $event_type ) {
-    my $button_drag = ( $event_type +& 0x20 ) +> 5;
+sub _mouse_event_to_button( Str $event_type ) {
+    my Int $button_drag = ( $event_type +& 0x20 ) +> 5;
     if $button_drag {
         return;
     }
-    my $button;
-    my $low_2_bits = $event_type +& 0x03;
+    my Int $button;
+    my Int $low_2_bits = $event_type +& 0x03;
     if $low_2_bits == 3 {
         $button = 0;
     }
