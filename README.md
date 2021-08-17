@@ -49,21 +49,21 @@ How to choose the items is described in [ROUTINES](#ROUTINES).
 Keys
 ----
 
-  * the `Arrow` keys (or `h,j,k,l`) to move up and down or to move to the right and to the left,
+  * the Arrow keys (or h,j,k,l) to move up and down or to move to the right and to the left,
 
-  * the `Tab` key (or `Ctrl-I`) to move forward, the `BackSpace` key (or `Ctrl-H`) to move backward,
+  * the Tab key (or Ctrl-I) to move forward, the BackSpace key (or Ctrl-H) to move backward,
 
-  * the `PageUp` key (or `Ctrl-B`) to go back one page, the `PageDown` key (or `Ctrl-F`) to go forward one page,
+  * the PageUp key (or Ctrl-P) to go to the previous page, the PageDown key (or Ctrl-N) to go to the next page,
 
-  * the `Insert` key to go back 10 pages, the `Delete` key to go forward 10 pages,
+  * the Insert key to go back 10 pages, the Delete key to go forward 10 pages,
 
-  * the `Home` key (or `Ctrl-A`) to jump to the beginning of the list, the `End` key (or `Ctrl-E`) to jump to the end of the list.
+  * the Home key (or Ctrl-A) to jump to the beginning of the list, the End key (or Ctrl-E) to jump to the end of the list.
 
-For the usage of `SpaceBar`, `Ctrl-SpaceBar`, `Return` and the `q`-key see [choose](#choose), [choose-multi](#choose-multi) and [pause](#pause).
+For the usage of SpaceBar, Ctrl-SpaceBar, Return and the q-key see [choose](#choose), [choose-multi](#choose-multi) and [pause](#pause).
 
-With *mouse* enabled use the the left mouse key instead the `Return` key and the right mouse key instead of the `SpaceBar` key. Instead of `PageUp` and `PageDown` it can be used the mouse wheel. See [mouse](#mouse)
+With *mouse* enabled use the the left mouse key instead the Return key and the right mouse key instead of the SpaceBar key. Instead of PageUp and PageDown it can be used the mouse wheel. See [mouse](#mouse)
 
-Pressing the `F3` allows one to enter a regular expression so that only the items that match the regular expression are displayed. When going back to the unfiltered menu (`Enter`) the item highlighted in the filtered menu keeps the highlighting. Also (in *list context*) marked items retain there markings. The Raku function `prompt` is used to read the regular expression if [Readline](Readline) is not available. See option [f3](#f3).
+Pressing the Ctrl-F allows one to enter a regular expression so that only the items that match the regular expression are displayed. When going back to the unfiltered menu (Return) the item highlighted in the filtered menu keeps the highlighting. Also (in *list context*) marked items retain there markings. The Raku function `prompt` is used to read the regular expression if [Readline](Readline) is not available. See option [search](#search).
 
 CONSTRUCTOR
 ===========
@@ -76,27 +76,27 @@ ROUTINES
 choose
 ------
 
-`choose` allows the user to choose one item from a list: the highlighted item is returned when `Return` is pressed.
+`choose` allows the user to choose one item from a list: the highlighted item is returned when Return is pressed.
 
-`choose` returns nothing if the `q` or `Ctrl-Q` is pressed.
+`choose` returns nothing if the q or Ctrl-Q is pressed.
 
 choose-multi
 ------------
 
 The user can choose many items.
 
-To choose an item mark the item with the `SpaceBar`. When `Return` is pressed `choose-multi` then returns the marked items as an Array. If the option *include-highlighted* is set to `1`, the highlighted item is also returned.
+To choose an item mark the item with the SpaceBar. When Return is pressed `choose-multi` then returns the marked items as an Array. If the option *include-highlighted* is set to `1`, the highlighted item is also returned.
 
-If `Return` is pressed with no marked items and [include-highlighted](#include-highlighted) is set to `2`, the highlighted item is returned.
+If Return is pressed with no marked items and [include-highlighted](#include-highlighted) is set to `2`, the highlighted item is returned.
 
-`Ctrl-SpaceBar` (or `Ctrl-@`) inverts the choices: marked items are unmarked and unmarked items are marked.
+Ctrl-SpaceBar (or Ctrl-@) inverts the choices: marked items are unmarked and unmarked items are marked.
 
-`choose-multi` returns nothing if the `q` or `Ctrl-Q` is pressed.
+`choose-multi` returns nothing if the q or Ctrl-Q is pressed.
 
 pause
 -----
 
-Nothing can be chosen, nothing is returned but the user can move around and read the output until closed with `Return`, `q` or `Ctrl-Q`.
+Nothing can be chosen, nothing is returned but the user can move around and read the output until closed with Return, q or Ctrl-Q.
 
 OUTPUT
 ======
@@ -177,16 +177,6 @@ Allowed values: 0 or greater
 Sets the string displayed on the screen instead of an empty string.
 
 (default: "<empty>")
-
-### f3
-
-Set the behavior of the `F3` key.
-
-0 - off
-
-1 - case-insensitive search (default)
-
-2 - case-sensitive search
 
 ### footer
 
@@ -339,6 +329,16 @@ If the *prompt* value is an empty string (""), no prompt-line will be shown.
 
 1 - use the alternate screen
 
+### search
+
+Set the behavior of Ctrl-F.
+
+0 - off
+
+1 - case-insensitive search (default)
+
+2 - case-sensitive search
+
 ### tabs-info
 
 If *info* lines are folded, the option *tabs-info* allows one to insert spaces at beginning of the folded lines.
@@ -378,11 +378,11 @@ options choose-multi
 
 ### include-highlighted
 
-0 - `choose-multi` returns the items marked with the `SpaceBar`. (default)
+0 - `choose-multi` returns the items marked with the SpaceBar. (default)
 
-1 - `choose-multi` returns the items marked with the `SpaceBar` plus the highlighted item.
+1 - `choose-multi` returns the items marked with the SpaceBar plus the highlighted item.
 
-2 - `choose-multi` returns the items marked with the `SpaceBar`. If no items are marked with the `SpaceBar`, the highlighted item is returned.
+2 - `choose-multi` returns the items marked with the SpaceBar. If no items are marked with the SpaceBar, the highlighted item is returned.
 
 ### mark
 
@@ -392,7 +392,7 @@ options choose-multi
 
 ### meta-items
 
-*meta_items* expects as its value a list of indexes (integers). List-elements correlating to these indexes can not be marked with the `SpaceBar` or with the right mouse key but if one of these elements is the highlighted item it is added to the chosen items when `Return` is pressed.
+*meta_items* expects as its value a list of indexes (integers). List-elements correlating to these indexes can not be marked with the SpaceBar or with the right mouse key but if one of these elements is the highlighted item it is added to the chosen items when Return is pressed.
 
 Elements greater than the last index of the list are ignored.
 
@@ -400,7 +400,7 @@ Elements greater than the last index of the list are ignored.
 
 ### no-spacebar
 
-*no-spacebar* expects as its value an list. The elements of the list are indexes of choices which should not be markable with the `SpaceBar` or with the right mouse key. If an element is preselected with the option *mark* and also marked as not selectable with the option *no-spacebar*, the user can not remove the preselection of this element.
+*no-spacebar* expects as its value an list. The elements of the list are indexes of choices which should not be markable with the SpaceBar or with the right mouse key. If an element is preselected with the option *mark* and also marked as not selectable with the option *no-spacebar*, the user can not remove the preselection of this element.
 
 (default: undefined)
 

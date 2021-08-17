@@ -1,6 +1,11 @@
 Revision history for Term::Choose
 
 
+1.7.5   2021-08-17
+        - Renamed the option 'f3' to 'search'.
+        - Changed the search key from 'F3' to 'Ctrl-F'.
+        - Page up/down: changed from 'Ctrl-B/Ctrl-F' to 'Ctrl-P/Ctrl-N'.
+
 1.7.4   2021-08-16
         - Code refactoring.
         - Update F3.

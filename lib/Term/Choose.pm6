@@ -1,6 +1,6 @@
 use v6;
 
-unit class Term::Choose:ver<1.7.4>;
+unit class Term::Choose:ver<1.7.5>;
 
 use Term::termios;
 
@@ -29,7 +29,7 @@ has Int_0_or_1   $.save-screen          = 0;
 has Int_0_to_2   $.alignment            = 0;
 has Int_0_to_2   $.clear-screen         = 1; # 27.05.2021 - remove this and uncomment `has Int_0_or_1 $.clear-screen = 1;`
 has Int_0_to_2   $.color                = 0;
-has Int_0_to_2   $.f3                   = 1;
+has Int_0_to_2   $.search               = 1;
 has Int_0_to_2   $.include-highlighted  = 0;
 has Int_0_to_2   $.layout               = 1;
 has Int_0_to_2   $.page                 = 1;
@@ -205,7 +205,7 @@ method !_prepare_prompt_and_info {
         @!prompt_lines.push: |line-fold( %!o<prompt>, $info_w, :init-tab( ' ' x $init ), :subseq-tab( ' ' x $subseq ), :color( %!o<color> ) );
     }
     if $!filter_string.chars {
-        @!prompt_lines.push: ( %!o<f3> == 1 ?? 'Filter rx:i/' !! 'Filter rx/' ) ~ $!filter_string ~ '/:';
+        @!prompt_lines.push: ( %!o<search> == 1 ?? 'Filter rx:i/' !! 'Filter rx/' ) ~ $!filter_string ~ '/:';
     }
     if ! @!prompt_lines.elems {
         return;
@@ -408,7 +408,7 @@ method !_choose ( Int $multiselect, @!orig_list,
         Int_0_to_2   :$alignment            = $!alignment,
         Int_0_to_2   :$clear-screen         = $!clear-screen, # 27.05.2021 - remove this and uncomment `Int_0_or_1 :$clear-screen = $!clear-screen,`
         Int_0_to_2   :$color                = $!color,
-        Int_0_to_2   :$f3                   = $!f3,
+        Int_0_to_2   :$search               = $!search,
         Int_0_to_2   :$include-highlighted  = $!include-highlighted,
         Int_0_to_2   :$layout               = $!layout,
         Int_0_to_2   :$page                 = $!page,
@@ -431,9 +431,9 @@ method !_choose ( Int $multiselect, @!orig_list,
         Str          :$undef                = $!undef,
     ) {
     # %!o -> make options available in methods
-    %!o = :$alignment, :$beep, :$clear-screen, :$color, :$default, :$empty, :$f3, :$footer, :$hide-cursor,
+    %!o = :$alignment, :$beep, :$clear-screen, :$color, :$default, :$empty, :$footer, :$hide-cursor,
           :$include-highlighted, :$index, :$info, :$keep, :$layout, :$ll, :$mark, :$max-cols, :$max-height, :$max-width,
-          :$meta-items, :$mouse, :$no-spacebar, :$order, :$pad, :$page, :$prompt, :$save-screen, :$tabs-info,
+          :$meta-items, :$mouse, :$no-spacebar, :$order, :$pad, :$page, :$prompt, :$save-screen, :$search, :$tabs-info,
           :$tabs-prompt, :$undef;
     self!_modify_options( $multiselect );
     if ! @!orig_list.elems {
@@ -645,7 +645,7 @@ method !_choose ( Int $multiselect, @!orig_list,
                         }
                     }
                 }
-                when 'PageUp' | '^B' {
+                when 'PageUp' | '^P' {
                     if $!first_page_row <= 0 {
                         self!_beep();
                     }
@@ -663,7 +663,7 @@ method !_choose ( Int $multiselect, @!orig_list,
                         self!_wr_screen();
                     }
                 }
-                when 'PageDown' | '^F' {
+                when 'PageDown' | '^N' {
                     if $!last_page_row >= $!rc2idx.end {
                         self!_beep();
                     }
@@ -829,10 +829,10 @@ method !_choose ( Int $multiselect, @!orig_list,
                         self!_beep();
                     }
                 }
-                when 'F3' {
-                    if %!o<f3> {
+                when '^F' {
+                    if %!o<search> {
                         if %!o<ll> {
-                            %*ENV<TC_POS_AT_F3> = $!rc2idx[ $!p[R] ][ $!p[C] ];
+                            %*ENV<TC_POS_AT_SEARCH> = $!rc2idx[ $!p[R] ][ $!p[C] ];
                             $!setterm.restore-term( $!i_row + @!prompt_lines );
                             $return = -13;
                             done();
@@ -1245,7 +1245,7 @@ method !_search_begin ( $multiselect is copy ) {
     }
     $!filter_string = $search_str;
     my Regex $regex;
-    if %!o<f3> == 1 {
+    if %!o<search> == 1 {
         $regex = rx:i/<$search_str>/;
     }
     else {
@@ -1384,28 +1384,28 @@ How to choose the items is described in L<#ROUTINES>.
 
 =head2 Keys
 
-=item the C<Arrow> keys (or C<h,j,k,l>) to move up and down or to move to the right and to the left,
+=item the K<Arrow> keys (or K<h>,K<j>,K<k>,K<l>) to move up and down or to move to the right and to the left,
 
-=item the C<Tab> key (or C<Ctrl-I>) to move forward, the C<BackSpace> key (or C<Ctrl-H>) to move
-backward,
+=item the K<Tab> key (or K<Ctrl-I>) to move forward, the K<BackSpace> key (or K<Ctrl-H>) to move backward,
 
-=item the C<PageUp> key (or C<Ctrl-B>) to go back one page, the C<PageDown> key (or C<Ctrl-F>) to go forward one page,
+=item the K<PageUp> key (or K<Ctrl-P>) to go to the previous page, the K<PageDown> key (or K<Ctrl-N>) to go to the next
+page,
 
-=item the C<Insert> key to go back 10 pages, the C<Delete> key to go forward 10 pages,
+=item the K<Insert> key to go back 10 pages, the K<Delete> key to go forward 10 pages,
 
-=item the C<Home> key (or C<Ctrl-A>) to jump to the beginning of the list, the C<End> key (or C<Ctrl-E>) to jump to the
+=item the K<Home> key (or K<Ctrl-A>) to jump to the beginning of the list, the K<End> key (or K<Ctrl-E>) to jump to the
 end of the list.
 
-For the usage of C<SpaceBar>, C<Ctrl-SpaceBar>, C<Return> and the C<q>-key see L<#choose>, L<#choose-multi> and
+For the usage of K<SpaceBar>, K<Ctrl-SpaceBar>, K<Return> and the K<q>-key see L<#choose>, L<#choose-multi> and
 L<#pause>.
 
-With I<mouse> enabled use the the left mouse key instead the C<Return> key and the right mouse key instead of the
-C<SpaceBar> key. Instead of C<PageUp> and C<PageDown> it can be used the mouse wheel. See L<#mouse>
+With I<mouse> enabled use the the left mouse key instead the K<Return> key and the right mouse key instead of the
+K<SpaceBar> key. Instead of K<PageUp> and K<PageDown> it can be used the mouse wheel. See L<#mouse>
 
-Pressing the C<F3> allows one to enter a regular expression so that only the items that match the regular expression
-are displayed. When going back to the unfiltered menu (C<Enter>) the item highlighted in the filtered menu keeps the
+Pressing the K<Ctrl-F> allows one to enter a regular expression so that only the items that match the regular expression
+are displayed. When going back to the unfiltered menu (K<Return>) the item highlighted in the filtered menu keeps the
 highlighting. Also (in I<list context>) marked items retain there markings. The Raku function C<prompt> is used to
-read the regular expression if L<Readline> is not available. See option L<#f3>.
+read the regular expression if L<Readline> is not available. See option L<#search>.
 
 =head1 CONSTRUCTOR
 
@@ -1416,29 +1416,28 @@ options in C<new> overwrites the default values for the instance.
 
 =head2 choose
 
-C<choose> allows the user to choose one item from a list: the highlighted item is returned when C<Return>
-is pressed.
+C<choose> allows the user to choose one item from a list: the highlighted item is returned when K<Return> is pressed.
 
-C<choose> returns nothing if the C<q> or C<Ctrl-Q> is pressed.
+C<choose> returns nothing if the K<q> or K<Ctrl-Q> is pressed.
 
 =head2 choose-multi
 
 The user can choose many items.
 
-To choose an item mark the item with the C<SpaceBar>. When C<Return> is pressed C<choose-multi> then returns the marked
+To choose an item mark the item with the K<SpaceBar>. When K<Return> is pressed C<choose-multi> then returns the marked
 items as an Array. If the option I<include-highlighted> is set to C<1>, the highlighted item is also returned.
 
-If C<Return> is pressed with no marked items and L<#include-highlighted> is set to C<2>, the highlighted item is
+If K<Return> is pressed with no marked items and L<#include-highlighted> is set to C<2>, the highlighted item is
 returned.
 
-C<Ctrl-SpaceBar> (or C<Ctrl-@>) inverts the choices: marked items are unmarked and unmarked items are marked.
+K<Ctrl-SpaceBar> (or K<Ctrl-@>) inverts the choices: marked items are unmarked and unmarked items are marked.
 
-C<choose-multi> returns nothing if the C<q> or C<Ctrl-Q> is pressed.
+C<choose-multi> returns nothing if the K<q> or K<Ctrl-Q> is pressed.
 
 =head2 pause
 
-Nothing can be chosen, nothing is returned but the user can move around and read the output until closed with C<Return>,
-C<q> or C<Ctrl-Q>.
+Nothing can be chosen, nothing is returned but the user can move around and read the output until closed with K<Return>,
+K<q> or K<Ctrl-Q>.
 
 =head1 OUTPUT
 
@@ -1520,16 +1519,6 @@ Allowed values: 0 or greater
 Sets the string displayed on the screen instead of an empty string.
 
 (default: "E<lt>emptyE<gt>")
-
-=head3 f3
-
-Set the behavior of the C<F3> key.
-
-0 - off
-
-1 - case-insensitive search (default)
-
-2 - case-sensitive search
 
 =head3 footer
 
@@ -1696,6 +1685,16 @@ If the I<prompt> value is an empty string (""), no prompt-line will be shown.
 
 1 - use the alternate screen
 
+=head3 search
+
+Set the behavior of K<Ctrl-F>.
+
+0 - off
+
+1 - case-insensitive search (default)
+
+2 - case-sensitive search
+
 =head3 tabs-info
 
 If I<info> lines are folded, the option I<tabs-info> allows one to insert spaces at beginning of the folded lines.
@@ -1736,11 +1735,11 @@ Sets the string displayed on the screen instead of an undefined element.
 
 =head3 include-highlighted
 
-0 - C<choose-multi> returns the items marked with the C<SpaceBar>. (default)
+0 - C<choose-multi> returns the items marked with the K<SpaceBar>. (default)
 
-1 - C<choose-multi> returns the items marked with the C<SpaceBar> plus the highlighted item.
+1 - C<choose-multi> returns the items marked with the K<SpaceBar> plus the highlighted item.
 
-2 - C<choose-multi> returns the items marked with the C<SpaceBar>. If no items are marked with the C<SpaceBar>, the
+2 - C<choose-multi> returns the items marked with the K<SpaceBar>. If no items are marked with the K<SpaceBar>, the
 highlighted item is returned.
 
 =head3 mark
@@ -1753,8 +1752,8 @@ these indexes.
 =head3 meta-items
 
 I<meta_items> expects as its value a list of indexes (integers). List-elements correlating to these indexes can not be
-marked with the C<SpaceBar> or with the right mouse key but if one of these elements is the highlighted item it is added
-to the chosen items when C<Return> is pressed.
+marked with the K<SpaceBar> or with the right mouse key but if one of these elements is the highlighted item it is added
+to the chosen items when K<Return> is pressed.
 
 Elements greater than the last index of the list are ignored.
 
@@ -1763,7 +1762,7 @@ Elements greater than the last index of the list are ignored.
 =head3 no-spacebar
 
 I<no-spacebar> expects as its value an list. The elements of the list are indexes of choices which should not be
-markable with the C<SpaceBar> or with the right mouse key. If an element is preselected with the option I<mark> and also
+markable with the K<SpaceBar> or with the right mouse key. If an element is preselected with the option I<mark> and also
 marked as not selectable with the option I<no-spacebar>, the user can not remove the preselection of this element.
 
 (default: undefined)
