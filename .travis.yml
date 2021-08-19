@@ -1,7 +1,9 @@
-language:  minimal
-
-services:  docker
-
-install: docker pull jjmerelo/raku-test
-
-script: docker run -t  --entrypoint="/bin/sh"  -v  $TRAVIS_BUILD_DIR:/test jjmerelo/raku-test -c "apk add --update --no-cache make ncurses build-base && zef install --deps-only . && zef test ."
+#branches:
+#  except:
+#    - gh-pages
+language: perl6
+perl6:
+  - latest
+install:
+  - rakudobrew build zef
+sudo: false

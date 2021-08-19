@@ -44,7 +44,7 @@ for @positive_int -> $key {
 
 
 
-my @int_0_2 = <alignment layout clear-screen>;
+my @int_0_2 = <alignment clear-screen color layout search include-highlighted page>;
 
 my @inval_int_0_2 = 3, |@inval_u_int;
 for @int_0_2 -> $key {
@@ -64,7 +64,7 @@ for @int_0_2 -> $key {
 
 
 
-my @int_0_1 = <beep index mouse order>;
+my @int_0_1 = <beep hide-cursor index loop mouse order save-screen>; # clear-screen
 
 my @inval_int_0_1 = 2, 3, |@inval_u_int;
 for @int_0_1 -> $key {
@@ -84,7 +84,7 @@ for @int_0_1 -> $key {
 
 
 
-my @string = <prompt empty undef>;
+my @string = <empty footer info prompt undef>;
 
 my @inval_str = 2, 3, -3, 6.6, [];
 for @string -> $key {
@@ -104,8 +104,7 @@ for @string -> $key {
 
 
 
-
-my @list = <tabs-info tabs-prompt mark no-spacebar>;
+my @list = <mark meta-items no-spacebar tabs-info tabs-prompt>;
 
 my @inval_list = 2, 3, -3, 6.6, 'hello';
 for @list -> $key {

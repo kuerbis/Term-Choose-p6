@@ -15,7 +15,7 @@ SYNOPSIS
 
     # Functional interface:
      
-    my $chosen = choose( @list, :layout(2) );
+    my $chosen = choose( @list, :2layout );
 
 
     # OO interface:

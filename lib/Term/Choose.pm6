@@ -1,6 +1,6 @@
 use v6;
 
-unit class Term::Choose:ver<1.7.5>;
+unit class Term::Choose:ver<1.7.6>;
 
 use Term::termios;
 
@@ -29,10 +29,10 @@ has Int_0_or_1   $.save-screen          = 0;
 has Int_0_to_2   $.alignment            = 0;
 has Int_0_to_2   $.clear-screen         = 1; # 27.05.2021 - remove this and uncomment `has Int_0_or_1 $.clear-screen = 1;`
 has Int_0_to_2   $.color                = 0;
-has Int_0_to_2   $.search               = 1;
 has Int_0_to_2   $.include-highlighted  = 0;
 has Int_0_to_2   $.layout               = 1;
 has Int_0_to_2   $.page                 = 1;
+has Int_0_to_2   $.search               = 1;
 has Positive_Int $.keep                 = 5;
 has Positive_Int $.ll;                       # privat
 has Positive_Int $.max-cols;
@@ -43,8 +43,8 @@ has UInt         $.pad                  = 2;
 has List         $.mark;
 has List         $.meta-items;
 has List         $.no-spacebar;
-has List         $.tabs-prompt;
 has List         $.tabs-info;
+has List         $.tabs-prompt;
 has Str          $.empty                = '<empty>';
 has Str          $.footer               = '';
 has Str          $.info                 = '';
@@ -205,7 +205,7 @@ method !_prepare_prompt_and_info {
         @!prompt_lines.push: |line-fold( %!o<prompt>, $info_w, :init-tab( ' ' x $init ), :subseq-tab( ' ' x $subseq ), :color( %!o<color> ) );
     }
     if $!filter_string.chars {
-        @!prompt_lines.push: ( %!o<search> == 1 ?? 'Filter rx:i/' !! 'Filter rx/' ) ~ $!filter_string ~ '/:';
+        @!prompt_lines.push: ( %!o<search> == 1 ?? 'rx:i/' !! 'rx/' ) ~ $!filter_string ~ '/;';
     }
     if ! @!prompt_lines.elems {
         return;
@@ -408,10 +408,10 @@ method !_choose ( Int $multiselect, @!orig_list,
         Int_0_to_2   :$alignment            = $!alignment,
         Int_0_to_2   :$clear-screen         = $!clear-screen, # 27.05.2021 - remove this and uncomment `Int_0_or_1 :$clear-screen = $!clear-screen,`
         Int_0_to_2   :$color                = $!color,
-        Int_0_to_2   :$search               = $!search,
         Int_0_to_2   :$include-highlighted  = $!include-highlighted,
         Int_0_to_2   :$layout               = $!layout,
         Int_0_to_2   :$page                 = $!page,
+        Int_0_to_2   :$search               = $!search,
         Positive_Int :$keep                 = $!keep,
         Positive_Int :$ll                   = $!ll,
         Positive_Int :$max-cols             = $!max-cols,
@@ -1057,7 +1057,7 @@ method !_goto( $row, $col ) {
 method !_prepare_layout {
     $!all_in_one_row = 0;
     $!single_column = 0;
-    if %!o<layout> != 2 && ! %!o<ll> {
+    if %!o<layout> <= 1 && ! %!o<ll> {
         for ^@!list -> $idx {
             $!all_in_one_row += @!w_list_items[$idx] + %!o<pad>;
             if $!all_in_one_row - %!o<pad> > $!avail_w {
@@ -1353,7 +1353,7 @@ Term::Choose - Choose items from a list interactively.
 
     # Functional interface:
  
-    my $chosen = choose( @list, :layout(2) );
+    my $chosen = choose( @list, :2layout );
 
 
     # OO interface:
