@@ -1,11 +1,18 @@
 use v6;
 unit module Term::Choose::LineFold;
 
-use Term::Choose::LineFold::CharWidthDefault;
 use Term::Choose::Screen;
 
 
-my $table = table_char_width();
+my $table;
+if %*ENV<TC_AMBIGUOUS_WIDE> {
+    require Term::Choose::LineFold::CharWidthAmbiguousWide <&table_char_width>;
+    $table = table_char_width();
+}
+else {
+    require Term::Choose::LineFold::CharWidthDefault <&table_char_width>;
+    $table = table_char_width();
+}
 
 
 sub char_width( Int $ord_char ) {

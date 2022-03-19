@@ -1,6 +1,6 @@
 use v6;
 
-unit class Term::Choose:ver<1.7.6>;
+unit class Term::Choose:ver<1.7.7>;
 
 use Term::termios;
 
@@ -19,7 +19,7 @@ subset Int_0_to_2   of Int where * == 0|1|2;
 subset Int_0_or_1   of Int where * == 0|1;
 
 has Int_0_or_1   $.beep                 = 0;
-#has Int_0_or_1   $.clear-screen         = 1; # uncomment after removing  `has Int_0_to_2 $.clear-screen = 1;`
+has Int_0_or_1   $.clear-screen         = 1;
 has Int_0_or_1   $.hide-cursor          = 1;
 has Int_0_or_1   $.index                = 0;
 has Int_0_or_1   $.loop                 = 0; # privat
@@ -27,7 +27,6 @@ has Int_0_or_1   $.mouse                = 0;
 has Int_0_or_1   $.order                = 1;
 has Int_0_or_1   $.save-screen          = 0;
 has Int_0_to_2   $.alignment            = 0;
-has Int_0_to_2   $.clear-screen         = 1; # 27.05.2021 - remove this and uncomment `has Int_0_or_1 $.clear-screen = 1;`
 has Int_0_to_2   $.color                = 0;
 has Int_0_to_2   $.include-highlighted  = 0;
 has Int_0_to_2   $.layout               = 1;
@@ -361,13 +360,6 @@ method !_modify_options ( $multiselect ) {
     if %!o<save-screen> {
         %!o<clear-screen> = 1;
     }
-    ############################ # 27.05.2021 - remove this
-    if %!o<clear-screen> == 2 {
-        %!o<save-screen> = 1;
-        %!o<clear-screen> = 1;
-        prompt( 'To save the screen use the option `save-screen`. Setting `clear-screen` to `2` is no longer valid. Press ENTER to contiune:' );
-    }
-    ############################
     if %!o<max-cols>.defined && %!o<max-cols> == 1 {
         %!o<layout> = 2;
     }
@@ -399,14 +391,13 @@ method pause        ( @list, *%opt ) { self!_choose( Int, @list, |%opt ) }
 
 method !_choose ( Int $multiselect, @!orig_list,
         Int_0_or_1   :$beep                 = $!beep,
-        #Int_0_or_1   :$clear-screen         = $!clear-screen, # uncomment after removing `Int_0_to_2 :$clear-screen = $!clear-screen,`
+        Int_0_or_1   :$clear-screen         = $!clear-screen,
         Int_0_or_1   :$hide-cursor          = $!hide-cursor,
         Int_0_or_1   :$index                = $!index,
         Int_0_or_1   :$mouse                = $!mouse,
         Int_0_or_1   :$order                = $!order,
         Int_0_or_1   :$save-screen          = $!save-screen,
         Int_0_to_2   :$alignment            = $!alignment,
-        Int_0_to_2   :$clear-screen         = $!clear-screen, # 27.05.2021 - remove this and uncomment `Int_0_or_1 :$clear-screen = $!clear-screen,`
         Int_0_to_2   :$color                = $!color,
         Int_0_to_2   :$include-highlighted  = $!include-highlighted,
         Int_0_to_2   :$layout               = $!layout,
@@ -1489,8 +1480,6 @@ Options which expect a number as their value expect integers.
 
 1 - clears the screen before printing the choices (default)
 
-Setting clear-screen to 2 is no longer valid. See option L<#save-screen> instead.
-
 =head3 color
 
 If enabled, SRG ANSI escape sequences can be used to color the screen output.
@@ -1790,6 +1779,11 @@ Escape sequences to handle mouse input are hardcoded.
 
 It is required a terminal that uses a monospaced font which supports the printed characters.
 
+=head2 Ambiguous width characters
+
+By default ambiguous width characters are treated as half width. If the environment variable TC_AMBIGUOUS_WIDE is set to
+a true value, ambiguous width characters are treated as full width.
+
 =head1 AUTHOR
 
 Matthäus Kiem <cuer2s@gmail.com>
@@ -1804,7 +1798,7 @@ help.
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (C) 2016-2021 Matthäus Kiem.
+Copyright (C) 2016-2022 Matthäus Kiem.
 
 This library is free software; you can redistribute it and/or modify it under the Artistic License 2.0.
 

@@ -44,7 +44,7 @@ for @positive_int -> $key {
 
 
 
-my @int_0_2 = <alignment clear-screen color layout search include-highlighted page>;
+my @int_0_2 = <alignment color layout search include-highlighted page>;
 
 my @inval_int_0_2 = 3, |@inval_u_int;
 for @int_0_2 -> $key {
@@ -64,7 +64,7 @@ for @int_0_2 -> $key {
 
 
 
-my @int_0_1 = <beep hide-cursor index loop mouse order save-screen>; # clear-screen
+my @int_0_1 = <beep clear-screen hide-cursor index loop mouse order save-screen>;
 
 my @inval_int_0_1 = 2, 3, |@inval_u_int;
 for @int_0_1 -> $key {

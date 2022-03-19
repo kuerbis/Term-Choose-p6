@@ -148,8 +148,6 @@ Options which expect a number as their value expect integers.
 
 1 - clears the screen before printing the choices (default)
 
-Setting clear-screen to 2 is no longer valid. See option [save-screen](#save-screen) instead.
-
 ### color
 
 If enabled, SRG ANSI escape sequences can be used to color the screen output.
@@ -428,6 +426,11 @@ Monospaced font
 
 It is required a terminal that uses a monospaced font which supports the printed characters.
 
+Ambiguous width characters
+--------------------------
+
+By default ambiguous width characters are treated as half width. If the environment variable TC_AMBIGUOUS_WIDE is set to a true value, ambiguous width characters are treated as full width.
+
 AUTHOR
 ======
 
@@ -443,7 +446,7 @@ Thanks to the people from [Perl-Community.de](http://www.perl-community.de), fro
 LICENSE AND COPYRIGHT
 =====================
 
-Copyright (C) 2016-2021 Matthäus Kiem.
+Copyright (C) 2016-2022 Matthäus Kiem.
 
 This library is free software; you can redistribute it and/or modify it under the Artistic License 2.0.
 

@@ -1,6 +1,13 @@
 Revision history for Term::Choose
 
 
+1.7.7   2022-03-19
+        - Char-width-tables: Arabic numbers in category 'Cf' to print-width 1.
+        - Char-width-tables: update to Unicode 14.
+        - Environment variable TC_AMBIGUOUS_WIDE.
+        - Clear-screen set to 2 is now fatal.
+        - Update year copyright.
+
 1.7.6   2021-08-19
         - Update travis.
 
