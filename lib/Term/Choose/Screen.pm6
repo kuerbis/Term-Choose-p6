@@ -91,7 +91,7 @@ sub get-term-size is export( :DEFAULT, :get-term-size  ) {
     if ( $tput_ok ) {
         my $width  = run( 'tput', '-T', $term, 'cols',  :out ).out.get.chomp.Int or die "No terminal width!";
         my $height = run( 'tput', '-T', $term, 'lines', :out ).out.get.chomp.Int or die "No terminal heigth!";
-        return $width - 1, $height;
+        return $width - WIDTH_CURSOR, $height;
     }
     else {
         my $size = run( 'stty', 'size', :out ).out.slurp;
@@ -105,7 +105,7 @@ sub get-term-size is export( :DEFAULT, :get-term-size  ) {
 sub get-term-width is export( :DEFAULT, :get-term-width  ) {
     if ( $tput_ok ) {
         my $width  = run( 'tput', '-T', $term, 'cols',  :out ).out.get.chomp.Int or die "No terminal width!";
-        return $width - 1;
+        return $width - WIDTH_CURSOR;
     }
     else {
         my $size = run( 'stty', 'size', :out ).out.slurp;
