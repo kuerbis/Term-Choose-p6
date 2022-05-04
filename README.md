@@ -410,12 +410,14 @@ MULTITHREADING
 REQUIREMENTS
 ============
 
-tput
-----
+Escape sequences
+----------------
 
 The control of the cursor location, the highlighting of the cursor position and the marked elements and other options on the terminal is done via escape sequences.
 
-`tput` is used to get the appropriate escape sequences.
+By default `Term::Choose` uses `tput` to get the appropriate escape sequences. If the environment variable `TC_ANSI_ESCAPES` is set to a true value, hardcoded ANSI escape sequences are used directly without calling `tput`.
+
+The escape sequences to enable the *mouse* mode are always hardcoded.
 
 If the environment variable `TERM` is not set to a true value, `vt100` is used instead as the terminal type for `tput`.
 
