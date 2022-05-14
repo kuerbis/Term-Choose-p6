@@ -1,6 +1,10 @@
 Revision history for Term::Choose
 
 
+1.7.9   2022-05-14
+        - New option 'margin'.
+        - Update options 'tabs-info' and 'tabs-prompt'.
+
 1.7.8   2022-05-04
         - Use hardcoded ANSI escape sequences if 'tput' is not available.
         - Environment variable TC_ANSI_ESCAPES.

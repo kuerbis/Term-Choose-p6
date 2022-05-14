@@ -251,9 +251,29 @@ From broad to narrow: 0 > 1 > 2
         |                   |   |                   |   |                   |   | ..                |
         '-------------------'   '-------------------'   '-------------------'   '-------------------'
 
+### margin
+
+The option *margin* allows one to set a margin on all four sides.
+
+*margin* expects a list of four elements in the following order:
+
+- top margin (number of terminal lines)
+
+- right margin (number of terminal columns)
+
+- botton margin (number of terminal lines)
+
+- left margin (number of terminal columns)
+
+*margin* does not affect the *info* and *prompt* string. To add margins to the *info* and *prompt* string see *tabs-info* and *tabs-prompt*.
+
+Allowed values: 0 or greater. Elements beyond the fourth are ignored.
+
+(default: undefined)
+
 ### max-cols
 
-Limit the number of columns to *max-cols*.
+Limit the number of item columns to *max-cols*.
 
 Allowed values: 1 or greater
 
@@ -339,29 +359,33 @@ Set the behavior of Ctrl-F.
 
 ### tabs-info
 
-If *info* lines are folded, the option *tabs-info* allows one to insert spaces at beginning of the folded lines.
+If *info* lines are folded, the option *tabs-info* allows one to insert spaces at beginning of the folded lines. It is also possible, to set a right margin.
 
-The option *tabs-info* expects a reference to an array with one or two elements:
+The option *tabs-info* expects a list with one to three elements:
 
 - the first element (initial tab) sets the number of spaces inserted at beginning of paragraphs
 
-- a second element (subsequent tab) sets the number of spaces inserted at the beginning of all broken lines apart from the beginning of paragraphs
+- the second element (subsequent tab) sets the number of spaces inserted at the beginning of all broken lines apart from the beginning of paragraphs
 
-Allowed values: 0 or greater. Elements beyond the second are ignored.
+- the third element sets the number of spaces used as a right margin.
+
+Allowed values: 0 or greater. Elements beyond the third are ignored.
 
 (default: undefined)
 
 ### tabs-prompt
 
-If *prompt* lines are folded, the option *tabs-prompt* allows one to insert spaces at beginning of the folded lines.
+If *prompt* lines are folded, the option *tabs-prompt* allows one to insert spaces at beginning of the folded lines. It is also possible, to set a right margin.
 
-The option *tabs-prompt* expects a reference to an array with one or two elements:
+The option *tabs-prompt* expects a list with one to three elements:
 
 - the first element (initial tab) sets the number of spaces inserted at beginning of paragraphs
 
-- a second element (subsequent tab) sets the number of spaces inserted at the beginning of all broken lines apart from the beginning of paragraphs
+- the second element (subsequent tab) sets the number of spaces inserted at the beginning of all broken lines apart from the beginning of paragraphs
 
-Allowed values: 0 or greater. Elements beyond the second are ignored.
+- the third element sets the number of spaces used as a right margin.
+
+Allowed values: 0 or greater. Elements beyond the third are ignored.
 
 (default: undefined)
 

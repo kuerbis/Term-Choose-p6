@@ -1,6 +1,6 @@
 use v6;
 
-unit class Term::Choose:ver<1.7.8>;
+unit class Term::Choose:ver<1.7.9>;
 
 use Term::termios;
 
@@ -39,6 +39,7 @@ has Positive_Int $.max-height;
 has Positive_Int $.max-width;
 has UInt         $.default              = 0;
 has UInt         $.pad                  = 2;
+has List         $.margin;
 has List         $.mark;
 has List         $.meta-items;
 has List         $.no-spacebar;
@@ -186,6 +187,9 @@ method !_beep {
 
 method !_prepare_prompt_and_info {
     @!prompt_lines = ();
+    if %!o<margin>[0] { # ### 
+        @!prompt_lines.append: '' xx %!o<margin>[0];
+    }
     my Int $info_w = $!term_w;
     #if $*KERNEL ne any 'MSWin32', 'cygwin' {
         $info_w += WIDTH_CURSOR;
@@ -194,14 +198,22 @@ method !_prepare_prompt_and_info {
         $info_w = %!o<max_width>;
     }
     if %!o<info>.chars {
-        my Int $init   = %!o<tabs-info>[0] // 0;
-        my Int $subseq = %!o<tabs-info>[1] // 0;
-        @!prompt_lines.push: |line-fold( %!o<info>, $info_w, :init-tab( ' ' x $init ), :subseq-tab( ' ' x $subseq ), :color( %!o<color> ) );
+        my Int $init     = %!o<tabs-info>[0] // 0;
+        my Int $subseq   = %!o<tabs-info>[1] // 0;
+        my Int $r_margin = %!o<tabs-info>[2] // 0; # ### 
+        @!prompt_lines.push: |line-fold(
+            %!o<info>,
+            $info_w - $r_margin,
+            :init-tab( ' ' x $init ), :subseq-tab( ' ' x $subseq ), :color( %!o<color> ) );
     }
     if %!o<prompt>.chars {
-        my Int $init   = %!o<tabs-prompt>[0] // 0;
-        my Int $subseq = %!o<tabs-prompt>[1] // 0;
-        @!prompt_lines.push: |line-fold( %!o<prompt>, $info_w, :init-tab( ' ' x $init ), :subseq-tab( ' ' x $subseq ), :color( %!o<color> ) );
+        my Int $init     = %!o<tabs-prompt>[0] // 0;
+        my Int $subseq   = %!o<tabs-prompt>[1] // 0;
+        my Int $r_margin = %!o<tabs-prompt>[2] // 0; # ### 
+        @!prompt_lines.push: |line-fold(
+            %!o<prompt>,
+            $info_w - $r_margin,
+            :init-tab( ' ' x $init ), :subseq-tab( ' ' x $subseq ), :color( %!o<color> ) );
     }
     if $!filter_string.chars {
         @!prompt_lines.push: ( %!o<search> == 1 ?? 'rx:i/' !! 'rx/' ) ~ $!filter_string ~ '/;';
@@ -378,6 +390,9 @@ method !_modify_options ( $multiselect ) {
     if ! %!o<prompt>.defined {
         %!o<prompt> = $multiselect.defined ?? 'Your choice' !! 'Continue with ENTER';
     }
+#    if ( defined $self->{margin} ) { # ### 
+#        ( $self->{t_margin}, $self->{r_margin}, $self->{b_margin}, $self->{l_margin} ) = @{$self->{margin}};
+#    }
 }
 
 
@@ -410,6 +425,7 @@ method !_choose ( Int $multiselect, @!orig_list,
         Positive_Int :$max-width            = $!max-width,
         UInt         :$default              = $!default,
         UInt         :$pad                  = $!pad,
+        List         :$margin               = $!margin,
         List         :$mark                 = $!mark,
         List         :$meta-items           = $!meta-items,
         List         :$no-spacebar          = $!no-spacebar,
@@ -423,9 +439,9 @@ method !_choose ( Int $multiselect, @!orig_list,
     ) {
     # %!o -> make options available in methods
     %!o = :$alignment, :$beep, :$clear-screen, :$color, :$default, :$empty, :$footer, :$hide-cursor,
-          :$include-highlighted, :$index, :$info, :$keep, :$layout, :$ll, :$mark, :$max-cols, :$max-height, :$max-width,
-          :$meta-items, :$mouse, :$no-spacebar, :$order, :$pad, :$page, :$prompt, :$save-screen, :$search, :$tabs-info,
-          :$tabs-prompt, :$undef;
+          :$include-highlighted, :$index, :$info, :$keep, :$layout, :$ll, :$margin, :$mark, :$max-cols, :$max-height,
+          :$max-width, :$meta-items, :$mouse, :$no-spacebar, :$order, :$pad, :$page, :$prompt, :$save-screen, :$search,
+          :$tabs-info, :$tabs-prompt, :$undef;
     self!_modify_options( $multiselect );
     if ! @!orig_list.elems {
         if ! $multiselect.defined {
@@ -855,7 +871,13 @@ method !_choose ( Int $multiselect, @!orig_list,
 method !_avail_screen_size {
     ( $!term_w, $!term_h ) = get-term-size();
     ( $!avail_w, $!avail_h ) = ( $!term_w, $!term_h );
-    if  %!o<ll>.defined &&  %!o<ll> > $!avail_w {
+    if %!o<margin>[1] { # ### 
+        $!avail_w -= %!o<margin>[1];
+    }
+    if %!o<margin>[3] { # ### 
+        $!avail_w -= %!o<margin>[3];
+    }
+    if  %!o<margin>[1] || ( %!o<ll>.defined && %!o<ll> > $!avail_w ) {
         $!avail_w += 1;
         # with only one print-column the output doesn't get messed up if an item
         # reaches the right edge of the terminal on a non-MSWin32-OS
@@ -870,7 +892,10 @@ method !_avail_screen_size {
     if @!prompt_lines.elems {
         $!avail_h -= @!prompt_lines.elems;
     }
-   if %!o<page> {
+    if %!o<margin>[2] { # ### 
+        $!avail_h -= %!o<margin>[2];
+    }
+    if %!o<page> {
         $!avail_h--;
     }
     if %!o<max-height> && %!o<max-height> < $!avail_h {
@@ -906,6 +931,10 @@ method !_wr_first_screen ( Int $multiselect ) {
     if @!prompt_lines.elems {
         print @!prompt_lines.join( "\n\r" ) ~ "\n\r";
     }
+    if %!o<margin>[3] { # ### 
+        print right( %!o<margin>[3] );
+    }
+    
     $!i_col = 0;
     $!i_row = 0;
     self!_wr_screen();
@@ -957,7 +986,15 @@ method !_wr_screen {
         }
         @lines.push: sprintf $!pp_row_fmt, $!first_page_row div $!avail_h + 1;
     }
-    print self!_goto( $!first_page_row, 0 ) ~ @lines.join( "\n\r" ) ~ "\r";
+    if %!o<margin>[2] { # ### 
+        @lines.append: '' xx %!o<margin>[2];
+    }
+    if %!o<margin>[3] { # ### 
+        print self!_goto( $!first_page_row, 0 ) ~ @lines.join( "\n\r" ~ right( %!o<margin>[3] ) ) ~ "\r" ~ right( %!o<margin>[3] );
+    }
+    else {
+        print self!_goto( $!first_page_row, 0 ) ~ @lines.join( "\n\r" ) ~ "\r";
+    }
     $!i_row += @lines.end;
     $!i_col = 0;
     self!_wr_cell( $!p[R], $!p[C] );
@@ -1023,8 +1060,7 @@ method !_goto( $row, $col ) {
     # Row
     my \new_i_row = $row - $!first_page_row;
     if new_i_row > $!i_row {
-        $escape = $escape ~ "\r\n" x ( new_i_row - $!i_row );
-        $!i_col = 0; #!
+        $escape = $escape ~ down( new_i_row - $!i_row );
     }
     elsif new_i_row < $!i_row {
         $escape = $escape ~ up( $!i_row - new_i_row );
@@ -1596,9 +1632,30 @@ From broad to narrow: 0 > 1 > 2
 
 =end code
 
+=head3 margin
+
+The option I<margin> allows one to set a margin on all four sides.
+
+I<margin> expects a list of four elements in the following order:
+
+- top margin (number of terminal lines)
+
+- right margin (number of terminal columns)
+
+- botton margin (number of terminal lines)
+
+- left margin (number of terminal columns)
+
+I<margin> does not affect the I<info> and I<prompt> string. To add margins to the I<info> and I<prompt> string see
+I<tabs-info> and I<tabs-prompt>.
+
+Allowed values: 0 or greater. Elements beyond the fourth are ignored.
+
+(default: undefined)
+
 =head3 max-cols
 
-Limit the number of columns to I<max-cols>.
+Limit the number of item columns to I<max-cols>.
 
 Allowed values: 1 or greater
 
@@ -1685,33 +1742,39 @@ Set the behavior of K<Ctrl-F>.
 2 - case-sensitive search
 
 =head3 tabs-info
-
-If I<info> lines are folded, the option I<tabs-info> allows one to insert spaces at beginning of the folded lines.
-
-The option I<tabs-info> expects a reference to an array with one or two elements:
-
+ 
+If I<info> lines are folded, the option I<tabs-info> allows one to insert spaces at beginning of the folded lines. It is
+also possible, to set a right margin.
+ 
+The option I<tabs-info> expects a list with one to three elements:
+ 
 - the first element (initial tab) sets the number of spaces inserted at beginning of paragraphs
-
-- a second element (subsequent tab) sets the number of spaces inserted at the beginning of all broken lines apart
-from the beginning of paragraphs
-
-Allowed values: 0 or greater. Elements beyond the second are ignored.
-
+ 
+- the second element (subsequent tab) sets the number of spaces inserted at the beginning of all broken lines apart from
+the beginning of paragraphs
+ 
+- the third element sets the number of spaces used as a right margin.
+ 
+Allowed values: 0 or greater. Elements beyond the third are ignored.
+ 
 (default: undefined)
 
 =head3 tabs-prompt
-
+ 
 If I<prompt> lines are folded, the option I<tabs-prompt> allows one to insert spaces at beginning of the folded lines.
-
-The option I<tabs-prompt> expects a reference to an array with one or two elements:
-
+It is also possible, to set a right margin.
+ 
+The option I<tabs-prompt> expects a list with one to three elements:
+ 
 - the first element (initial tab) sets the number of spaces inserted at beginning of paragraphs
-
-- a second element (subsequent tab) sets the number of spaces inserted at the beginning of all broken lines apart
-from the beginning of paragraphs
-
-Allowed values: 0 or greater. Elements beyond the second are ignored.
-
+ 
+- the second element (subsequent tab) sets the number of spaces inserted at the beginning of all broken lines apart from
+the beginning of paragraphs
+ 
+- the third element sets the number of spaces used as a right margin.
+ 
+Allowed values: 0 or greater. Elements beyond the third are ignored.
+ 
 (default: undefined)
 
 =head3 undef
