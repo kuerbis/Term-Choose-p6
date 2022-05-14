@@ -187,7 +187,7 @@ method !_beep {
 
 method !_prepare_prompt_and_info {
     @!prompt_lines = ();
-    if %!o<margin>[0] { # ### 
+    if %!o<margin>[0] {
         @!prompt_lines.append: '' xx %!o<margin>[0];
     }
     my Int $info_w = $!term_w;
@@ -200,7 +200,7 @@ method !_prepare_prompt_and_info {
     if %!o<info>.chars {
         my Int $init     = %!o<tabs-info>[0] // 0;
         my Int $subseq   = %!o<tabs-info>[1] // 0;
-        my Int $r_margin = %!o<tabs-info>[2] // 0; # ### 
+        my Int $r_margin = %!o<tabs-info>[2] // 0;
         @!prompt_lines.push: |line-fold(
             %!o<info>,
             $info_w - $r_margin,
@@ -209,7 +209,7 @@ method !_prepare_prompt_and_info {
     if %!o<prompt>.chars {
         my Int $init     = %!o<tabs-prompt>[0] // 0;
         my Int $subseq   = %!o<tabs-prompt>[1] // 0;
-        my Int $r_margin = %!o<tabs-prompt>[2] // 0; # ### 
+        my Int $r_margin = %!o<tabs-prompt>[2] // 0;
         @!prompt_lines.push: |line-fold(
             %!o<prompt>,
             $info_w - $r_margin,
@@ -390,9 +390,6 @@ method !_modify_options ( $multiselect ) {
     if ! %!o<prompt>.defined {
         %!o<prompt> = $multiselect.defined ?? 'Your choice' !! 'Continue with ENTER';
     }
-#    if ( defined $self->{margin} ) { # ### 
-#        ( $self->{t_margin}, $self->{r_margin}, $self->{b_margin}, $self->{l_margin} ) = @{$self->{margin}};
-#    }
 }
 
 
@@ -871,10 +868,10 @@ method !_choose ( Int $multiselect, @!orig_list,
 method !_avail_screen_size {
     ( $!term_w, $!term_h ) = get-term-size();
     ( $!avail_w, $!avail_h ) = ( $!term_w, $!term_h );
-    if %!o<margin>[1] { # ### 
+    if %!o<margin>[1] {
         $!avail_w -= %!o<margin>[1];
     }
-    if %!o<margin>[3] { # ### 
+    if %!o<margin>[3] {
         $!avail_w -= %!o<margin>[3];
     }
     if  %!o<margin>[1] || ( %!o<ll>.defined && %!o<ll> > $!avail_w ) {
@@ -892,7 +889,7 @@ method !_avail_screen_size {
     if @!prompt_lines.elems {
         $!avail_h -= @!prompt_lines.elems;
     }
-    if %!o<margin>[2] { # ### 
+    if %!o<margin>[2] {
         $!avail_h -= %!o<margin>[2];
     }
     if %!o<page> {
@@ -931,7 +928,7 @@ method !_wr_first_screen ( Int $multiselect ) {
     if @!prompt_lines.elems {
         print @!prompt_lines.join( "\n\r" ) ~ "\n\r";
     }
-    if %!o<margin>[3] { # ### 
+    if %!o<margin>[3] {
         print right( %!o<margin>[3] );
     }
     
@@ -986,10 +983,10 @@ method !_wr_screen {
         }
         @lines.push: sprintf $!pp_row_fmt, $!first_page_row div $!avail_h + 1;
     }
-    if %!o<margin>[2] { # ### 
+    if %!o<margin>[2] {
         @lines.append: '' xx %!o<margin>[2];
     }
-    if %!o<margin>[3] { # ### 
+    if %!o<margin>[3] {
         print self!_goto( $!first_page_row, 0 ) ~ @lines.join( "\n\r" ~ right( %!o<margin>[3] ) ) ~ "\r" ~ right( %!o<margin>[3] );
     }
     else {
