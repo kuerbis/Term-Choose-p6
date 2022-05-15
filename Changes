@@ -1,6 +1,10 @@
 Revision history for Term::Choose
 
 
+1.8.0   2022-05-15
+        - Bugfix data type error in search.
+        - Bugfix search: input puffer.
+
 1.7.9   2022-05-14
         - New option 'margin'.
         - Update options 'tabs-info' and 'tabs-prompt'.

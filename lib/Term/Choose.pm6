@@ -1,6 +1,6 @@
 use v6;
 
-unit class Term::Choose:ver<1.7.9>;
+unit class Term::Choose:ver<1.8.0>;
 
 use Term::termios;
 
@@ -216,7 +216,13 @@ method !_prepare_prompt_and_info {
             :init-tab( ' ' x $init ), :subseq-tab( ' ' x $subseq ), :color( %!o<color> ) );
     }
     if $!filter_string.chars {
-        @!prompt_lines.push: ( %!o<search> == 1 ?? 'rx:i/' !! 'rx/' ) ~ $!filter_string ~ '/;';
+        my Int $init     = %!o<margin>[3] // 0;
+        my Int $subseq   = %!o<margin>[3] // 0;
+        my Int $r_margin = %!o<margin>[1] // 0;
+        @!prompt_lines.push: |line-fold(
+            ( %!o<search> == 1 ?? 'Filter: i/' !! 'Filter: /' ) ~ $!filter_string ~ '/',
+            $info_w - $r_margin,
+            :init-tab( ' ' x $init ), :subseq-tab( ' ' x $subseq ), :color( %!o<color> ) );
     }
     if ! @!prompt_lines.elems {
         return;
@@ -844,7 +850,9 @@ method !_choose ( Int $multiselect, @!orig_list,
                         if $!filter_string.chars {
                             self!_search_end( $multiselect );
                         }
-                        self!_search_begin( $multiselect );
+                        else {
+                            self!_search_begin( $multiselect );
+                        }
                     }
                     else {
                         self!_beep();
@@ -1280,8 +1288,11 @@ method !_search_begin ( $multiselect is copy ) {
     try { 'Teststring' ~~ $regex }
     if $! {
         my Str @lines = $!.Str.split( "\n" ).map: { |line-fold( $_, $!avail_w ) };
+         for @lines -> $line is rw {
+            $line = $line ~ ( ' ' x ( $!avail_w - print-columns( $line ) ) );
+        }
         $filtered_list = [ @lines ];
-        $filtered_w_list_items = [ $!avail_w xx @lines.elems ];
+        $filtered_w_list_items = Array[Int].new( $!avail_w xx @lines.elems );
         $multiselect = 0;
     }
     else {
@@ -1295,7 +1306,7 @@ method !_search_begin ( $multiselect is copy ) {
         if ! $filtered_list.elems {
             my Str $message = 'No matches found.';
             $filtered_list = [ $message ];
-            $filtered_w_list_items = [ print-columns( $message ) ];
+            $filtered_w_list_items = Array[Int].new( print-columns( $message ) );
             $multiselect = 0;
         }
         else {

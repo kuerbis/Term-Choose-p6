@@ -34,6 +34,15 @@ method init-term {
 }
 
 
+
+method flush-term-in {
+    my $termios := Term::termios.new(fd => 1).getattr;
+    $termios.setattr(:FLUSH);
+
+}
+
+
+
 method restore-term ( $up ) {
     if $!mouse {
         print unset-mouse1003;
