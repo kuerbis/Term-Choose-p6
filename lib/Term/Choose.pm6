@@ -1,6 +1,6 @@
 use v6;
 
-unit class Term::Choose:ver<1.8.0>;
+unit class Term::Choose:ver<1.8.1>;
 
 use Term::termios;
 
@@ -194,8 +194,8 @@ method !_prepare_prompt_and_info {
     #if $*KERNEL ne any 'MSWin32', 'cygwin' {
         $info_w += WIDTH_CURSOR;
     #}
-    if %!o<max_width> && $info_w > %!o<max_width> { #
-        $info_w = %!o<max_width>;
+    if %!o<max-width> && $info_w > %!o<max-width> { #
+        $info_w = %!o<max-width>;
     }
     if %!o<info>.chars {
         my Int $init     = %!o<tabs-info>[0] // 0;
@@ -849,6 +849,8 @@ method !_choose ( Int $multiselect, @!orig_list,
                         }
                         if $!filter_string.chars {
                             self!_search_end( $multiselect );
+                            # loop up to read-key before a new _search_begin because get-cursor-position in
+                            # _wr_first_screen in _search_end fills the input puffer with the cursor position
                         }
                         else {
                             self!_search_begin( $multiselect );
@@ -939,7 +941,6 @@ method !_wr_first_screen ( Int $multiselect ) {
     if %!o<margin>[3] {
         print right( %!o<margin>[3] );
     }
-    
     $!i_col = 0;
     $!i_row = 0;
     self!_wr_screen();
@@ -1311,7 +1312,7 @@ method !_search_begin ( $multiselect is copy ) {
         }
         else {
             %!o<mark> = self!_marked_rc2idx();
-            for <meta_items no_spacebar mark> -> $opt {
+            for <meta-items no-spacebar mark> -> $opt {
                 if %!o{$opt}.defined {
                     $!search_backup_opt{$opt} = [ |%!o{$opt} ];
                     my Array $tmp = [];
@@ -1352,18 +1353,18 @@ method !_search_end ( $multiselect ) {
             @tmp_mark.push: |$!search_backup_opt<mark>;
         }
         %!o<mark> = [ |@tmp_mark.unique ]; ##
-        for <meta_items no_spacebar> -> $key {
+        for <meta-items no-spacebar> -> $key {
             if $!search_backup_opt{$key}.defined {
                 %!o{$key} = $!search_backup_opt{$key};
             }
         }
     }
-    if $!search_backup_data.keys {
+    if $!search_backup_data.keys { # backed up data to avoid a _prepare_new_copy_of_list after each search
         @!list = |$!search_backup_data<list>;
         @!w_list_items = |$!search_backup_data<w_list_items>;
         $!col_w  = $!search_backup_data<col_w>;
     }
-    $!filter_string ='';
+    $!filter_string = '';
     my Int $up = $!i_row + @!prompt_lines;
     print up( $up ) if $up;
     print "\r" ~ clear-to-end-of-screen;
@@ -1723,7 +1724,7 @@ Allowed values: 0 or greater
 displayed. (default)
 
 2 - the page number is always displayed even with only one page. Setting page to 2 automatically enables the option
-clear_screen.
+clear-screen.
 
 =head3 prompt
 
@@ -1811,7 +1812,7 @@ these indexes.
 
 =head3 meta-items
 
-I<meta_items> expects as its value a list of indexes (integers). List-elements correlating to these indexes can not be
+I<meta-items> expects as its value a list of indexes (integers). List-elements correlating to these indexes can not be
 marked with the K<SpaceBar> or with the right mouse key but if one of these elements is the highlighted item it is added
 to the chosen items when K<Return> is pressed.
 

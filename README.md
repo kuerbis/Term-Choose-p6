@@ -331,7 +331,7 @@ Allowed values: 0 or greater
 
 1 - print the page number on the bottom of the screen. If all the choices fit into one page, the page number is not displayed. (default)
 
-2 - the page number is always displayed even with only one page. Setting page to 2 automatically enables the option clear_screen.
+2 - the page number is always displayed even with only one page. Setting page to 2 automatically enables the option clear-screen.
 
 ### prompt
 
@@ -414,7 +414,7 @@ options choose-multi
 
 ### meta-items
 
-*meta_items* expects as its value a list of indexes (integers). List-elements correlating to these indexes can not be marked with the SpaceBar or with the right mouse key but if one of these elements is the highlighted item it is added to the chosen items when Return is pressed.
+*meta-items* expects as its value a list of indexes (integers). List-elements correlating to these indexes can not be marked with the SpaceBar or with the right mouse key but if one of these elements is the highlighted item it is added to the chosen items when Return is pressed.
 
 Elements greater than the last index of the list are ignored.
 

@@ -1,6 +1,9 @@
 Revision history for Term::Choose
 
 
+1.8.1   2022-05-16
+        - Bugfix option names 'meta-items', 'no-spacebar' 'and max-width'.
+
 1.8.0   2022-05-15
         - Bugfix data type error in search.
         - Bugfix search: input puffer.
