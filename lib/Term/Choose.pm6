@@ -1,6 +1,6 @@
 use v6;
 
-unit class Term::Choose:ver<1.8.1>;
+unit class Term::Choose:ver<1.8.2>;
 
 use Term::termios;
 
@@ -287,7 +287,7 @@ method !_set_pp_row_fmt {
 
 
 method !_pad_str_to_colwidth ( Int $i ) {
-    if %!o<ll> || $!all_in_one_row { # if 'll' is set, all list elements must have the same length
+    if %!o<ll> || $!all_in_one_row { # if 'll' is set, all list elements must be defined and have the same length
         return @!list[$i];
     }
     my Int $str_w = @!w_list_items[$i];
@@ -1751,40 +1751,39 @@ Set the behavior of K<Ctrl-F>.
 2 - case-sensitive search
 
 =head3 tabs-info
- 
-If I<info> lines are folded, the option I<tabs-info> allows one to insert spaces at beginning of the folded lines. It is
-also possible, to set a right margin.
- 
-The option I<tabs-info> expects a list with one to three elements:
- 
+
+The option I<tabs-info> allows one to insert spaces at beginning  and the end of I<info> lines.
+
+I<tabs-info> expects a list with one to three elements:
+
 - the first element (initial tab) sets the number of spaces inserted at beginning of paragraphs
- 
+
 - the second element (subsequent tab) sets the number of spaces inserted at the beginning of all broken lines apart from
 the beginning of paragraphs
- 
+
 - the third element sets the number of spaces used as a right margin.
- 
+
 Allowed values: 0 or greater. Elements beyond the third are ignored.
- 
+
 (default: undefined)
 
 =head3 tabs-prompt
- 
-If I<prompt> lines are folded, the option I<tabs-prompt> allows one to insert spaces at beginning of the folded lines.
-It is also possible, to set a right margin.
- 
-The option I<tabs-prompt> expects a list with one to three elements:
- 
+
+The option I<tabs-prompt> allows one to insert spaces at beginning  and the end of I<prompt> lines.
+
+I<tabs-prompt> expects a list with one to three elements:
+
 - the first element (initial tab) sets the number of spaces inserted at beginning of paragraphs
- 
+
 - the second element (subsequent tab) sets the number of spaces inserted at the beginning of all broken lines apart from
 the beginning of paragraphs
- 
+
 - the third element sets the number of spaces used as a right margin.
- 
+
 Allowed values: 0 or greater. Elements beyond the third are ignored.
- 
-(default: undefined)
+
+default: If I<margin> is defined, C<initial tab> and C<subsequent tab> are set to C<left-margin> and the right margin is
+set to C<right-margin>. If I<margin> is not defined the default of I<tabs_prompt> is undefined.
 
 =head3 undef
 

@@ -1,6 +1,9 @@
 Revision history for Term::Choose
 
 
+1.8.2   2022-06-01
+        - Update documentation.
+
 1.8.1   2022-05-16
         - Bugfix option names 'meta-items', 'no-spacebar' 'and max-width'.
 

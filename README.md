@@ -359,9 +359,9 @@ Set the behavior of Ctrl-F.
 
 ### tabs-info
 
-If *info* lines are folded, the option *tabs-info* allows one to insert spaces at beginning of the folded lines. It is also possible, to set a right margin.
+The option *tabs-info* allows one to insert spaces at beginning and the end of *info* lines.
 
-The option *tabs-info* expects a list with one to three elements:
+*tabs-info* expects a list with one to three elements:
 
 - the first element (initial tab) sets the number of spaces inserted at beginning of paragraphs
 
@@ -375,9 +375,9 @@ Allowed values: 0 or greater. Elements beyond the third are ignored.
 
 ### tabs-prompt
 
-If *prompt* lines are folded, the option *tabs-prompt* allows one to insert spaces at beginning of the folded lines. It is also possible, to set a right margin.
+The option *tabs-prompt* allows one to insert spaces at beginning and the end of *prompt* lines.
 
-The option *tabs-prompt* expects a list with one to three elements:
+*tabs-prompt* expects a list with one to three elements:
 
 - the first element (initial tab) sets the number of spaces inserted at beginning of paragraphs
 
@@ -387,7 +387,7 @@ The option *tabs-prompt* expects a list with one to three elements:
 
 Allowed values: 0 or greater. Elements beyond the third are ignored.
 
-(default: undefined)
+default: If *margin* is defined, `initial tab` and `subsequent tab` are set to `left-margin` and the right margin is set to `right-margin`. If *margin* is not defined the default of *tabs_prompt* is undefined.
 
 ### undef
 
