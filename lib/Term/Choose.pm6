@@ -1,6 +1,6 @@
 use v6;
 
-unit class Term::Choose:ver<1.8.3>;
+unit class Term::Choose:ver<1.8.4>;
 
 use Term::termios;
 
@@ -396,7 +396,7 @@ method !_modify_options ( $multiselect ) {
     if ! %!o<prompt>.defined {
         %!o<prompt> = $multiselect.defined ?? 'Your choice' !! 'Continue with ENTER';
     }
-    if %!o<margin>.defined {
+    if %!o<margin> {
         if ! %!o<tabs-prompt>.defined {
             %!o<tabs-prompt> = %!o<margin>[3,3,1];
         }
@@ -1773,8 +1773,8 @@ the beginning of paragraphs
 
 Allowed values: 0 or greater. Elements beyond the third are ignored.
 
-default: If I<margin> is defined, initial-tab and subsequent-tab are set to left-I<margin> and the right margin is
-set to right-I<margin>. If I<margin> is not defined the default is undefined.
+default: If I<margin> is set, the initial-tab and the subsequent-tab are set to left-I<margin> and the right margin is
+set to right-I<margin>. If I<margin> is not defined, the default is undefined.
 
 =head3 tabs-prompt
 
@@ -1791,8 +1791,8 @@ the beginning of paragraphs
 
 Allowed values: 0 or greater. Elements beyond the third are ignored.
 
-default: If I<margin> is defined, initial-tab and subsequent-tab are set to left-I<margin> and the right margin is
-set to right-I<margin>. If I<margin> is not defined the default is undefined.
+default: If I<margin> is set, the initial-tab and the subsequent-tab are set to left-I<margin> and the right margin is
+set to right-I<margin>. If I<margin> is not defined, the default is undefined.
 
 =head3 undef
 

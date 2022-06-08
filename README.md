@@ -371,7 +371,7 @@ The option *tabs-info* allows one to insert spaces at beginning and the end of *
 
 Allowed values: 0 or greater. Elements beyond the third are ignored.
 
-default: If *margin* is defined, initial-tab and subsequent-tab are set to left-*margin* and the right margin is set to right-*margin*. If *margin* is not defined the default is undefined.
+default: If *margin* is set, the initial-tab and the subsequent-tab are set to left-*margin* and the right margin is set to right-*margin*. If *margin* is not defined, the default is undefined.
 
 ### tabs-prompt
 
@@ -387,7 +387,7 @@ The option *tabs-prompt* allows one to insert spaces at beginning and the end of
 
 Allowed values: 0 or greater. Elements beyond the third are ignored.
 
-default: If *margin* is defined, initial-tab and subsequent-tab are set to left-*margin* and the right margin is set to right-*margin*. If *margin* is not defined the default is undefined.
+default: If *margin* is set, the initial-tab and the subsequent-tab are set to left-*margin* and the right margin is set to right-*margin*. If *margin* is not defined, the default is undefined.
 
 ### undef
 
