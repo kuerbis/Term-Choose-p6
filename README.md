@@ -441,11 +441,9 @@ The control of the cursor location, the highlighting of the cursor position and 
 
 By default `Term::Choose` uses `tput` to get the appropriate escape sequences. If the environment variable `TC_ANSI_ESCAPES` is set to a true value, hardcoded ANSI escape sequences are used directly without calling `tput`.
 
-The escape sequences to enable the *mouse* mode are always hardcoded.
+The escape sequences to enable the *mouse* mode and the escape sequence to get the cursor position are always hardcoded.
 
 If the environment variable `TERM` is not set to a true value, `vt100` is used instead as the terminal type for `tput`.
-
-Escape sequences to handle mouse input are hardcoded.
 
 Monospaced font
 ---------------

@@ -1,6 +1,6 @@
 use v6;
 
-unit class Term::Choose:ver<1.8.4>;
+unit class Term::Choose:ver<1.8.5>;
 
 use Term::termios;
 
@@ -9,6 +9,14 @@ use Term::Choose::Screen;
 use Term::Choose::LineFold;
 use Term::Choose::SetTerm;
 
+#END {
+#    if $*EXIT {
+#        run 'stty', 'sane';
+#        print "\n", clear-to-end-of-screen;
+#        print show-cursor;
+#        print restore-screen;
+#    }
+#}
 
 constant R  = 0;
 constant C  = 1;
@@ -104,7 +112,7 @@ method !_prepare_new_copy_of_list {
         @portions[*-1][1] = @!orig_list.elems;
         my Promise @promise;
         for @portions -> $range {
-            my Int @cache;
+            my Int %cache;
             @promise.push: start {
                 do for $range[0] ..^ $range[1] -> $i {
                     if %!o<color> {
@@ -113,7 +121,7 @@ method !_prepare_new_copy_of_list {
                                 %!o<undef>.subst( / \x[feff] /,  '', :g ).subst( / \e \[ <[\d;]>* m /, "\x[feff]", :g ).subst( / \t /,  ' ', :g ).subst( / \v+ /,  '  ', :g ).subst( / <:Cc+:Noncharacter_Code_Point+:Cs> /, '', :g ),
                                 $!avail_w,
                                 True,
-                                @cache
+                                %cache
                             );
                             $i, $str, $len;
                         }
@@ -122,7 +130,7 @@ method !_prepare_new_copy_of_list {
                                 %!o<empty>.subst( / \x[feff] /,  '', :g ).subst( / \e \[ <[\d;]>* m /, "\x[feff]", :g ).subst( / \t /,  ' ', :g ).subst( / \v+ /,  '  ', :g ).subst( / <:Cc+:Noncharacter_Code_Point+:Cs> /, '', :g ),
                                 $!avail_w,
                                 True,
-                                @cache
+                                %cache
                             );
                             $i, $str, $len;
                         }
@@ -131,7 +139,7 @@ method !_prepare_new_copy_of_list {
                                 @!orig_list[$i].subst( / \x[feff] /,  '', :g ).subst( / \e \[ <[\d;]>* m /, "\x[feff]", :g ).subst( / \t /,  ' ', :g ).subst( / \v+ /,  '  ', :g ).subst( / <:Cc+:Noncharacter_Code_Point+:Cs> /, '', :g ),
                                 $!avail_w,
                                 True,
-                                @cache
+                                %cache
                             );
                             $i, $str, $len;
                         }
@@ -142,7 +150,7 @@ method !_prepare_new_copy_of_list {
                                 %!o<undef>.subst( / \t /,  ' ', :g ).subst( / \v+ /,  '  ', :g ).subst( / <:Cc+:Noncharacter_Code_Point+:Cs> /, '', :g ),
                                 $!avail_w,
                                 True,
-                                @cache
+                                %cache
                             );
                             $i, $str, $len;
                         }
@@ -151,7 +159,7 @@ method !_prepare_new_copy_of_list {
                                 %!o<empty>.subst( / \t /,  ' ', :g ).subst( / \v+ /,  '  ', :g ).subst( / <:Cc+:Noncharacter_Code_Point+:Cs> /, '', :g ),
                                 $!avail_w,
                                 True,
-                                @cache
+                                %cache
                             );
                             $i, $str, $len;
                         }
@@ -160,7 +168,7 @@ method !_prepare_new_copy_of_list {
                                 @!orig_list[$i].subst( / \t /,  ' ', :g ).subst( / \v+ /,  '  ', :g ).subst( / <:Cc+:Noncharacter_Code_Point+:Cs> /, '', :g ),
                                 $!avail_w,
                                 True,
-                                @cache
+                                %cache
                             );
                             $i, $str, $len;
                         }
@@ -1027,43 +1035,71 @@ method !_cell ( Int $row, Int $col ) {
     if $!marked[$row][$col] {
         $emphasised = bold() ~ underline() ~ $emphasised;
     }
-    my Str $str = self!_pad_str_to_colwidth( $!rc2idx[$row][$col] );
-    if %!o<color> {
-        my Str @color;
-        if ! @!orig_list[ $!rc2idx[$row][$col] ].defined {
-            @color = %!o<undef>.comb( / \e \[ <[\d;]>* m / );
-        }
-        elsif ! @!orig_list[ $!rc2idx[$row][$col] ].chars {
-            @color = %!o<empty>.comb( / \e \[ <[\d;]>* m / );
+    my Int $i = $!rc2idx[$row][$col];
+    if %!o<ll> {
+        if %!o<color> {
+            my $str = @!list[$i];
+            if $emphasised {
+                if is_current_pos && %!o<color> == 1 {
+                    # no color for the selected cell if color == 1
+                    $str.=subst( / \e \[ <[\d;]>* m /, '', :g );
+                }
+                else {
+                    # keep marked cells marked after color escapes
+                    $str.=subst( / <?after \e \[ <[\d;]>* m > /, $emphasised, :g );
+                }
+                $str = $emphasised ~ $str;
+            }
+            return $str ~ normal(); # if \e[
         }
         else {
-            @color = @!orig_list[ $!rc2idx[$row][$col] ].comb( / \e \[ <[\d;]>* m / );
-        }
-        if $emphasised {
-            for @color {
-                # keep cell marked after color escapes
-                $_ ~= $emphasised;
+            if $emphasised {
+                return $emphasised ~ @!list[$i] ~ normal();
             }
-            $str = $emphasised ~ $str ~ normal();
-            if is_current_pos && %!o<color> == 1 {
-                # no color for selected cell if color == 1
-                @color = ();
-                $str.=subst( / \x[feff] /, '', :g );
+            else {
+                return @!list[$i];
             }
         }
-        if @color.elems {
-            $str.=subst( / \x[feff] /, { @color.shift }, :g );
-            if ! $emphasised {
-                $str ~= normal();
-            }
-        }
-        return $str;
-    }
-    elsif $emphasised {
-        return $emphasised ~ $str ~ normal();
     }
     else {
-        return $str;
+        my Str $str = self!_pad_str_to_colwidth( $i );
+        if %!o<color> {
+            my Str @color;
+            if ! @!orig_list[$i].defined {
+                @color = %!o<undef>.comb( / \e \[ <[\d;]>* m / );
+            }
+            elsif ! @!orig_list[$i].chars {
+                @color = %!o<empty>.comb( / \e \[ <[\d;]>* m / );
+            }
+            else {
+                @color = @!orig_list[$i].comb( / \e \[ <[\d;]>* m / );
+            }
+            if $emphasised {
+                for @color {
+                    # keep cell marked after color escapes
+                    $_ ~= $emphasised;
+                }
+                $str = $emphasised ~ $str ~ normal();
+                if is_current_pos && %!o<color> == 1 { ## ^ 
+                    # no color for selected cell if color == 1
+                    @color = ();
+                    $str.=subst( / \x[feff] /, '', :g );
+                }
+            }
+            if @color.elems {
+                $str.=subst( / \x[feff] /, { @color.shift }, :g );
+                if ! $emphasised {
+                    $str ~= normal();
+                }
+            }
+            return $str;
+        }
+        elsif $emphasised {
+            return $emphasised ~ $str ~ normal();
+        }
+        else {
+            return $str;
+        }
     }
 }
 
@@ -1851,12 +1887,11 @@ the terminal is done via escape sequences.
 By default C<Term::Choose> uses C<tput> to get the appropriate escape sequences. If the environment variable
 C<TC_ANSI_ESCAPES> is set to a true value, hardcoded ANSI escape sequences are used directly without calling C<tput>.
 
-The escape sequences to enable the I<mouse> mode are always hardcoded.
+The escape sequences to enable the I<mouse> mode and the escape sequence to get the cursor position are always
+hardcoded.
 
 If the environment variable C<TERM> is not set to a true value, C<vt100> is used instead as the terminal type for
 C<tput>.
-
-Escape sequences to handle mouse input are hardcoded.
 
 =head2 Monospaced font
 

@@ -40,7 +40,12 @@ method restore-term ( $up ) {
         print unset-mouse1006;
     }
     if $!saved_termios.defined { ##
-        $!saved_termios.setattr(:DRAIN);
+        if $!mouse {
+            $!saved_termios.setattr(:FLUSH);#:DRAIN); # ### 
+        }
+        else {
+            $!saved_termios.setattr(:DRAIN);
+        }
     }
     if $!save-screen {
         print restore-screen;

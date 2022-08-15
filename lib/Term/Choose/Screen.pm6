@@ -97,6 +97,8 @@ sub get-term-size is export( :DEFAULT, :get-term-size  ) {
         my $size = run( 'stty', 'size', :out ).out.slurp;
         if $size && $size ~~ / ( \d+ ) \s ( \d+ ) / {
             my ( $hight, $width ) = ( $0, $1 );
+            die "No terminal heigth!" if ! $hight;
+            die "No terminal width!" if ! $width;
             return $width - WIDTH_CURSOR, $hight.Int;
         }
     }
@@ -111,6 +113,7 @@ sub get-term-width is export( :DEFAULT, :get-term-width  ) {
         my $size = run( 'stty', 'size', :out ).out.slurp;
         if $size && $size ~~ / \d+ \s ( \d+ ) / {
             my $width = $0;
+            die "No terminal width!" if ! $width;
             return $width - WIDTH_CURSOR;
         }
     }

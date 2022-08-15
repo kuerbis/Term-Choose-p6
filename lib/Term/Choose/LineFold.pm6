@@ -38,24 +38,24 @@ sub char_width( Int $ord_char ) {
 }
 
 
-sub to-printwidth( $str, Int $avail_w, Bool $dot=False, @cache? ) is export( :DEFAULT, :to-printwidth ) {
+sub to-printwidth( $str, Int $avail_w, Int $dot=0, %cache? ) is export( :DEFAULT, :to-printwidth ) {
     # no check if char_width returns -1 because no invalid characters (s:g/<:C>//)
     my Int $width = 0;
     my Str @graph;
     for $str.NFC {
         my $w;
-        if @cache.EXISTS-POS( $_ ) {
-            $w := @cache.AT-POS( $_ );
+        if %cache.EXISTS-KEY( $_ ) {
+            $w := %cache.AT-KEY( $_ );
         }
         else {
-            $w := @cache.BIND-POS( $_, char_width( $_ ) );
+            $w := %cache.BIND-KEY( $_, char_width( $_ ) );
         }
         if $width + $w > $avail_w {
             if $dot && $avail_w > 5 {
                 my \tail = '...';
                 my \tail_w = 3;
                 while $width > $avail_w - tail_w {
-                    $width -= @cache[ @graph.pop.ord ];
+                    $width -= %cache.AT-KEY( @graph.pop.ord );
                 }
                 return @graph.join( '' ) ~ '.' ~ tail, $width + tail_w + 1 if $width < $avail_w - tail_w;
                 return @graph.join( '' )       ~ tail, $width + tail_w;
@@ -147,15 +147,15 @@ sub line-fold( $str, Int $avail_w, Str :$init-tab is copy = '', Str :$subseq-tab
 }
 
 
-sub print-columns( $str, @cache? ) returns Int is export( :DEFAULT, :print-columns ) {
+sub print-columns( $str, %cache? ) returns Int is export( :DEFAULT, :print-columns ) {
     # no check if char_width returns -1 because invalid characters removed
     my Int $width = 0;
     for $str.Str.NFC {
-        if @cache.EXISTS-POS( $_ ) {
-            $width = $width + @cache.AT-POS( $_ );
+        if %cache.EXISTS-KEY( $_ ) {
+            $width = $width + %cache.AT-KEY( $_ );
         }
         else {
-            $width = $width + @cache.BIND-POS( $_, char_width( $_ ) );
+            $width = $width + %cache.BIND-KEY( $_, char_width( $_ ) );
         }
     }
     $width;

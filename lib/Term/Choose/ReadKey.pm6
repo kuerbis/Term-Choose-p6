@@ -19,12 +19,7 @@ sub read-key( Int $mouse ) is export( :DEFAULT, :read-key ) {
             my $pressed_key; # Str or Array
             if $c1 eq "\e" {
                 my Str $c2 = $*IN.read(1).decode;
-                if ! $c2.defined { $pressed_key = 'Escape' }
-                elsif $c2 eq "A" { $pressed_key = 'CursorUp' }
-                elsif $c2 eq "B" { $pressed_key = 'CursorDown' }
-                elsif $c2 eq "C" { $pressed_key = 'CursorRight' }
-                elsif $c2 eq "D" { $pressed_key = 'CursorLeft' }
-                elsif $c2 eq "H" { $pressed_key = 'CursorHome' }
+                if  ! $c2.defined { $pressed_key = 'Escape' }
                 elsif $c2 eq "O" {
                     my Str $c3 = $*IN.read(1).decode;
                     if    $c3 eq "A" { $pressed_key = 'CursorUp' }
