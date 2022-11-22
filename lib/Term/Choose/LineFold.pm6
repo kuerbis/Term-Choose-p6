@@ -15,7 +15,7 @@ else {
 }
 
 
-sub char_width( Int $ord_char ) {
+sub char_width( Int $ord_char ) returns Int is export( :DEFAULT, :char_width ) {
     my Int $min = 0;
     my Int $mid;
     my Int $max = $table.end;

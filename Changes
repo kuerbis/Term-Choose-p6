@@ -1,6 +1,9 @@
 Revision history for Term::Choose
 
 
+1.8.6   2022-11-22
+        - Export 'char_width'.
+
 1.8.5   2022-08-15
         - Cache char width in a hash instead of in an array.
         - Bugfix option 'color'.
