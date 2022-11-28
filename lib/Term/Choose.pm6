@@ -1,6 +1,6 @@
 use v6;
 
-unit class Term::Choose:ver<1.8.6>;
+unit class Term::Choose:ver<1.8.7>;
 
 use Term::termios;
 
@@ -112,8 +112,8 @@ method !_prepare_new_copy_of_list {
         @portions[*-1][1] = @!orig_list.elems;
         my Promise @promise;
         for @portions -> $range {
-            my Int %cache;
             @promise.push: start {
+                my Int %cache;
                 do for $range[0] ..^ $range[1] -> $i {
                     if %!o<color> {
                         if ! @!orig_list[$i].defined {
@@ -187,6 +187,7 @@ method !_prepare_new_copy_of_list {
         $!col_w = @!w_list_items.max;
     }
 }
+
 
 method !_beep {
     print beep if %!o<beep>;
