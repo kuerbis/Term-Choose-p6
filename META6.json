@@ -1,5 +1,5 @@
 {
-  "auth": "kuerbis",
+  "auth": "zef:kuerbis",
   "build-depends": [
   ],
   "depends": [
