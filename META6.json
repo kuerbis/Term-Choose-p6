@@ -1,7 +1,5 @@
 {
-  "authors": [
-    "kuerbis"
-  ],
+  "auth": "kuerbis",
   "build-depends": [
   ],
   "depends": [
