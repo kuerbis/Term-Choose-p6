@@ -15,7 +15,7 @@ else {
 }
 
 
-sub char_width( Int $ord_char ) returns Int is export( :DEFAULT, :char_width ) {
+sub char-width( Int $ord_char ) returns Int is export( :DEFAULT, :char-width ) {
     my Int $min = 0;
     my Int $mid;
     my Int $max = $table.end;
@@ -39,7 +39,7 @@ sub char_width( Int $ord_char ) returns Int is export( :DEFAULT, :char_width ) {
 
 
 sub to-printwidth( $str, Int $avail_w, Int $dot=0, %cache? ) is export( :DEFAULT, :to-printwidth ) {
-    # no check if char_width returns -1 because no invalid characters (s:g/<:C>//)
+    # no check if char-width returns -1 because no invalid characters (s:g/<:C>//)
     my Int $width = 0;
     my Str @graph;
     for $str.NFC {
@@ -48,7 +48,7 @@ sub to-printwidth( $str, Int $avail_w, Int $dot=0, %cache? ) is export( :DEFAULT
             $w := %cache.AT-KEY( $_ );
         }
         else {
-            $w := %cache.BIND-KEY( $_, char_width( $_ ) );
+            $w := %cache.BIND-KEY( $_, char-width( $_ ) );
         }
         if $width + $w > $avail_w {
             if $dot && $avail_w > 5 {
@@ -148,14 +148,14 @@ sub line-fold( $str, Int $avail_w, Str :$init-tab is copy = '', Str :$subseq-tab
 
 
 sub print-columns( $str, %cache? ) returns Int is export( :DEFAULT, :print-columns ) {
-    # no check if char_width returns -1 because invalid characters removed
+    # no check if char-width returns -1 because invalid characters removed
     my Int $width = 0;
     for $str.Str.NFC {
         if %cache.EXISTS-KEY( $_ ) {
             $width = $width + %cache.AT-KEY( $_ );
         }
         else {
-            $width = $width + %cache.BIND-KEY( $_, char_width( $_ ) );
+            $width = $width + %cache.BIND-KEY( $_, char-width( $_ ) );
         }
     }
     $width;
