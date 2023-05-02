@@ -103,7 +103,7 @@ method !_prepare_new_copy_of_list {
     }
     else {
         my Int $threads = num-threads();
-        while $threads > @!orig_list.elems { # ### 
+        while $threads > @!orig_list.elems { ##
             last if $threads < 2;
             $threads = $threads div 2;
         }
