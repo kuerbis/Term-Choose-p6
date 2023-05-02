@@ -1,6 +1,6 @@
 use v6;
 
-unit class Term::Choose:ver<1.8.8>;
+unit class Term::Choose:ver<1.8.9>;
 
 use Term::termios;
 
@@ -103,7 +103,7 @@ method !_prepare_new_copy_of_list {
     }
     else {
         my Int $threads = num-threads();
-        while $threads > @!orig_list.elems {
+        while $threads > @!orig_list.elems { # ### 
             last if $threads < 2;
             $threads = $threads div 2;
         }
@@ -1917,7 +1917,7 @@ help.
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (C) 2016-2022 Matthäus Kiem.
+Copyright (C) 2016-2023 Matthäus Kiem.
 
 This library is free software; you can redistribute it and/or modify it under the Artistic License 2.0.
 

@@ -1,6 +1,9 @@
 Revision history for Term::Choose
 
 
+1.8.9   2023-05-02
+        - Uniocde 15.0.
+
 1.8.8   2022-12-02
         - Replace 'char_with' with 'char-width'.
 
