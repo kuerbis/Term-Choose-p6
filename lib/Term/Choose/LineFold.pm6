@@ -70,7 +70,10 @@ sub to-printwidth( $str, Int $avail_w, Int $dot=0, %cache? ) is export( :DEFAULT
 
 
 
-sub line-fold( $str, Int $avail_w, Str :$init-tab is copy = '', Str :$subseq-tab is copy = '', :$color = 0, :$join = 0 ) is export( :DEFAULT, :line-fold ) {
+sub line-fold( $str, Int $avail_w, Str :$init-tab is copy = '', Str :$subseq-tab is copy = '', :$color = 0, :$join = 0, :$binary-filter = 0 ) is export( :DEFAULT, :line-fold ) {
+    if ( ! ( $str // '' ).chars ) {
+        return $str;
+    }
     for $init-tab, $subseq-tab {
         if $_ { # .gist
             $_ = to-printwidth(
@@ -80,23 +83,31 @@ sub line-fold( $str, Int $avail_w, Str :$init-tab is copy = '', Str :$subseq-tab
                 ).[0];
         }
     }
-    my $string = ( $str // '' ); #
-    if $string ~~ Buf {
-        $string = $string.gist; # perl
+    my $str_copy = $str;
+    if $str_copy ~~ Buf {
+        $str_copy = $str_copy.gist; # perl
     }
     my Str @colors;
     if $color { # elsif
-        $string.=subst( / \x[feff] /, '', :g );
-        $string.=subst( / ( \e \[ <[\d;]>* m ) /, { @colors.push( $0.Str ) && "\x[feff]" }, :g );
+        $str_copy.=subst( / \x[feff] /, '', :g );
+        $str_copy.=subst( / ( \e \[ <[\d;]>* m ) /, { @colors.push( $0.Str ) && "\x[feff]" }, :g );
     }
-    $string.=subst( / \t /, ' ', :g );
-    $string.=subst( / <:Cc+:Noncharacter_Code_Point+:Cs> && \V /, '' , :g ); #
-    if $string !~~ / \R / && print-columns( $init-tab ~ $string ) <= $avail_w {
-        return $init-tab ~ $string;
+    if $binary-filter && $str_copy.substr( 0, 100 ).match: /<[\x00..\x08\x0B..\x0C\x0E..\x1F]>/ {
+        if $binary-filter == 2 {
+            $str_copy = $str.encode>>.fmt('%02X').Str;
+        }
+        else {
+            $str_copy = 'BNRY';
+        }
+    }
+    $str_copy.=subst( / \t /, ' ', :g );
+    $str_copy.=subst( / <:Cc+:Noncharacter_Code_Point+:Cs> && \V /, '' , :g ); #
+    if $str_copy !~~ / \R / && print-columns( $init-tab ~ $str_copy ) <= $avail_w {
+        return $init-tab ~ $str_copy;
     }
     my Str @lines;
 
-    for $string.lines -> $row {
+    for $str_copy.lines -> $row {
         my Str @words;
         if $row ~~ / \S / {
             @words = $row.trim-trailing.split( / <?after \S > <?before \s > / );
@@ -141,7 +152,7 @@ sub line-fold( $str, Int $avail_w, Str :$init-tab is copy = '', Str :$subseq-tab
             }
         }
     }
-    @lines.push( '' ) if $string.ends-with( "\n" );
+    @lines.push( '' ) if $str_copy.ends-with( "\n" );
     return @lines.join: "\n" if $join;
     return @lines; #
 }

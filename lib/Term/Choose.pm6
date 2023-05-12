@@ -1,6 +1,6 @@
 use v6;
 
-unit class Term::Choose:ver<1.8.9>;
+unit class Term::Choose:ver<1.9.0>;
 
 use Term::termios;
 
@@ -180,8 +180,8 @@ method !_prepare_new_copy_of_list {
         @!w_list_items = ();
         for await @promise -> @portion {
             for @portion {
-                @!list[.[0]] := .[1];
-                @!w_list_items[.[0]] := .[2];
+                @!list[.[0]] = .[1];
+                @!w_list_items[.[0]] = .[2];
             }
         }
         $!col_w = @!w_list_items.max;
