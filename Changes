@@ -1,6 +1,9 @@
 Revision history for Term::Choose
 
 
+1.9.1   2023-05-16
+        - line-fold: update option color.
+
 1.9.0   2023-05-12
         - prepare_new_copy_of_list: replace 2 := with =.
         - line-fold: option binary-filter.

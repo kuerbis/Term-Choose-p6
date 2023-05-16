@@ -145,7 +145,17 @@ sub line-fold( $str, Int $avail_w, Str :$init-tab is copy = '', Str :$subseq-tab
         }
     }
     if @colors.elems {
+        my Str $last_color;
         for @lines -> $line is rw {
+            if ! $join {
+                if $last_color {
+                    $line = $last_color ~ $line;
+                }
+                my Int $count = $line.comb( "\x[feff]" ).elems;
+                if $count {
+                    $last_color = @colors[$count - 1];
+                }
+            }
             $line.=subst( / \x[feff] /, { @colors.shift }, :g );
             if ! @colors.elems {
                 last;

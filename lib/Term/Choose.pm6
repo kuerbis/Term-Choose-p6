@@ -1,6 +1,6 @@
 use v6;
 
-unit class Term::Choose:ver<1.9.0>;
+unit class Term::Choose:ver<1.9.1>;
 
 use Term::termios;
 
@@ -10,7 +10,7 @@ use Term::Choose::LineFold;
 use Term::Choose::SetTerm;
 
 #END {
-#    if $*EXIT {
+#    if $*EXIT {    # 2023.02
 #        run 'stty', 'sane';
 #        print "\n", clear-to-end-of-screen;
 #        print show-cursor;
