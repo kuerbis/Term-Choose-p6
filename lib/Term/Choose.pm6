@@ -1,6 +1,6 @@
 use v6;
 
-unit class Term::Choose:ver<1.9.1>;
+unit class Term::Choose:ver<1.9.2>;
 
 use Term::termios;
 
@@ -1917,7 +1917,7 @@ help.
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (C) 2016-2023 Matthäus Kiem.
+Copyright (C) 2016-2024 Matthäus Kiem.
 
 This library is free software; you can redistribute it and/or modify it under the Artistic License 2.0.
 
