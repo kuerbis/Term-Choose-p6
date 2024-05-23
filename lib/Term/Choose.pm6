@@ -412,7 +412,7 @@ method !_modify_options ( $multiselect ) {
     }
     if %!o<margin> {
         if ! %!o<tabs-prompt>.defined {
-            %!o<tabs-prompt> = %!o<margin>[3,3,1];  # documentation # ### 
+            %!o<tabs-prompt> = %!o<margin>[3,3,1];
         }
         if ! %!o<tabs-info>.defined {
             %!o<tabs-info> = %!o<margin>[3,3,1];
