@@ -1,6 +1,9 @@
 Revision history for Term::Choose
 
 
+1.9.3   2024-05-23
+        If the layout has only 1 column, bypass the loops in '_pos_to_default'.
+
 1.9.2   2024-01-18
         - Unicode 15.1.
         - Zero width for Hangul Jamo Extended-B.

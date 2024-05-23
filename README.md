@@ -263,7 +263,7 @@ The option *margin* allows one to set a margin on all four sides.
 
 - left margin (number of terminal columns)
 
-*margin* does not affect the *info* and *prompt* string. To add margins to the *info* and *prompt* string see *tabs-info* and *tabs-prompt*.
+See also [tabs-info](#tabs-info) and [tabs-prompt](#tabs-prompt).
 
 Allowed values: 0 or greater. Elements beyond the fourth are ignored.
 

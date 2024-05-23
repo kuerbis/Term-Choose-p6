@@ -1,6 +1,6 @@
 use v6;
 
-unit class Term::Choose:ver<1.9.2>;
+unit class Term::Choose:ver<1.9.3>;
 
 use Term::termios;
 
@@ -250,11 +250,16 @@ method !_prepare_prompt_and_info {
 
 
 method !_pos_to_default {
-    ROW: for ^$!rc2idx -> $row {
-        COL: for ^$!rc2idx[$row] -> $col {
-            if %!o<default> == $!rc2idx[$row][$col] {
-                $!p = [ $row, $col ];
-                last ROW;
+    if $!single_column {
+        $!p = [ %!o<default>, 0 ];
+    }
+    else {
+        ROW: for ^$!rc2idx -> $row {
+            COL: for ^$!rc2idx[$row] -> $col {
+                if %!o<default> == $!rc2idx[$row][$col] {
+                    $!p = [ $row, $col ];
+                    last ROW;
+                }
             }
         }
     }
@@ -407,7 +412,7 @@ method !_modify_options ( $multiselect ) {
     }
     if %!o<margin> {
         if ! %!o<tabs-prompt>.defined {
-            %!o<tabs-prompt> = %!o<margin>[3,3,1];
+            %!o<tabs-prompt> = %!o<margin>[3,3,1];  # documentation # ### 
         }
         if ! %!o<tabs-info>.defined {
             %!o<tabs-info> = %!o<margin>[3,3,1];
@@ -1700,8 +1705,7 @@ I<margin> expects a list of four elements in the following order:
 
 - left margin (number of terminal columns)
 
-I<margin> does not affect the I<info> and I<prompt> string. To add margins to the I<info> and I<prompt> string see
-I<tabs-info> and I<tabs-prompt>.
+See also L<#tabs-info> and L<#tabs-prompt>.
 
 Allowed values: 0 or greater. Elements beyond the fourth are ignored.
 
