@@ -1,7 +1,7 @@
 use v6;
 unit module Term::Choose::Screen;
 
-constant WIDTH_CURSOR = 1;
+use Term::Choose::Constant;
 
 
 my ( $t_up, $t_down, $t_right, $t_left, $clear_screen, $clear_to_end_of_screen, $clear_to_end_of_line, $reverse, $bold,
@@ -91,7 +91,7 @@ sub get-term-size is export( :DEFAULT, :get-term-size  ) {
     if ( $tput_ok ) {
         my $width  = run( 'tput', '-T', $term, 'cols',  :out ).out.get.chomp.Int or die "No terminal width!";
         my $height = run( 'tput', '-T', $term, 'lines', :out ).out.get.chomp.Int or die "No terminal heigth!";
-        return $width - WIDTH_CURSOR, $height;
+        return $width - cursor-width, $height;
     }
     else {
         my $size = run( 'stty', 'size', :out ).out.slurp;
@@ -99,7 +99,7 @@ sub get-term-size is export( :DEFAULT, :get-term-size  ) {
             my ( $hight, $width ) = ( $0, $1 );
             die "No terminal heigth!" if ! $hight;
             die "No terminal width!" if ! $width;
-            return $width - WIDTH_CURSOR, $hight.Int;
+            return $width - cursor-width, $hight.Int;
         }
     }
 }
@@ -107,14 +107,16 @@ sub get-term-size is export( :DEFAULT, :get-term-size  ) {
 sub get-term-width is export( :DEFAULT, :get-term-width  ) {
     if ( $tput_ok ) {
         my $width  = run( 'tput', '-T', $term, 'cols',  :out ).out.get.chomp.Int or die "No terminal width!";
-        return $width - WIDTH_CURSOR;
+        return $width - cursor-width;
     }
     else {
         my $size = run( 'stty', 'size', :out ).out.slurp;
         if $size && $size ~~ / \d+ \s ( \d+ ) / {
             my $width = $0;
             die "No terminal width!" if ! $width;
-            return $width - WIDTH_CURSOR;
+            return $width - cursor-width;
         }
     }
 }
+
+

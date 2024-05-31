@@ -453,6 +453,11 @@ Ambiguous width characters
 
 By default ambiguous width characters are treated as half width. If the environment variable TC_AMBIGUOUS_WIDE is set to a true value, ambiguous width characters are treated as full width.
 
+Restrictions
+------------
+
+Term::Choose is not installable on Windows.
+
 AUTHOR
 ======
 

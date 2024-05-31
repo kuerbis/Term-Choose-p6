@@ -11,6 +11,7 @@
   "perl": "6.d",
   "provides": {
     "Term::Choose": "lib/Term/Choose.pm6",
+    "Term::Choose::Constant": "lib/Term/Choose/Constant.pm6",
     "Term::Choose::LineFold": "lib/Term/Choose/LineFold.pm6",
     "Term::Choose::LineFold::CharWidthAmbiguousWide": "lib/Term/Choose/LineFold/CharWidthAmbiguousWide.pm6",
     "Term::Choose::LineFold::CharWidthDefault": "lib/Term/Choose/LineFold/CharWidthDefault.pm6",
@@ -29,5 +30,5 @@
   "test-depends": [
     "Test"
   ],
-  "version": "1.9.3"
+  "version": "1.9.4"
 }

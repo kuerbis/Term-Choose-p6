@@ -1,9 +1,10 @@
 use v6;
 
-unit class Term::Choose:ver<1.9.3>;
+unit class Term::Choose:ver<1.9.4>;
 
 use Term::termios;
 
+use Term::Choose::Constant;
 use Term::Choose::ReadKey;
 use Term::Choose::Screen;
 use Term::Choose::LineFold;
@@ -20,11 +21,6 @@ use Term::Choose::SetTerm;
 
 constant R  = 0;
 constant C  = 1;
-constant WIDTH_CURSOR = 1;
-
-subset Positive_Int of Int where * > 0;
-subset Int_0_to_2   of Int where * == 0|1|2;
-subset Int_0_or_1   of Int where * == 0|1;
 
 has Int_0_or_1   $.beep                 = 0;
 has Int_0_or_1   $.clear-screen         = 1;
@@ -56,7 +52,7 @@ has List         $.tabs-prompt;
 has Str          $.empty                = '<empty>';
 has Str          $.footer               = '';
 has Str          $.info                 = '';
-has Str          $.prompt;              # undefined because: undef => default prompt-line, '' => no prompt-line
+has Str          $.prompt;
 has Str          $.undef                = '<undef>';
 
 has Int $!i_col;
@@ -118,7 +114,7 @@ method !_prepare_new_copy_of_list {
                     if %!o<color> {
                         if ! @!orig_list[$i].defined {
                             my ( $str, $len ) = to-printwidth(
-                                %!o<undef>.subst( / \x[feff] /,  '', :g ).subst( / \e \[ <[\d;]>* m /, "\x[feff]", :g ).subst( / \t /,  ' ', :g ).subst( / \v+ /,  '  ', :g ).subst( / <:Cc+:Noncharacter_Code_Point+:Cs> /, '', :g ),
+                                %!o<undef>.subst( / $(ph-char) /,  '', :g ).subst( &rx-color, ph-char, :g ).subst( / \t /,  ' ', :g ).subst( / \v+ /,  '  ', :g ).subst( &rx-invalid-char, '', :g ),
                                 $!avail_w,
                                 True,
                                 %cache
@@ -127,7 +123,7 @@ method !_prepare_new_copy_of_list {
                         }
                         elsif @!orig_list[$i] eq '' {
                             my ( $str, $len ) = to-printwidth(
-                                %!o<empty>.subst( / \x[feff] /,  '', :g ).subst( / \e \[ <[\d;]>* m /, "\x[feff]", :g ).subst( / \t /,  ' ', :g ).subst( / \v+ /,  '  ', :g ).subst( / <:Cc+:Noncharacter_Code_Point+:Cs> /, '', :g ),
+                                %!o<empty>.subst( / $(ph-char) /,  '', :g ).subst( &rx-color, ph-char, :g ).subst( / \t /,  ' ', :g ).subst( / \v+ /,  '  ', :g ).subst( &rx-invalid-char, '', :g ),
                                 $!avail_w,
                                 True,
                                 %cache
@@ -136,7 +132,7 @@ method !_prepare_new_copy_of_list {
                         }
                         else {
                                 my ( $str, $len ) = to-printwidth(
-                                @!orig_list[$i].subst( / \x[feff] /,  '', :g ).subst( / \e \[ <[\d;]>* m /, "\x[feff]", :g ).subst( / \t /,  ' ', :g ).subst( / \v+ /,  '  ', :g ).subst( / <:Cc+:Noncharacter_Code_Point+:Cs> /, '', :g ),
+                                @!orig_list[$i].subst( / $(ph-char) /,  '', :g ).subst( &rx-color, ph-char, :g ).subst( / \t /,  ' ', :g ).subst( / \v+ /,  '  ', :g ).subst( &rx-invalid-char, '', :g ),
                                 $!avail_w,
                                 True,
                                 %cache
@@ -147,7 +143,7 @@ method !_prepare_new_copy_of_list {
                     else {
                         if ! @!orig_list[$i].defined {
                             my ( $str, $len ) = to-printwidth(
-                                %!o<undef>.subst( / \t /,  ' ', :g ).subst( / \v+ /,  '  ', :g ).subst( / <:Cc+:Noncharacter_Code_Point+:Cs> /, '', :g ),
+                                %!o<undef>.subst( / \t /,  ' ', :g ).subst( / \v+ /,  '  ', :g ).subst( &rx-invalid-char, '', :g ),
                                 $!avail_w,
                                 True,
                                 %cache
@@ -156,7 +152,7 @@ method !_prepare_new_copy_of_list {
                         }
                         elsif @!orig_list[$i] eq '' {
                             my ( $str, $len ) = to-printwidth(
-                                %!o<empty>.subst( / \t /,  ' ', :g ).subst( / \v+ /,  '  ', :g ).subst( / <:Cc+:Noncharacter_Code_Point+:Cs> /, '', :g ),
+                                %!o<empty>.subst( / \t /,  ' ', :g ).subst( / \v+ /,  '  ', :g ).subst( &rx-invalid-char, '', :g ),
                                 $!avail_w,
                                 True,
                                 %cache
@@ -165,7 +161,7 @@ method !_prepare_new_copy_of_list {
                         }
                         else {
                             my ( $str, $len ) = to-printwidth(
-                                @!orig_list[$i].subst( / \t /,  ' ', :g ).subst( / \v+ /,  '  ', :g ).subst( / <:Cc+:Noncharacter_Code_Point+:Cs> /, '', :g ),
+                                @!orig_list[$i].subst( / \t /,  ' ', :g ).subst( / \v+ /,  '  ', :g ).subst( &rx-invalid-char, '', :g ),
                                 $!avail_w,
                                 True,
                                 %cache
@@ -200,9 +196,9 @@ method !_prepare_prompt_and_info {
         @!prompt_lines.append: '' xx %!o<margin>[0];
     }
     my Int $info_w = $!term_w;
-    if $*KERNEL ne any 'MSWin32', 'cygwin' { # new # ### 
-        $info_w += WIDTH_CURSOR;
-    }
+    #if ! $*DISTRO.is-win {     # Term::Choose is not installable on Windows
+        $info_w += cursor-width;
+    #}
     if %!o<max-width> && $info_w > %!o<max-width> { #
         $info_w = %!o<max-width>;
     }
@@ -1048,11 +1044,11 @@ method !_cell ( Int $row, Int $col ) {
             if $emphasised {
                 if is_current_pos && %!o<color> == 1 {
                     # no color for the selected cell if color == 1
-                    $str.=subst( / \e \[ <[\d;]>* m /, '', :g );
+                    $str.=subst( &rx-color, '', :g );
                 }
                 else {
                     # keep marked cells marked after color escapes
-                    $str.=subst( / <?after \e \[ <[\d;]>* m > /, $emphasised, :g );
+                    $str.=subst( / <?after <rx-color>> /, $emphasised, :g );
                 }
                 $str = $emphasised ~ $str;
             }
@@ -1072,13 +1068,13 @@ method !_cell ( Int $row, Int $col ) {
         if %!o<color> {
             my Str @color;
             if ! @!orig_list[$i].defined {
-                @color = %!o<undef>.comb( / \e \[ <[\d;]>* m / );
+                @color = %!o<undef>.comb( &rx-color );
             }
             elsif ! @!orig_list[$i].chars {
-                @color = %!o<empty>.comb( / \e \[ <[\d;]>* m / );
+                @color = %!o<empty>.comb( &rx-color );
             }
             else {
-                @color = @!orig_list[$i].comb( / \e \[ <[\d;]>* m / );
+                @color = @!orig_list[$i].comb( &rx-color );
             }
             if $emphasised {
                 for @color {
@@ -1089,11 +1085,11 @@ method !_cell ( Int $row, Int $col ) {
                 if is_current_pos && %!o<color> == 1 { ## ^ 
                     # no color for selected cell if color == 1
                     @color = ();
-                    $str.=subst( / \x[feff] /, '', :g );
+                    $str.=subst( / $(ph-char) /, '', :g );
                 }
             }
             if @color.elems {
-                $str.=subst( / \x[feff] /, { @color.shift }, :g );
+                $str.=subst( / $(ph-char) /, { @color.shift }, :g );
                 if ! $emphasised {
                     $str ~= normal();
                 }
@@ -1421,6 +1417,7 @@ method !_search_end ( $multiselect ) {
     self!_avail_screen_size();
     self!_wr_first_screen( $multiselect );
 }
+
 
 
 
@@ -1906,6 +1903,10 @@ It is required a terminal that uses a monospaced font which supports the printed
 
 By default ambiguous width characters are treated as half width. If the environment variable TC_AMBIGUOUS_WIDE is set to
 a true value, ambiguous width characters are treated as full width.
+
+=head2 Restrictions
+
+Term::Choose is not installable on Windows.
 
 =head1 AUTHOR
 

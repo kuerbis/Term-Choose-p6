@@ -1,6 +1,12 @@
 Revision history for Term::Choose
 
 
+1.9.4   2024-05-31
+        Update 'to-printwidth'.
+        Update documentation.
+        Workflows test: don't test Windows.
+        Code refactoring.
+
 1.9.3   2024-05-23
         If the layout has only 1 column, bypass the loops in '_pos_to_default'.
 

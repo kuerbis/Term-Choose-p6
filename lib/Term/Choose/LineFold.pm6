@@ -1,6 +1,7 @@
 use v6;
 unit module Term::Choose::LineFold;
 
+use Term::Choose::Constant;
 use Term::Choose::Screen;
 
 
@@ -60,7 +61,8 @@ sub to-printwidth( $str, Int $avail_w, Int $dot=0, %cache? ) is export( :DEFAULT
                 return @graph.join( '' ) ~ '.' ~ tail, $width + tail_w + 1 if $width < $avail_w - tail_w;
                 return @graph.join( '' )       ~ tail, $width + tail_w;
             }
-            return @graph.join( '' ), $width;
+            return @graph.join( '' ) ~ ' ', $width + 1 if $width < $avail_w;
+            return @graph.join( '' )      , $width;
         }
         $width = $width + $w;
         @graph.push: .chr;
@@ -69,15 +71,15 @@ sub to-printwidth( $str, Int $avail_w, Int $dot=0, %cache? ) is export( :DEFAULT
 }
 
 
-
 sub line-fold( $str, Int $avail_w, Str :$init-tab is copy = '', Str :$subseq-tab is copy = '', :$color = 0, :$join = 0, :$binary-filter = 0 ) is export( :DEFAULT, :line-fold ) {
     if ( ! ( $str // '' ).chars ) {
         return $str;
     }
+
     for $init-tab, $subseq-tab {
         if $_ { # .gist
             $_ = to-printwidth(
-                    $_.=subst( / \t /,  ' ', :g ).=subst( / \v+ /,  '  ', :g ).=subst( / <:Cc+:Noncharacter_Code_Point+:Cs> /, '', :g ),
+                    $_.=subst( / \t /,  ' ', :g ).=subst( / \v+ /,  '  ', :g ).=subst( &rx-invalid-char, '', :g ),
                     $avail_w div 2,
                     False
                 ).[0];
@@ -89,10 +91,10 @@ sub line-fold( $str, Int $avail_w, Str :$init-tab is copy = '', Str :$subseq-tab
     }
     my Str @colors;
     if $color { # elsif
-        $str_copy.=subst( / \x[feff] /, '', :g );
-        $str_copy.=subst( / ( \e \[ <[\d;]>* m ) /, { @colors.push( $0.Str ) && "\x[feff]" }, :g );
+        $str_copy.=subst( / $(ph-char) /, '', :g );
+        $str_copy.=subst( / ( <rx-color> ) /, { @colors.push( $0.Str ) && ph-char }, :g );
     }
-    if $binary-filter && $str_copy.substr( 0, 100 ).match: /<[\x00..\x08\x0B..\x0C\x0E..\x1F]>/ {
+    if $binary-filter && $str_copy.substr( 0, 100 ).match: &rx-is-binary {
         if $binary-filter == 2 {
             $str_copy = $str.encode>>.fmt('%02X').Str;
         }
@@ -101,7 +103,7 @@ sub line-fold( $str, Int $avail_w, Str :$init-tab is copy = '', Str :$subseq-tab
         }
     }
     $str_copy.=subst( / \t /, ' ', :g );
-    $str_copy.=subst( / <:Cc+:Noncharacter_Code_Point+:Cs> && \V /, '' , :g ); #
+    $str_copy.=subst( / <rx-invalid-char> && \V /, '' , :g ); #
     if $str_copy !~~ / \R / && print-columns( $init-tab ~ $str_copy ) <= $avail_w {
         return $init-tab ~ $str_copy;
     }

@@ -41,7 +41,7 @@ method restore-term ( $up ) {
     }
     if $!saved_termios.defined { ##
         if $!mouse {
-            $!saved_termios.setattr(:FLUSH);#:DRAIN); # ### 
+            $!saved_termios.setattr(:FLUSH);#:DRAIN); ##
         }
         else {
             $!saved_termios.setattr(:DRAIN);
