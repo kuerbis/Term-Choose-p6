@@ -1,6 +1,6 @@
 use v6;
 
-unit class Term::Choose:ver<1.9.4>;
+unit class Term::Choose:ver<1.9.5>;
 
 use Term::termios;
 
