@@ -269,14 +269,14 @@ I<width> is C<1> or greater.
 
 =item init-tab
 
-Sets the initial tab inserted at the beginning of paragraphs. If a value consisting of C< <[0..9]>+> is provided,
+Sets the initial tab inserted at the beginning of paragraphs. If a value consisting of C</^<[0..9]>+$/> is provided,
 the tab will be that number of spaces. Otherwise, the provided value is used directly as the tab. By default, no initial
 tab is inserted. If the initial tab is longer than half the available width, it will be cut to half the available width.
 
 =item subseq-tab
 
 Sets the subsequent tab inserted at the beginning of all broken lines (excluding paragraph beginnings). If a value
-consisting of C< <[0..9]>+> is provided, the tab will be that number of spaces. Otherwise, the provided value is
+consisting of C</^<[0..9]>+$/> is provided, the tab will be that number of spaces. Otherwise, the provided value is
 used directly as the tab. By default, no subsequent tab is inserted. If the subsequent tab is longer than half the
 available width, it will be cut to half the available width
 

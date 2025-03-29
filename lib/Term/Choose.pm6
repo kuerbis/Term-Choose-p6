@@ -206,7 +206,7 @@ method !_prepare_prompt_and_info {
         @!prompt_lines.push: |line-fold(
             %!o<info>,
             :width( $info_w - $r_margin ),
-            :init-tab( ' ' x $init ), :subseq-tab( ' ' x $subseq ), :color( %!o<color> ), :0join ); # ### 
+            :init-tab( ' ' x $init ), :subseq-tab( ' ' x $subseq ), :color( %!o<color> ), :0join );
     }
     if %!o<prompt>.chars {
         my Int $init     = %!o<tabs-prompt>[0] // 0;
@@ -215,7 +215,7 @@ method !_prepare_prompt_and_info {
         @!prompt_lines.push: |line-fold(
             %!o<prompt>,
             :width( $info_w - $r_margin ),
-            :init-tab( ' ' x $init ), :subseq-tab( ' ' x $subseq ), :color( %!o<color> ), :0join ); # ### 
+            :init-tab( ' ' x $init ), :subseq-tab( ' ' x $subseq ), :color( %!o<color> ), :0join );
     }
     if $!filter_string.chars {
         my Int $init     = %!o<margin>[3] // 0;
@@ -224,7 +224,7 @@ method !_prepare_prompt_and_info {
         @!prompt_lines.push: |line-fold(
             ( %!o<search> == 1 ?? 'Filter: i/' !! 'Filter: /' ) ~ $!filter_string ~ '/',
             :width( $info_w - $r_margin ),
-            :init-tab( ' ' x $init ), :subseq-tab( ' ' x $subseq ), :color( %!o<color> ), :0join ); # ### 
+            :init-tab( ' ' x $init ), :subseq-tab( ' ' x $subseq ), :color( %!o<color> ), :0join );
     }
     if ! @!prompt_lines.elems {
         return;
@@ -1331,7 +1331,7 @@ method !_search_begin ( $multiselect is copy ) {
     my Array[Int] $filtered_w_list_items = Array[Int].new();
     try { 'Teststring' ~~ $regex }
     if $! {
-        my Str @lines = $!.Str.split( "\n" ).map: { |line-fold( $_, :width( $!avail_w ), :0join ) }; # join # ### 
+        my Str @lines = $!.Str.split( "\n" ).map: { |line-fold( $_, :width( $!avail_w ), :0join ) };
          for @lines -> $line is rw {
             $line = $line ~ ( ' ' x ( $!avail_w - print-columns( $line ) ) );
         }
