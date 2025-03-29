@@ -1,6 +1,10 @@
 Revision history for Term::Choose
 
 
+1.9.6   2025-03-29
+        Make 'print-columns' and 'line-fold' public.
+        Update 'line-fold'.
+
 1.9.5   2024-11-18
         Unicode 16.
 

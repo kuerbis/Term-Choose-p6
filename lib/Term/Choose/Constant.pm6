@@ -8,6 +8,8 @@ my regex rx-is-binary    is export( :DEFAULT, :rx-is-binary )    { <[\x00..\x08\
 
 
 constant cursor-width is export( :DEFAULT, :cursor-width ) = 1;
+#constant extra-w is export( :DEFAULT, :extra-w ) = $*DISTRO.is-win ?? 0 !! cursor-width;     # Term::TablePrint not installable on Windows
+constant extra-w is export( :DEFAULT, :extra-w ) = cursor-width; # ### 
 
 # zero width placeholder charcter:
 constant ph-char is export( :DEFAULT, :ph-char ) = "\x[feff]";

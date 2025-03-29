@@ -1,19 +1,32 @@
 use v6;
-unit module Term::Choose::LineFold;
+unit module Term::Choose::LineFold:ver<1.9.6>;
 
 use Term::Choose::Constant;
 use Term::Choose::Screen;
 
 
 my $table;
-if %*ENV<TC_AMBIGUOUS_WIDE> {
-    require Term::Choose::LineFold::CharWidthAmbiguousWide <&table_char_width>;
-    $table = table_char_width();
-}
-else {
-    require Term::Choose::LineFold::CharWidthDefault <&table_char_width>;
-    $table = table_char_width();
-}
+if %*ENV<TC_AMBIGUOUS_WIDTH_IS_WIDE>:exists {                                       # 29.03.2025
+    if %*ENV<TC_AMBIGUOUS_WIDTH_IS_WIDE> {
+        require Term::Choose::LineFold::CharWidthAmbiguousWide <&table_char_width>;
+        $table = table_char_width();
+    }
+    else {
+        require Term::Choose::LineFold::CharWidthDefault <&table_char_width>;
+        $table = table_char_width();
+    }
+}                                                                                   #
+else {                                                                              #
+    if %*ENV<TC_AMBIGUOUS_WIDE> {                                                   #
+        require Term::Choose::LineFold::CharWidthAmbiguousWide <&table_char_width>; #
+        $table = table_char_width();                                                #
+    }                                                                               #
+    else {                                                                          #
+        require Term::Choose::LineFold::CharWidthDefault <&table_char_width>;       #
+        $table = table_char_width();                                                #
+    }                                                                               #
+}                                                                                   #
+
 
 
 sub char-width( Int $ord_char ) returns Int is export( :DEFAULT, :char-width ) {
@@ -71,18 +84,36 @@ sub to-printwidth( $str, Int $avail_w, Int $dot=0, %cache? ) is export( :DEFAULT
 }
 
 
-sub line-fold( $str, Int $avail_w, Str :$init-tab is copy = '', Str :$subseq-tab is copy = '', :$color = 0, :$join = 0, :$binary-filter = 0 ) is export( :DEFAULT, :line-fold ) {
-    if ( ! ( $str // '' ).chars ) {
+multi sub line-fold( $str, Int $width, Str :$init-tab is copy = '', Str :$subseq-tab is copy = '', Int :$color = 0, Int :$join = 1, Int :$binary-filter = 0 ) is export( :DEFAULT, :line-fold ) {   # 29.03.2025
+    return line-fold( $str, :$width, :$init-tab, :$subseq-tab, :$color, :$join, :$binary-filter );                                                                                                  #
+}                                                                                                                                                                                                   #
+multi sub line-fold(                                                                                                                                                                                #
+
+#sub line-fold(
+        $str,
+        Positive_Int :$width = get-term-size().[0] + extra-w,
+        :$init-tab is copy = '',
+        :$subseq-tab is copy = '',
+        Int_0_to_2 :$color = 0,
+        Int_0_or_1 :$join = 1,
+        Int_0_to_2 :$binary-filter = 0
+    ) is export( :DEFAULT, :line-fold ) {
+
+    if ! $str.defined || ! $str.chars {
         return $str;
     }
-
     for $init-tab, $subseq-tab {
-        if $_ { # .gist
-            $_ = to-printwidth(
-                    $_.=subst( / \t /,  ' ', :g ).=subst( / \v+ /,  '  ', :g ).=subst( &rx-invalid-char, '', :g ),
-                    $avail_w div 2,
-                    False
+        if $_.chars {
+            if / ^ <[0..9]>+ $ / {
+                $_ = ' ' x $_;
+            }
+            else {
+                $_ = to-printwidth(
+                        $_.=subst( / \t /,  ' ', :g ).=subst( / \v+ /,  '  ', :g ).=subst( &rx-invalid-char, '', :g ),
+                        $width div 2,
+                        False
                 ).[0];
+            }
         }
     }
     my $str_copy = $str;
@@ -90,7 +121,7 @@ sub line-fold( $str, Int $avail_w, Str :$init-tab is copy = '', Str :$subseq-tab
         $str_copy = $str_copy.gist; # perl
     }
     my Str @colors;
-    if $color { # elsif
+    if $color { # 1 or 2 # elsif 
         $str_copy.=subst( / $(ph-char) /, '', :g );
         $str_copy.=subst( / ( <rx-color> ) /, { @colors.push( $0.Str ) && ph-char }, :g );
     }
@@ -104,7 +135,7 @@ sub line-fold( $str, Int $avail_w, Str :$init-tab is copy = '', Str :$subseq-tab
     }
     $str_copy.=subst( / \t /, ' ', :g );
     $str_copy.=subst( / <rx-invalid-char> && \V /, '' , :g ); #
-    if $str_copy !~~ / \R / && print-columns( $init-tab ~ $str_copy ) <= $avail_w {
+    if $str_copy !~~ / \R / && print-columns( $init-tab ~ $str_copy ) <= $width {
         return $init-tab ~ $str_copy;
     }
     my Str @lines;
@@ -120,7 +151,7 @@ sub line-fold( $str, Int $avail_w, Str :$init-tab is copy = '', Str :$subseq-tab
         my Str $line = $init-tab;
 
         for 0 .. @words.end -> $i {
-            if print-columns( $line ~ @words[$i] ) <= $avail_w {
+            if print-columns( $line ~ @words[$i] ) <= $width {
                 $line ~= @words[$i];
             }
             else {
@@ -132,12 +163,12 @@ sub line-fold( $str, Int $avail_w, Str :$init-tab is copy = '', Str :$subseq-tab
                     @lines.push: $line;
                     $tmp = $subseq-tab ~ @words[$i].subst( / ^ \s+ /, '' );
                 }
-                $line = to-printwidth( $tmp, $avail_w, False ).[0];
+                $line = to-printwidth( $tmp, $width, False ).[0];
                 my Str $remainder = $tmp.substr( $line.chars );
                 while $remainder.chars {
                     @lines.push( $line );
                     $tmp = $subseq-tab ~ $remainder;
-                    $line = to-printwidth( $tmp, $avail_w, False ).[0];
+                    $line = to-printwidth( $tmp, $width, False ).[0];
                     $remainder = $tmp.substr( $line.chars );
                 }
             }
@@ -153,12 +184,12 @@ sub line-fold( $str, Int $avail_w, Str :$init-tab is copy = '', Str :$subseq-tab
                 if $last_color {
                     $line = $last_color ~ $line;
                 }
-                my Int $count = $line.comb( "\x[feff]" ).elems;
+                my Int $count = $line.comb( $(ph-char) ).elems;
                 if $count {
                     $last_color = @colors[$count - 1];
                 }
             }
-            $line.=subst( / \x[feff] /, { @colors.shift }, :g );
+            $line.=subst( / $(ph-char) /, { @colors.shift }, :g );
             if ! @colors.elems {
                 last;
             }
@@ -183,5 +214,104 @@ sub print-columns( $str, %cache? ) returns Int is export( :DEFAULT, :print-colum
     }
     $width;
 }
+
+
+
+=begin pod
+
+=head1 NAME
+
+Term::Choose::LineFold - print-columns and line-fold
+
+=head1 DESCRIPTION
+
+I<Width> in this context refers to the number of occupied columns of a character string on a terminal with a monospaced
+font.
+
+=head1 EXPORT
+
+Nothing by default.
+
+    use Term::Choose::LineFold qw( print-columns );
+
+=head1 FUNCTIONS
+
+=head2 print-columns
+
+Get the number of occupied columns of a character string on a terminal.
+
+    $print-width = print-columns( $string );
+
+    $print-width = print-columns( $string, %cache );
+
+The string passed to this function is free of control characters, non-characters, and surrogates.
+
+Passing a hash (C<%cache>) to cache the character widths is optional.
+
+=head2 line-fold
+
+Fold a string.
+
+    $folded-string = line-fold( $string );
+
+    $folded-string = line-fold( $string, :120width, :1color );
+
+Control characters (excluding vertical spaces), non-characters, and surrogates are removed before the string is folded.
+Changes are applied to a copy; the passed string is unchanged.
+
+=head3 Options
+
+=item width
+
+If not set, defaults to the terminal width.
+
+I<width> is C<1> or greater.
+
+=item init-tab
+
+Sets the initial tab inserted at the beginning of paragraphs. If a value consisting of C< <[0..9]>+> is provided,
+the tab will be that number of spaces. Otherwise, the provided value is used directly as the tab. By default, no initial
+tab is inserted. If the initial tab is longer than half the available width, it will be cut to half the available width.
+
+=item subseq-tab
+
+Sets the subsequent tab inserted at the beginning of all broken lines (excluding paragraph beginnings). If a value
+consisting of C< <[0..9]>+> is provided, the tab will be that number of spaces. Otherwise, the provided value is
+used directly as the tab. By default, no subsequent tab is inserted. If the subsequent tab is longer than half the
+available width, it will be cut to half the available width
+
+=item color
+
+Enables support for ANSI SGR escape sequences. If enabled, all zero-width no-break spaces (C<0xfeff>) are removed.
+
+I<color> is C<0> or C<1>.
+
+=head1 Ambiguous width characters
+
+By default ambiguous width characters are treated as half width. If the environment variable
+C<TC_AMBIGUOUS_WIDTH_IS_WIDE> is set to a true value, ambiguous width characters are treated as full width.
+
+=head1 Restrictions
+
+Term::Choose::LineFold is not installable on Windows.
+
+=head1 AUTHOR
+
+Matthäus Kiem <cuer2s@gmail.com>
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright (C) 2025 Matthäus Kiem.
+
+This library is free software; you can redistribute it and/or modify it under the Artistic License 2.0.
+
+=end pod
+
+
+
+
+
+
+
 
 
