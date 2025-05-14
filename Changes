@@ -1,6 +1,9 @@
 Revision history for Term::Choose
 
 
+1.9.7   2025-05-14
+        Screen.pm: bugfix export clear-to-end-of-screen.
+
 1.9.6   2025-03-29
         Make 'print-columns' and 'line-fold' public.
         Update 'line-fold'.

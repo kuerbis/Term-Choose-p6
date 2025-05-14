@@ -135,9 +135,9 @@ multi sub line-fold(                                                            
     }
     $str_copy.=subst( / \t /, ' ', :g );
     $str_copy.=subst( / <rx-invalid-char> && \V /, '' , :g ); #
-    if $str_copy !~~ / \R / && print-columns( $init-tab ~ $str_copy ) <= $width {
-        return $init-tab ~ $str_copy;
-    }
+    #if $str_copy !~~ / \R / && print-columns( $init-tab ~ $str_copy ) <= $width { # ### 
+    #    return $init-tab ~ $str_copy;
+    #}
     my Str @lines;
 
     for $str_copy.lines -> $row {
@@ -278,7 +278,7 @@ tab is inserted. If the initial tab is longer than half the available width, it 
 Sets the subsequent tab inserted at the beginning of all broken lines (excluding paragraph beginnings). If a value
 consisting of C</^<[0..9]>+$/> is provided, the tab will be that number of spaces. Otherwise, the provided value is
 used directly as the tab. By default, no subsequent tab is inserted. If the subsequent tab is longer than half the
-available width, it will be cut to half the available width
+available width, it will be cut to half the available width.
 
 =item color
 

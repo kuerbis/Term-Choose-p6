@@ -62,7 +62,7 @@ sub right ( $steps ) is export( :DEFAULT, :right ) { return $t_right.join: $step
 sub  left ( $steps ) is export( :DEFAULT, :left  ) { return $t_left.join: $steps  if $steps }
 
 sub clear-screen           is export( :DEFAULT, :clear-screen           ) { return $clear_screen }
-sub clear-to-end-of-screen is export( :DEFAULT, :clear-to_end-of-screen ) { return "\r" ~ $clear_to_end_of_screen } # name 
+sub clear-to-end-of-screen is export( :DEFAULT, :clear-to-end-of-screen ) { return "\r" ~ $clear_to_end_of_screen } # name 
 sub clear-to-end-of-line   is export( :DEFAULT, :clear-to-end-of-line   ) { return $clear_to_end_of_line }
 
 sub reverse   is export( :DEFAULT, :reverse   ) { return $reverse }
