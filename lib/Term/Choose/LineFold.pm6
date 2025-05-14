@@ -135,9 +135,6 @@ multi sub line-fold(                                                            
     }
     $str_copy.=subst( / \t /, ' ', :g );
     $str_copy.=subst( / <rx-invalid-char> && \V /, '' , :g ); #
-    #if $str_copy !~~ / \R / && print-columns( $init-tab ~ $str_copy ) <= $width { # ### 
-    #    return $init-tab ~ $str_copy;
-    #}
     my Str @lines;
 
     for $str_copy.lines -> $row {
