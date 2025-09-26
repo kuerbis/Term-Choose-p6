@@ -21,7 +21,7 @@
   },
   "resources": [
   ],
-  "source-url": "git://github.com/kuerbis/Term-Choose-p6.git",
+  "source-url": "https://github.com/kuerbis/Term-Choose-p6.git",
   "tags": [
     "cli",
     "terminal",
@@ -30,5 +30,5 @@
   "test-depends": [
     "Test"
   ],
-  "version": "1.9.7"
+  "version": "1.9.8"
 }

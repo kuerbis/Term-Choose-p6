@@ -1,6 +1,9 @@
 Revision history for Term::Choose
 
 
+1.9.8   2025-09-26
+        - Unicode 17.
+
 1.9.7   2025-05-14
         Screen.pm: bugfix export clear-to-end-of-screen.
         Refactored 'line-fold'.
