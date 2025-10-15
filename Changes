@@ -1,6 +1,9 @@
 Revision history for Term::Choose
 
 
+1.9.9   2025-10-15
+        - Set the width of all format code points to zero.
+
 1.9.8   2025-09-26
         - Unicode 17.
 
