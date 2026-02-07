@@ -10,14 +10,14 @@
   "name": "Term::Choose",
   "perl": "6.d",
   "provides": {
-    "Term::Choose": "lib/Term/Choose.pm6",
-    "Term::Choose::Constant": "lib/Term/Choose/Constant.pm6",
-    "Term::Choose::LineFold": "lib/Term/Choose/LineFold.pm6",
-    "Term::Choose::LineFold::CharWidthAmbiguousWide": "lib/Term/Choose/LineFold/CharWidthAmbiguousWide.pm6",
-    "Term::Choose::LineFold::CharWidthDefault": "lib/Term/Choose/LineFold/CharWidthDefault.pm6",
-    "Term::Choose::ReadKey": "lib/Term/Choose/ReadKey.pm6",
-    "Term::Choose::Screen": "lib/Term/Choose/Screen.pm6",
-    "Term::Choose::SetTerm": "lib/Term/Choose/SetTerm.pm6"
+    "Term::Choose": "lib/Term/Choose.rakumod",
+    "Term::Choose::Constant": "lib/Term/Choose/Constant.rakumod",
+    "Term::Choose::LineFold": "lib/Term/Choose/LineFold.rakumod",
+    "Term::Choose::LineFold::CharWidthAmbiguousWide": "lib/Term/Choose/LineFold/CharWidthAmbiguousWide.rakumod",
+    "Term::Choose::LineFold::CharWidthDefault": "lib/Term/Choose/LineFold/CharWidthDefault.rakumod",
+    "Term::Choose::ReadKey": "lib/Term/Choose/ReadKey.rakumod",
+    "Term::Choose::Screen": "lib/Term/Choose/Screen.rakumod",
+    "Term::Choose::SetTerm": "lib/Term/Choose/SetTerm.rakumod"
   },
   "resources": [
   ],
@@ -30,5 +30,5 @@
   "test-depends": [
     "Test"
   ],
-  "version": "2.0.1"
+  "version": "2.0.2"
 }

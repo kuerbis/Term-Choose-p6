@@ -1,6 +1,9 @@
 Revision history for Term::Choose
 
 
+2.0.2   2026-02-07
+    - Change file extensions from .pm6 to .rakumod.
+
 2.0.1   2026-02-07
     - New options bottom-text and tabs-bottom-text.
     - Bugfix mouse mode with left margin.

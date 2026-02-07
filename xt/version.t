@@ -14,7 +14,7 @@ for $meta-file.IO.lines -> $line {
 }
 
 
-my $pm-file = 'lib/Term/Choose.pm6';
+my $pm-file = 'lib/Term/Choose.rakumod';
 my $version-pm;
 
 for $pm-file.IO.lines -> $line {

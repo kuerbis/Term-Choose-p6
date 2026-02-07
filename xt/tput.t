@@ -2,7 +2,7 @@ use v6;
 use Test;
 
 
-my $term = %*ENV<TERM> || 'vt100'; # Screen.pm6
+my $term = %*ENV<TERM> || 'vt100'; # Screen.rakumod
 
 
 #ok run( 'tput', '-T', $term, '-V', :out ).out.slurp, 'tput available';     # OpenBSD: tput: unknown option -- V    (#5)
