@@ -34,7 +34,7 @@ method init-term {
 }
 
 
-method restore-term ( $up ) {
+method restore-term ( $up? ) {
     if $!mouse {
         print unset-mouse1003;
         print unset-mouse1006;
@@ -50,6 +50,9 @@ method restore-term ( $up ) {
     if $!save-screen {
         print restore-screen;
     }
+    elsif ! $up.defined {
+        print clear-screen();
+    }
     else {
         if $up {
             print up( $up );
@@ -62,4 +65,3 @@ method restore-term ( $up ) {
         print show-cursor;
     }
 }
-

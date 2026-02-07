@@ -140,6 +140,10 @@ Options which expect a number as their value expect integers.
 
 1 - on
 
+### bottom-text
+
+Expects as its value a string. If set, the text is printed below the menu.
+
 ### clear-screen
 
 0 - off
@@ -355,6 +359,22 @@ Set the behavior of Ctrl-F.
 
 2 - case-sensitive search
 
+### tabs-bottom-text
+
+The option *tabs-bottom-text* allows one to insert spaces at beginning and the end of *info* lines.
+
+*tabs-bottom-text* expects a list with one to three elements:
+
+- the first element (initial tab) sets the number of spaces inserted at beginning of paragraphs
+
+- the second element (subsequent tab) sets the number of spaces inserted at the beginning of all broken lines apart from the beginning of paragraphs
+
+- the third element sets the number of spaces used as a right margin.
+
+Allowed values: 0 or greater. Elements beyond the third are ignored.
+
+default: If *margin* is set, the initial-tab and the subsequent-tab are set to left-*margin* and the right margin is set to right-*margin*. If *margin* is not defined, the default is undefined.
+
 ### tabs-info
 
 The option *tabs-info* allows one to insert spaces at beginning and the end of *info* lines.
@@ -475,7 +495,7 @@ Thanks to the people from [Perl-Community.de](http://www.perl-community.de), fro
 LICENSE AND COPYRIGHT
 =====================
 
-Copyright (C) 2016-2025 Matthäus Kiem.
+Copyright (C) 2016-2026 Matthäus Kiem.
 
 This library is free software; you can redistribute it and/or modify it under the Artistic License 2.0.
 
