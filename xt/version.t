@@ -1,7 +1,7 @@
 use v6;
 use Test;
 
-plan 4;
+plan 6;
 
 
 my $meta-file = 'META6.json';
@@ -15,17 +15,21 @@ for $meta-file.IO.lines -> $line {
 
 
 my $pm-file = 'lib/Term/Choose.rakumod';
-my $version-pm;
+my $choose-pm;
 
 for $pm-file.IO.lines -> $line {
     if $line ~~ / ':ver<' ( \d+ '.' \d+ '.' \d+ ) '>' / {
-        $version-pm = $0;
+        $choose-pm = $0;
     }
-    ##if $line ~~ / ^ \= head1 \s VERSION / ff / ^ '=' /{
-    #    if $$line ~~ / ^ Version \s (\S+) $/ {
-    #        $version-pod = $0;
-    #    }
-    ##}
+}
+
+my $linefold-file = 'lib/Term/Choose/LineFold.rakumod';
+my $linefold-pm;
+
+for $linefold-file.IO.lines -> $line {
+    if $line ~~ / ':ver<' ( \d+ '.' \d+ '.' \d+ ) '>' / {
+        $linefold-pm = $0;
+    }
 }
 
 
@@ -45,7 +49,11 @@ for $change-file.IO.lines -> $line {
 my Date $today = Date.today;
 
 
-ok( $version-pm.defined,          'Version defined  OK' );
-is( $version-meta,   $version-pm, 'Version in "META6"  OK' );
-is( $version-change, $version-pm, 'Version in "Changes"  OK' );
+ok( $choose-pm.defined,          'Choose version defined  OK' );
+ok( $linefold-pm.defined,        'LineFold version defined  OK' );
+
+is( $version-meta, $choose-pm,   'Choose version eq version "META6"  OK' );
+is( $version-meta, $linefold-pm, 'LineFold version eq version in "META6"  OK' );
+
+is( $version-change, $choose-pm, 'Version in "Changes"  OK' );
 is( $release-date,   $today,      'Release date in Changes is date from today  OK' );

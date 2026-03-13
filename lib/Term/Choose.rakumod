@@ -1,6 +1,6 @@
 use v6;
 
-unit class Term::Choose:ver<2.0.2>;
+unit class Term::Choose:ver<2.0.3>;
 
 use Term::termios;
 
@@ -819,7 +819,7 @@ method !_avail_screen_hight {
     if $!filter_string.chars {
         my Str $search_str = ( %!o<search> == 1 ?? 'Filter: i/' !! 'Filter: /' ) ~ $!filter_string ~ '/';
         $search_str = ' ' xx $!temp<margin-left> ~ $search_str if $!temp<margin-left>;
-        $!temp<search-string> = to-printwidth( $search_str, $info_w, 1 );
+        $!temp<search-string> = to-printwidth( $search_str, $info_w, 1 ).[0];
     }
     $!avail_h = $!term_h;
     $!avail_h -= $!temp<margin-top>        if $!temp<margin-top>;
@@ -1107,7 +1107,8 @@ method !_cell ( Int $row, Int $col ) {
                 }
                 else {
                     # keep marked cells marked after color escapes
-                    $str.=subst( / <?after <rx-color>> /, $emphasised, :g );
+                    #$str.=subst( / <?after <rx-color>> /, $emphasised, :g ); # does not work, maybe a bug
+                    $str.=subst( / <?after \e \[ <[\d;]>* m> /, $emphasised, :g );
                 }
                 $str = $emphasised ~ $str;
             }
@@ -1536,6 +1537,7 @@ method !_search_end ( $multiselect ) {
         $!col_w  = $!search_backup_data<col_w>;
     }
     $!filter_string = '';
+    $!temp<search-string>:delete;
     my Int $up = $!i_row + @!pre_rows;
     print up( $up ) if $up;
     print "\r" ~ clear-to-end-of-screen;

@@ -1,6 +1,13 @@
 Revision history for Term::Choose
 
 
+2.0.3   2026-03-13
+    - Removed deprecated environment variable TC_AMBIGUOUS_WIDE.
+    - Removed deprecated line-fold signature.
+    - Bugfix: reset search-string.
+    - Bugfix search-string to-printwidth: to-printwidth returns two values.
+    - Workaround to avoid a potential bug.
+
 2.0.2   2026-02-07
     - Change file extensions from .pm6 to .rakumod.
 

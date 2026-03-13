@@ -1,32 +1,19 @@
 use v6;
-unit module Term::Choose::LineFold:ver<1.9.6>;
+unit module Term::Choose::LineFold:ver<2.0.3>;
 
 use Term::Choose::Constant;
 use Term::Choose::Screen;
 
 
 my $table;
-if %*ENV<TC_AMBIGUOUS_WIDTH_IS_WIDE>:exists {                                       # 29.03.2025
-    if %*ENV<TC_AMBIGUOUS_WIDTH_IS_WIDE> {
-        require Term::Choose::LineFold::CharWidthAmbiguousWide <&table_char_width>;
-        $table = table_char_width();
-    }
-    else {
-        require Term::Choose::LineFold::CharWidthDefault <&table_char_width>;
-        $table = table_char_width();
-    }
-}                                                                                   #
-else {                                                                              #
-    if %*ENV<TC_AMBIGUOUS_WIDE> {                                                   #
-        require Term::Choose::LineFold::CharWidthAmbiguousWide <&table_char_width>; #
-        $table = table_char_width();                                                #
-    }                                                                               #
-    else {                                                                          #
-        require Term::Choose::LineFold::CharWidthDefault <&table_char_width>;       #
-        $table = table_char_width();                                                #
-    }                                                                               #
-}                                                                                   #
-
+if %*ENV<TC_AMBIGUOUS_WIDTH_IS_WIDE> {
+    require Term::Choose::LineFold::CharWidthAmbiguousWide <&table_char_width>;
+    $table = table_char_width();
+}
+else {
+    require Term::Choose::LineFold::CharWidthDefault <&table_char_width>;
+    $table = table_char_width();
+}
 
 
 sub char-width( Int $ord_char ) returns Int is export( :DEFAULT, :char-width ) {
@@ -84,12 +71,7 @@ sub to-printwidth( $str, Int $avail_w, Int $dot=0, %cache? ) is export( :DEFAULT
 }
 
 
-multi sub line-fold( $str, Int $width, Str :$init-tab is copy = '', Str :$subseq-tab is copy = '', Int :$color = 0, Int :$join = 1, Int :$binary-filter = 0 ) is export( :DEFAULT, :line-fold ) {   # 29.03.2025
-    return line-fold( $str, :$width, :$init-tab, :$subseq-tab, :$color, :$join, :$binary-filter );                                                                                                  #
-}                                                                                                                                                                                                   #
-multi sub line-fold(                                                                                                                                                                                #
-
-#sub line-fold(
+sub line-fold(
         $str,
         Positive_Int :$width = get-term-size().[0] + extra-w,
         :$init-tab is copy = '',
