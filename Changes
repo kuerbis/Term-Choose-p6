@@ -1,6 +1,10 @@
 Revision history for Term::Choose
 
 
+2.0.4   2026-03-21
+    - Bugfix bottom-text-lines.
+    - Bugfix available height.
+
 2.0.3   2026-03-13
     - Removed deprecated environment variable TC_AMBIGUOUS_WIDE.
     - Removed deprecated line-fold signature.

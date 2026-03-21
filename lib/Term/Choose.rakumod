@@ -1,6 +1,6 @@
 use v6;
 
-unit class Term::Choose:ver<2.0.3>;
+unit class Term::Choose:ver<2.0.4>;
 
 use Term::termios;
 
@@ -898,48 +898,24 @@ method !_avail_height_to_keep () {
     if $keep <= $!avail_h {
         return;
     }
-    # Now change method:
-    my Int $available_rows = 0;
-    if $!term_h > $keep {
-        $!avail_h = $keep;
-        $available_rows = $!term_h - $!avail_h;
-    }
-    if $!temp<search-string> {
-        if $available_rows {
-            --$available_rows;
+    if $!temp<info-lines> {
+        # Text rows above the menu (info-lines, prompt-lines, search-string) are not deleted. They are pushed upwards
+        # out of the terminal when the space reserved for them is deleted.
+        if $!temp<info-lines> >= $keep - $!avail_h {
+            $!avail_h = $keep;
         }
         else {
-            --$!avail_h;
+            $!avail_h += $!temp<info-lines>;
         }
     }
-    if %!o<page> { ##
-        if $available_rows {
-            --$available_rows;
-        }
-        else {
-            --$!avail_h;
-        }
-    }
-    if $!temp<prompt-lines> {
-        if $available_rows {
-            if $!temp<prompt-lines> > $available_rows {
-                $available_rows = 0;
-            }
-            else {
-                $available_rows -= $!temp<prompt-lines>;
-            }
-        }
-        elsif $!avail_h > 4 {
-            --$!avail_h;
-        }
-    }
-    if ! $available_rows {
-        $!temp<bottom-text-lines>.delete;
+    if $keep <= $!avail_h {
         return;
     }
     if $!temp<bottom-text-lines> {
-        if $!temp<bottom-text-lines> > $available_rows {
-            $!temp<bottom-text-lines>.splice( *-( $!temp<bottom-text-lines> - $available_rows ) );
+        if $!temp<bottom-text-lines> > $keep - $!avail_h {
+            $!temp<bottom-text-lines>.splice: *-( $keep - $!avail_h );
+            # bottom-text-lines are deleted because they are below the menu.
+            $!avail_h = $keep;
             my Str $ellipsis = '...';
             my Int $ellipsis_w = $ellipsis.chars;
             my Int $avail_w = $!avail_w + extra-w + ( $!temp<margin-left> // 0 );
@@ -949,11 +925,46 @@ method !_avail_height_to_keep () {
                 }
                 $!temp<bottom-text-lines>[*-1] ~= $ellipsis;
             }
-            $available_rows = 0;
         }
         else {
-            $available_rows -= $!temp<bottom-text-lines>;
+            $!avail_h += $!temp<bottom-text-lines>;
+            $!temp<bottom-text-lines>:delete;
         }
+    }
+    if $keep <= $!avail_h {
+        return;
+    }
+    if $!temp<prompt-lines> {
+        if $!temp<prompt-lines> > $keep - $!avail_h {
+            $!avail_h = $keep;
+        }
+        else {
+            if $keep > 5 {
+                # keep the last prompt line
+                $!avail_h += $!temp<prompt-lines> - 1;
+                --$keep;
+            }
+            else {
+                $!avail_h += $!temp<prompt-lines>;
+            }
+        }
+    }
+    if $keep <= $!avail_h {
+        return;
+    }
+    if $!temp<search-string> {
+        if $keep > 4 {
+            --$keep;
+        }
+        else {
+            ++$!avail_h;
+        }
+    }
+    if $keep <= $!avail_h {
+        return;
+    }
+    if %!o<page> { ##
+        --$keep;
     }
 }
 
@@ -1011,7 +1022,13 @@ method !_wr_first_screen ( Int $multiselect ) {
     @trailing_lines.push: |$!temp<bottom-text-lines>       if $!temp<bottom-text-lines>;
     @trailing_lines.push: |( '' xx $!temp<margin-bottom> ) if $!temp<margin-bottom>;
     if @trailing_lines {
-        my Int $line-feed = $!last_page_row - $!first_page_row + 1 + ( $!pp_row_fmt ?? 1 !! 0 );
+        my Int $line-feed;
+        if $!page_count > 1 {
+            $line-feed = $!avail_h + ( $!pp_row_fmt ?? 1 !! 0 );
+        }
+        else {
+            $line-feed = $!rc2idx.elems + ( $!pp_row_fmt ?? 1 !! 0 );
+        }
         print "\n" xx $line-feed ~ "\r" ~ @trailing_lines.join( "\n\r" ) ~ "\r";
         print up( $line-feed - 1 + @trailing_lines );
     }
@@ -1107,7 +1124,7 @@ method !_cell ( Int $row, Int $col ) {
                 }
                 else {
                     # keep marked cells marked after color escapes
-                    #$str.=subst( / <?after <rx-color>> /, $emphasised, :g ); # does not work, maybe a bug
+                    #$str.=subst( / <?after <rx-color>> /, $emphasised, :g ); # does not work; https://github.com/rakudo/rakudo/issues/6087 (13.03.2026)
                     $str.=subst( / <?after \e \[ <[\d;]>* m> /, $emphasised, :g );
                 }
                 $str = $emphasised ~ $str;
