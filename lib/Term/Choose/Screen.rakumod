@@ -106,7 +106,7 @@ sub get-term-size is export( :DEFAULT, :get-term-size  ) {
 
 sub get-term-width is export( :DEFAULT, :get-term-width  ) {
     if ( $tput_ok ) {
-        my $width  = run( 'tput', '-T', $term, 'cols',  :out ).out.get.chomp.Int or die "No terminal width!";
+        my $width = run( 'tput', '-T', $term, 'cols',  :out ).out.get.chomp.Int or die "No terminal width!";
         return $width - cursor-width;
     }
     else {

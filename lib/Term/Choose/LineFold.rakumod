@@ -1,5 +1,5 @@
 use v6;
-unit module Term::Choose::LineFold:ver<2.0.4>;
+unit module Term::Choose::LineFold:ver<2.0.5>;
 
 use Term::Choose::Constant;
 use Term::Choose::Screen;
@@ -76,8 +76,9 @@ sub line-fold(
         Positive_Int :$width = get-term-size().[0] + extra-w,
         :$init-tab is copy = '',
         :$subseq-tab is copy = '',
-        Int_0_to_2 :$color = 0,
         Int_0_or_1 :$join = 1,
+        Int_0_or_1 :$truncate-long-tabs = 1, # ###
+        Int_0_to_2 :$color = 0,
         Int_0_to_2 :$binary-filter = 0
     ) is export( :DEFAULT, :line-fold ) {
 
@@ -89,7 +90,7 @@ sub line-fold(
             if / ^ <[0..9]>+ $ / {
                 $_ = ' ' x $_;
             }
-            else {
+            elsif $truncate-long-tabs { # ###
                 $_ = to-printwidth(
                         $_.=subst( / \t /,  ' ', :g ).=subst( / \v+ /,  '  ', :g ).=subst( &rx-invalid-char, '', :g ),
                         $width div 2,
@@ -258,6 +259,10 @@ Sets the subsequent tab inserted at the beginning of all broken lines (excluding
 consisting of C</^<[0..9]>+$/> is provided, the tab will be that number of spaces. Otherwise, the provided value is
 used directly as the tab. By default, no subsequent tab is inserted. If the subsequent tab is longer than half the
 available width, it will be cut to half the available width.
+
+=item truncate-long-tabs
+
+If enabled (default), I<init-tab> and I<subseq-tab> are truncated if they exceed half of the terminal width.
 
 =item color
 

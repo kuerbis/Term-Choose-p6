@@ -212,6 +212,8 @@ Setting *keep* ensures that at least *keep* terminal rows are available for prin
 
 If the terminal height is less than *keep*, *keep* is set to the terminal height.
 
+If *max-height* is set to a value less than *keep*, *keep* is set to *max-height*.
+
 Allowed values: 1 or greater
 
 (default: 5)
@@ -267,7 +269,7 @@ The option *margin* allows one to set a margin on all four sides.
 
 - left margin (number of terminal columns)
 
-See also [tabs-info](#tabs-info) and [tabs-prompt](#tabs-prompt).
+See also [tabs-info](#tabs-info), [tabs-prompt](#tabs-prompt) and [tabs-bottom-text](#tabs-bottom-text).
 
 Allowed values: 0 or greater. Elements beyond the fourth are ignored.
 
@@ -291,7 +293,7 @@ Height in this context means number of print rows.
 
 *max-height* overwrites *keep* if *max-height* is set to a value less than *keep*.
 
-Allowed values: 1 or greater
+Allowed values: 2 or greater
 
 (default: undefined)
 
@@ -361,51 +363,37 @@ Set the behavior of Ctrl-F.
 
 ### tabs-bottom-text
 
-The option *tabs-bottom-text* allows one to insert spaces at beginning and the end of *info* lines.
+Expects a list with one to five elements:
 
-*tabs-bottom-text* expects a list with one to three elements:
+- The 1st element (initial tab) specifies the number of spaces inserted at the beginning of paragraphs.
 
-- the first element (initial tab) sets the number of spaces inserted at beginning of paragraphs
+- The 2nd element (subsequent tab) specifies the number of spaces inserted at the beginning of wrapped lines (excluding paragraph starts).
 
-- the second element (subsequent tab) sets the number of spaces inserted at the beginning of all broken lines apart from the beginning of paragraphs
+- The 3rd element specifies the number of spaces used as the left margin.
 
-- the third element sets the number of spaces used as a right margin.
+- The 4th element specifies the number of spaces used as the right margin.
 
-Allowed values: 0 or greater. Elements beyond the third are ignored.
+- The 5th element specifies the maximum output width.
 
-default: If *margin* is set, the initial-tab and the subsequent-tab are set to left-*margin* and the right margin is set to right-*margin*. If *margin* is not defined, the default is undefined.
+Allowed values:
+
+- For the first four elements: 0 or greater
+
+- For the fifth element: 2 or greater
+
+If *tabs-bottom-text* is not defined:
+
+- If *margin* is defined, its values are used for the left and right margins.
+
+- If *max_width* is defined, it is used as the maximum output width.
 
 ### tabs-info
 
-The option *tabs-info* allows one to insert spaces at beginning and the end of *info* lines.
-
-*tabs-info* expects a list with one to three elements:
-
-- the first element (initial tab) sets the number of spaces inserted at beginning of paragraphs
-
-- the second element (subsequent tab) sets the number of spaces inserted at the beginning of all broken lines apart from the beginning of paragraphs
-
-- the third element sets the number of spaces used as a right margin.
-
-Allowed values: 0 or greater. Elements beyond the third are ignored.
-
-default: If *margin* is set, the initial-tab and the subsequent-tab are set to left-*margin* and the right margin is set to right-*margin*. If *margin* is not defined, the default is undefined.
+Works the same way as [tabs-bottom-text](#tabs-bottom-text).
 
 ### tabs-prompt
 
-The option *tabs-prompt* allows one to insert spaces at beginning and the end of *prompt* lines.
-
-*tabs-prompt* expects a list with one to three elements:
-
-- the first element (initial tab) sets the number of spaces inserted at beginning of paragraphs
-
-- the second element (subsequent tab) sets the number of spaces inserted at the beginning of all broken lines apart from the beginning of paragraphs
-
-- the third element sets the number of spaces used as a right margin.
-
-Allowed values: 0 or greater. Elements beyond the third are ignored.
-
-default: If *margin* is set, the initial-tab and the subsequent-tab are set to left-*margin* and the right margin is set to right-*margin*. If *margin* is not defined, the default is undefined.
+Works the same way as [tabs-bottom-text](#tabs-bottom-text).
 
 ### undef
 
@@ -467,6 +455,11 @@ Monospaced font
 ---------------
 
 It is required a terminal that uses a monospaced font which supports the printed characters.
+
+Minimum terminal size
+---------------------
+
+The minimum terminal size is 4 x 2.
 
 Ambiguous width characters
 --------------------------

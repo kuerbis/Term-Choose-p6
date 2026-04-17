@@ -1,6 +1,6 @@
 use v6;
 
-unit class Term::Choose:ver<2.0.4>;
+unit class Term::Choose:ver<2.0.5>;
 
 use Term::termios;
 
@@ -41,8 +41,8 @@ has Int_0_to_2   $.search               = 1;
 has Positive_Int $.keep                 = 5;
 has Positive_Int $.ll;                       # privat
 has Positive_Int $.max-cols;
-has Positive_Int $.max-height;
-has Positive_Int $.max-width;
+has Int_2_or_gt  $.max-height;
+has Int_2_or_gt  $.max-width;
 has UInt         $.default              = 0;
 has UInt         $.pad                  = 2;
 has List         $.margin;
@@ -86,7 +86,7 @@ has Array $!p;
 has Array $!marked;
 has Int   $!page_step;
 has Int   $!cursor_row;
-has Hash  $!temp; ##
+has Hash  $!temp;
 
 has Str   $!filter_string = '';
 has Array $!map_search_list_index;
@@ -264,12 +264,22 @@ method !_pad_str_to_colwidth ( Int $i ) {
 }
 
 
+method !_invalid_term_size ( $min_term_w, $min_term_h, $up? ) {
+    $!setterm.restore-term( $up );
+    warn "Minimum terminal size is {$min_term_w + 1} x $min_term_h";
+    exit;
+}
+
+
 method !_modify_options ( $multiselect ) {
     if %!o<save-screen> {
         %!o<clear-screen> = 1;
     }
     if %!o<max-cols>.defined && %!o<max-cols> == 1 {
         %!o<layout> = 2;
+    }
+    if %!o<max-height> && %!o<max-height> < %!o<keep> {
+        %!o<keep> = %!o<max-height>;
     }
     if %!o<footer>.chars && %!o<page> != 2 {
         %!o<page> = 2;
@@ -289,16 +299,11 @@ method !_modify_options ( $multiselect ) {
     $!temp = {};
     if %!o<margin> {
         ( $!temp<margin-top>, $!temp<margin-right>, $!temp<margin-bottom>, $!temp<margin-left> ) = |%!o<margin>;
-        if ! %!o<tabs-prompt>.defined {
-            %!o<tabs-prompt> = [ $!temp<margin-left>, $!temp<margin-left>, $!temp<margin-right>];
-        }
-        if ! %!o<tabs-info>.defined {
-            %!o<tabs-info> = [ $!temp<margin-left>, $!temp<margin-left>, $!temp<margin-right>];
-        }
-        if ! %!o<tabs-bottom-text>.defined {
-            %!o<tabs-bottom-text> = [ $!temp<margin-left>, $!temp<margin-left>, $!temp<margin-right>];
-        }
     }
+    $!temp<margin-top>    //= 0;
+    $!temp<margin-right>  //= 0;
+    $!temp<margin-bottom> //= 0;
+    $!temp<margin-left>   //= 0;
 }
 
 
@@ -327,8 +332,8 @@ method !_choose ( Int $multiselect, @!orig_list,
         Positive_Int :$keep                 = $!keep,
         Positive_Int :$ll                   = $!ll,
         Positive_Int :$max-cols             = $!max-cols,
-        Positive_Int :$max-height           = $!max-height,
-        Positive_Int :$max-width            = $!max-width,
+        Int_2_or_gt  :$max-height           = $!max-height,
+        Int_2_or_gt  :$max-width            = $!max-width,
         UInt         :$default              = $!default,
         UInt         :$pad                  = $!pad,
         List         :$margin               = $!margin,
@@ -368,6 +373,11 @@ method !_choose ( Int $multiselect, @!orig_list,
     $!setterm = Term::Choose::SetTerm.new( :$mouse :$hide-cursor, :$save-screen );
     $!setterm.init-term();
     ( $!term_w, $!term_h ) = get-term-size();
+    my Int $min_term_w = 3; # + 1
+    my Int $min_term_h = 2;
+    if ( $!term_w < $min_term_w || $!term_h < $min_term_h ) {
+        self!_invalid_term_size( $min_term_w, $min_term_h, 0 );
+    }
     self!_avail_screen_width();
     self!_prepare_new_copy_of_list();
     self!_wr_first_screen( $multiselect );
@@ -395,6 +405,9 @@ method !_choose ( Int $multiselect, @!orig_list,
             next if ! $c.defined;
             next if $c eq '~'; #
             my ( Int $new_term_w, Int $new_term_h ) = get-term-size();
+            if ( $new_term_w < $min_term_w || $new_term_h < $min_term_h ) {
+                self!_invalid_term_size( $min_term_w, $min_term_h, $!i_row + @!pre_rows );
+            }
             if $new_term_w != $!term_w || $new_term_h != $!term_h { #
                 my Int $up = $new_term_w < $!term_w ?? Int !! $!i_row + @!pre_rows;
                 $!term_w = $new_term_w;
@@ -787,58 +800,172 @@ method !_choose ( Int $multiselect, @!orig_list,
 
 method !_avail_screen_width {
     $!avail_w = $!term_w;
-    #$!col_w not yet available.
-    if  $!temp<margin-right> || ( %!o<ll>.defined && %!o<ll> > $!avail_w ) {
-        $!avail_w += extra-w;
-        # with only one print-column the output doesn't get messed up if an item
-        # reaches the right edge of the terminal on a non-MSWin32-OS
+    if $!temp<margin-right> || ( %!o<ll>.defined && %!o<ll> > $!avail_w ) { # $!col_w not yet available.
+        $!temp<extra-w> = extra-w;
+        $!avail_w += $!temp<extra-w>;
+        # + extra-w: use also the last terminal column if there is only one item-column;
+        # With only one print-column the output doesn't get messed up if an item reaches the right edge of the terminal
+        # on a non-MSWin32-OS.
+        # If margin-right is 1 or greater adding extra-w is also OK. When reducing the right margin, ensure that it does
+        # not go below 1 if it was originally set to 1 or greater, so that the extra-w does not have to be removed.
     }
-    $!avail_w -= $!temp<margin-right> if $!temp<margin-right>;
+    else {
+        $!temp<extra-w> = 0;
+    }
+    my Real $reduce = self!_check_horinzontal_margins();
+    if $reduce.defined {
+        $!temp<margin-left>  = ( $!temp<margin-left>  * $reduce ).Int || 1 if $!temp<margin-left>;
+        $!temp<margin-right> = ( $!temp<margin-right> * $reduce ).Int || 1 if $!temp<margin-right>;
+    }
     $!avail_w -= $!temp<margin-left>  if $!temp<margin-left>;
-    $!avail_w = %!o<max-width>        if %!o<max-width> && $!avail_w > %!o<max-width>;
-    if $!avail_w < 2 {
-        die "Terminal width to small!";
+    $!avail_w -= $!temp<margin-right> if $!temp<margin-right>;
+    $!temp<max-width> = %!o<max-width>;
+    if $!temp<max-width> && $!avail_w > $!temp<max-width>  {
+        $!avail_w = $!temp<max-width> ;
+    }
+    else {
+        $!temp<max-width> = Int;
+    }
+    self!_fold_text( $reduce, True );
+}
+
+
+method !_reduce_horizontal_margin ( Int $avail_w ) {
+       if $avail_w <  4 { return 0 }
+    elsif $avail_w <  9 { return 0.10 }
+    elsif $avail_w < 16 { return 0.20 }
+    elsif $avail_w < 23 { return 0.30 }
+    elsif $avail_w < 30 { return 0.40 }
+    elsif $avail_w < 37 { return 0.50 }
+    elsif $avail_w < 44 { return 0.60 }
+    elsif $avail_w < 51 { return 0.70 }
+    elsif $avail_w < 58 { return 0.80 }
+                          return 0.90;
+}
+
+
+method !_check_horinzontal_margins {
+    my Int $threshold = 65;
+    my Real $reduce = 1;
+    if $!temp<margin-left> || $!temp<margin-right> {
+        my Int $tmp_avail_w = $!avail_w - ( $!temp<margin-left> + $!temp<margin-right> );
+        if $tmp_avail_w < $threshold {
+            $reduce = self!_reduce_horizontal_margin( $tmp_avail_w );
+        }
+    }
+
+    for <info prompt bottom-text> -> $opt {
+        my Str $tabs_opt = "tabs-$opt";
+        if  ( %!o{$opt} // '' ).chars && %!o{$tabs_opt}.defined {
+            $!temp{$tabs_opt} = [
+                %!o{$tabs_opt}[0] // 0, %!o{$tabs_opt}[1] // 0,
+                %!o{$tabs_opt}[2] // 0, %!o{$tabs_opt}[3] // 0,
+                %!o{$tabs_opt}[4]
+            ];
+            if $!temp{$tabs_opt}[4] {
+                ++$!temp<tabs-with-max-width>;
+            }
+            if $!temp{$tabs_opt}[2] || $!temp{$tabs_opt}[3] {
+                my $avail_text_w = ( $!term_w + extra-w ) - ( $!temp{$tabs_opt}[2] + $!temp{$tabs_opt}[3] );
+                if $avail_text_w < $threshold {
+                    my $new_reduce = self!_reduce_horizontal_margin( $avail_text_w );
+                    if $new_reduce < $reduce {
+                        $reduce = $new_reduce;
+                    }
+                }
+                ++$!temp<tabs-width-horizontal-margin>;
+            }
+        }
+    }
+    if $reduce < 1 {
+        return $reduce;
+    }
+    return;
+}
+
+
+method !_fold_text ( Real $reduce?, Bool $initialize_text_rows? ) {
+
+    for <info prompt bottom-text> -> $opt {
+        if %!o{$opt}.defined && %!o{$opt}.chars {
+            my ( Int $init-tab, Int $subseq-tab, Int $l_margin, Int $r_margin ) = ( 0, 0, 0, 0 );
+            my Int $max_width;
+            my $tabs_opt = "tabs-$opt";
+            if $!temp{$tabs_opt}.defined {
+                $init-tab   = $!temp{$tabs_opt}[0] if $!temp{$tabs_opt}[0];
+                $subseq-tab = $!temp{$tabs_opt}[1] if $!temp{$tabs_opt}[1];
+                if ! $reduce.defined {
+                    $l_margin = $!temp{$tabs_opt}[2];
+                    $r_margin = $!temp{$tabs_opt}[3];
+                }
+                else {
+                    $l_margin = $!temp{$tabs_opt}[2] = ( $!temp{$tabs_opt}[2] * $reduce ).Int || 1 if $!temp{$tabs_opt}[2];
+                    $r_margin = $!temp{$tabs_opt}[3] = ( $!temp{$tabs_opt}[3] * $reduce ).Int || 1 if $!temp{$tabs_opt}[3];
+                }
+                if $!temp{$tabs_opt}[4] && $!temp{$tabs_opt}[4] < ( $!term_w + extra-w ) - ( $l_margin + $r_margin ) {
+                    $max_width = $!temp{$tabs_opt}[4];
+                }
+            }
+            else {
+                $l_margin = $!temp<margin-left>;
+                $r_margin = $!temp<margin-right>;
+                $max_width = $!temp<max-width>;
+            }
+            my $width;
+            if ( $max_width ) {
+                $width = $l_margin + $max_width;
+            }
+            else {
+                $width = $!term_w + extra-w - $r_margin;
+            }
+            $init-tab += $l_margin;
+            $subseq-tab += $l_margin;
+            if $init-tab > $width - 5 || $subseq-tab > $width - 5 {
+                ( $init-tab, $subseq-tab ) = ( 0, 0 );
+            }
+            my %fold_opt = :$width, :$init-tab, :$subseq-tab, :color( %!o<color> ), :0join, :0truncate-long-tabs;
+            my $opt_rows = $opt ~ '-rows';
+            if $initialize_text_rows {
+                $!temp{$opt_rows} = [ line-fold( %!o{$opt}, |%fold_opt ) ];
+            }
+            else {
+                my Int $prev_row_count = $!temp{$opt_rows}.elems;
+                $!temp{$opt_rows} = [ line-fold( %!o{$opt}, |%fold_opt ) ];
+                $!avail_h += $prev_row_count - $!temp{$opt_rows};
+            }
+
+        }
     }
 }
 
+
 method !_avail_screen_hight {
-    my Int $info_w = $!term_w + extra-w;
-    if %!o<max-width> && $info_w > %!o<max-width> { #
-        $info_w = %!o<max-width>;
-    }
-    for <info prompt bottom-text> -> $opt {
-        if %!o{$opt}.chars {
-            my Int $init-tab   = %!o{"tabs-$opt"}[0] // 0;
-            my Int $subseq-tab = %!o{"tabs-$opt"}[1] // 0;
-            my Int $r_margin   = %!o{"tabs-$opt"}[2] // 0;
-            $!temp{"{$opt}-lines"} = line-fold(
-                %!o{$opt}, :width( $info_w - $r_margin ), :$init-tab, :$subseq-tab, :color( %!o<color> ), :0join
-            );
-        }
-    }
     if $!filter_string.chars {
         my Str $search_str = ( %!o<search> == 1 ?? 'Filter: i/' !! 'Filter: /' ) ~ $!filter_string ~ '/';
         $search_str = ' ' xx $!temp<margin-left> ~ $search_str if $!temp<margin-left>;
-        $!temp<search-string> = to-printwidth( $search_str, $info_w, 1 ).[0];
+        $!temp<search-string> = to-printwidth( $search_str, $!term_w + extra-w, 1 ).[0];
     }
     $!avail_h = $!term_h;
-    $!avail_h -= $!temp<margin-top>        if $!temp<margin-top>;
-    $!avail_h -= $!temp<info-lines>        if $!temp<info-lines>;
-    $!avail_h -= $!temp<prompt-lines>      if $!temp<prompt-lines>;
-    $!avail_h--                            if $!temp<search-string>;
-    $!avail_h--                            if %!o<page>;
-    $!avail_h -= $!temp<bottom-text-lines> if $!temp<bottom-text-lines>;
-    $!avail_h -= $!temp<margin-bottom>     if $!temp<margin-bottom>;
-    $!avail_h = %!o<max-height>            if %!o<max-height> && %!o<max-height> < $!avail_h;
+    $!avail_h -= $!temp<margin-top>       if $!temp<margin-top>;
+    $!avail_h -= $!temp<info-rows>        if $!temp<info-rows>;
+    $!avail_h -= $!temp<prompt-rows>      if $!temp<prompt-rows>;
+    $!avail_h--                           if $!temp<search-string>;
+    $!avail_h--                           if %!o<page>;
+    $!avail_h -= $!temp<bottom-text-rows> if $!temp<bottom-text-rows>;
+    $!avail_h -= $!temp<margin-bottom>    if $!temp<margin-bottom>;
     if $!avail_h < %!o<keep> {
         self!_avail_height_to_keep();
     }
+    if %!o<max-height> && %!o<max-height> < $!avail_h {
+        $!avail_h = %!o<max-height>;
+    }
     @!pre_rows = ();
     @!pre_rows.push: |( '' xx $!temp<margin-top> ) if $!temp<margin-top>;
-    @!pre_rows.push: |$!temp<info-lines>           if $!temp<info-lines>;
-    @!pre_rows.push: |$!temp<prompt-lines>         if $!temp<prompt-lines>;
+    @!pre_rows.push: |$!temp<info-rows>            if $!temp<info-rows>;
+    @!pre_rows.push: |$!temp<prompt-rows>          if $!temp<prompt-rows>;
     @!pre_rows.push: $!temp<search-string>         if $!temp<search-string>;
 }
+
 
 method !_avail_height_to_keep () {
     my Int $keep = %!o<keep>;
@@ -871,81 +998,125 @@ method !_avail_height_to_keep () {
     if $keep <= $!avail_h {
         return;
     }
-    if $!temp<margin-right> || $!temp<margin-left> {
-        my Int $orig_margin_right = $!temp<margin-right> // 0;
-        my Int $orig_margin_left  = $!temp<margin-left>  // 0;
-        $!temp<margin-right> = $!temp<margin-right> ?? 1 !! 0;
-        $!temp<margin-left>  = $!temp<margin-left>  ?? 1 !! 0;
+    if $!temp<max-width> || $!temp<tabs-with-max-width> {
+        my %increase;
+        my Int $steps = 10; ##
+        my $avail_w_main = ( $!term_w + $!temp<extra-w> ) - ( $!temp<margin-left> + $!temp<margin-right> );
+        if $!temp<max-width> {
+            %increase<main> = ( ( $avail_w_main - $!temp<max-width> ) / $steps ).Int;
+            # increase could be 0
+        }
 
         for <info prompt bottom-text> -> $opt {
-            if %!o{$opt} {
-                my Str $ts = 'tabs-' ~ $opt;
-                my Int $init-tab   = %!o{$ts}[0].defined && %!o{$ts}[0] < $!temp<margin-left>  ?? %!o{$ts}[0] !! $!temp<margin-left>;
-                my Int $subseq-tab = %!o{$ts}[1].defined && %!o{$ts}[1] < $!temp<margin-left>  ?? %!o{$ts}[1] !! $!temp<margin-left>;
-                my Int $r_margin   = %!o{$ts}[2].defined && %!o{$ts}[2] < $!temp<margin-right> ?? %!o{$ts}[0] !! $!temp<margin-right>;
-                my  $prev_row_count = $!temp{"{$opt}-lines"};
-                $!temp{"{$opt}-lines"} = line-fold(
-                    %!o{$opt}, :width( $!term_w + extra-w - $r_margin ), :$init-tab, :$subseq-tab, :color( %!o<color> ), :0join
-                );
-                $!avail_h += $prev_row_count - $!temp{"{$opt}-lines"};
+            my Str $tabs_opt = "tabs-$opt";
+            if $!temp{$tabs_opt}.defined && $!temp{$tabs_opt}[4] {
+                my $avail_w_text = ( $!term_w + extra-w ) - ( $!temp{$tabs_opt}[2] + $!temp{$tabs_opt}[3] );
+                %increase{$opt} = ( ( $avail_w_text - $!temp{$tabs_opt}[4] ) / $steps ).Int;
+                # increase could be less than 0
             }
         }
-        my $prepare_new_copy = $!col_w == $!avail_w ?? 1 !! 0; ##
-        $!avail_w += ( $orig_margin_right - $!temp<margin-right> ) + ( $orig_margin_left - $!temp<margin-left> );
-        self!_prepare_new_copy_of_list() if $prepare_new_copy; ##
-        $keep = self!_keep_to_row_count( $keep );
+
+        for 1 .. $steps -> $s {
+            for %increase.keys -> $opt {
+                if $opt eq 'main' {
+                    if %increase<main> > 0 && $s < $steps {
+                        $!temp<max-width> += %increase<main>;
+                        $!avail_w = $!temp<max-width>;
+                    }
+                    else {
+                        $!temp<max-width> = Int;
+                        $!avail_w = $avail_w_main;
+                    }
+                }
+                else {
+                    if %increase{$opt} > 0 && $s < $steps {
+                        $!temp{"tabs-$opt"}[4] += %increase{$opt};
+                    }
+                    else {
+                        $!temp{"tabs-$opt"}[4] = Int;
+                    }
+                }
+            }
+            self!_fold_text();
+            $keep = self!_keep_to_row_count( $keep );
+            last if $keep <= $!avail_h;
+        }
     }
     if $keep <= $!avail_h {
         return;
     }
-    if $!temp<info-lines> {
-        # Text rows above the menu (info-lines, prompt-lines, search-string) are not deleted. They are pushed upwards
-        # out of the terminal when the space reserved for them is deleted.
-        if $!temp<info-lines> >= $keep - $!avail_h {
+    if $!temp<margin-right> || $!temp<margin-left> || $!temp<tabs-width-horizontal-margin> {
+        my Int $orig_margin_right = $!temp<margin-right>;
+        my Int $orig_margin_left  = $!temp<margin-left>;
+        my Int $orig_avail_w = $!avail_w;
+
+        for 0.80, 0.75, 0.6667, 0.5, 0 -> $reduce {
+            $!temp<margin-right> = ( $!temp<margin-right> * $reduce ).Int || 1 if $!temp<margin-right>;
+            $!temp<margin-left>  = ( $!temp<margin-left>  * $reduce ).Int || 1 if $!temp<margin-left>;
+            $!avail_w = $orig_avail_w + ( $orig_margin_right - $!temp<margin-right> ) + ( $orig_margin_left - $!temp<margin-left> );
+            self!_fold_text( $reduce );
+            $keep = self!_keep_to_row_count( $keep );
+            last if $keep <= $!avail_h; ##
+        }
+    }
+    if $keep <= $!avail_h {
+        return;
+    }
+    # Text rows above the menu (info-rows, prompt-rows, search-string) are not deleted. They are pushed upwards
+    # out of the terminal when the space reserved for them is deleted.
+    # To remove text rows below the menu: remove the reserved space and delete the string.
+    if $!temp<info-rows> {
+
+        if $!temp<info-rows> >= $keep - $!avail_h {
             $!avail_h = $keep;
         }
         else {
-            $!avail_h += $!temp<info-lines>;
+            $!avail_h += $!temp<info-rows>;
         }
     }
     if $keep <= $!avail_h {
         return;
     }
-    if $!temp<bottom-text-lines> {
-        if $!temp<bottom-text-lines> > $keep - $!avail_h {
-            $!temp<bottom-text-lines>.splice: *-( $keep - $!avail_h );
-            # bottom-text-lines are deleted because they are below the menu.
+    if $!temp<bottom-text-rows> {
+        if $!temp<bottom-text-rows> > $keep - $!avail_h {
+            $!temp<bottom-text-rows>.splice: *-( $keep - $!avail_h );
             $!avail_h = $keep;
+            my Int $avai_w_text;
+            if %!o<tabs-bottom-text>.defined {
+                $avai_w_text = $!term_w + extra-w - $!temp<tabs-bottom-text>[3];
+            }
+            else {
+                $avai_w_text = $!temp<margin-left> + $!avail_w;
+            }
             my Str $ellipsis = '...';
             my Int $ellipsis_w = $ellipsis.chars;
-            my Int $avail_w = $!avail_w + extra-w + ( $!temp<margin-left> // 0 );
-            if $avail_w >= $ellipsis_w {
-                while print-columns( $!temp<bottom-text-lines>[*-1] ) + $ellipsis_w > $avail_w {
-                    $!temp<bottom-text-lines>[*-1] ~~ s/ . $ //;
+            if $avai_w_text >= $ellipsis_w {
+                while print-columns( $!temp<bottom-text-rows>[*-1] ) + $ellipsis_w > $avai_w_text {
+                    $!temp<bottom-text-rows>[*-1] ~~ s/ . $ //;
                 }
-                $!temp<bottom-text-lines>[*-1] ~= $ellipsis;
+                $!temp<bottom-text-rows>[*-1] ~= $ellipsis;
             }
         }
         else {
-            $!avail_h += $!temp<bottom-text-lines>;
-            $!temp<bottom-text-lines>:delete;
+            $!avail_h += $!temp<bottom-text-rows>;
+            $!temp<bottom-text-rows>:delete;
         }
     }
     if $keep <= $!avail_h {
         return;
     }
-    if $!temp<prompt-lines> {
-        if $!temp<prompt-lines> > $keep - $!avail_h {
+    if $!temp<prompt-rows> {
+        if $!temp<prompt-rows> > $keep - $!avail_h {
             $!avail_h = $keep;
         }
         else {
-            if $keep > 5 {
+            if $!avail_h + $!temp<prompt-rows> > 4 {
                 # keep the last prompt line
-                $!avail_h += $!temp<prompt-lines> - 1;
+                $!avail_h += $!temp<prompt-rows> - 1;
                 --$keep;
             }
             else {
-                $!avail_h += $!temp<prompt-lines>;
+                $!avail_h += $!temp<prompt-rows>;
             }
         }
     }
@@ -953,7 +1124,7 @@ method !_avail_height_to_keep () {
         return;
     }
     if $!temp<search-string> {
-        if $keep > 4 {
+        if $!avail_h > 2 {
             --$keep;
         }
         else {
@@ -963,7 +1134,7 @@ method !_avail_height_to_keep () {
     if $keep <= $!avail_h {
         return;
     }
-    if %!o<page> { ##
+    if %!o<page> {
         --$keep;
     }
 }
@@ -1019,7 +1190,7 @@ method !_wr_first_screen ( Int $multiselect ) {
         print @!pre_rows.join( "\n\r" ) ~ "\n\r";
     }
     my @trailing_lines;
-    @trailing_lines.push: |$!temp<bottom-text-lines>       if $!temp<bottom-text-lines>;
+    @trailing_lines.push: |$!temp<bottom-text-rows>        if $!temp<bottom-text-rows>;
     @trailing_lines.push: |( '' xx $!temp<margin-bottom> ) if $!temp<margin-bottom>;
     if @trailing_lines {
         my Int $line-feed;
@@ -1327,7 +1498,7 @@ method !_marked_idx2rc ( List $indexes, Bool $yesno ) {
         my Int $first_list_idx_in_cols_short = $last_list_idx_in_cols_full + 1;
         for $indexes.list -> $list_idx {
             next if $list_idx > @!list.end;
-            if $list_idx < $last_list_idx_in_cols_full {
+            if $list_idx <= $last_list_idx_in_cols_full {
                 $row = $list_idx % $rows_per_col;
                 $col = $list_idx div $rows_per_col;
             }
@@ -1782,6 +1953,8 @@ Setting I<keep> ensures that at least I<keep> terminal rows are available for pr
 
 If the terminal height is less than I<keep>, I<keep> is set to the terminal height.
 
+If I<max-height> is set to a value less than I<keep>, I<keep> is set to I<max-height>.
+
 Allowed values: 1 or greater
 
 (default: 5)
@@ -1849,7 +2022,7 @@ I<margin> expects a list of four elements in the following order:
 
 - left margin (number of terminal columns)
 
-See also L<#tabs-info> and L<#tabs-prompt>.
+See also L<#tabs-info>, L<#tabs-prompt> and L<#tabs-bottom-text>.
 
 Allowed values: 0 or greater. Elements beyond the fourth are ignored.
 
@@ -1873,7 +2046,7 @@ Height in this context means number of print rows.
 
 I<max-height> overwrites I<keep> if I<max-height> is set to a value less than I<keep>.
 
-Allowed values: 1 or greater
+Allowed values: 2 or greater
 
 (default: undefined)
 
@@ -1943,60 +2116,40 @@ Set the behavior of K<Ctrl-F>.
 
 2 - case-sensitive search
 
-
 =head3 tabs-bottom-text
 
-The option I<tabs-bottom-text> allows one to insert spaces at beginning  and the end of I<info> lines.
+Expects a list with one to five elements:
 
-I<tabs-bottom-text> expects a list with one to three elements:
+- The 1st element (initial tab) specifies the number of spaces inserted at the beginning of paragraphs.
 
-- the first element (initial tab) sets the number of spaces inserted at beginning of paragraphs
+- The 2nd element (subsequent tab) specifies the number of spaces inserted at the beginning of wrapped lines (excluding
+paragraph starts).
 
-- the second element (subsequent tab) sets the number of spaces inserted at the beginning of all broken lines apart from
-the beginning of paragraphs
+- The 3rd element specifies the number of spaces used as the left margin.
 
-- the third element sets the number of spaces used as a right margin.
+- The 4th element specifies the number of spaces used as the right margin.
 
-Allowed values: 0 or greater. Elements beyond the third are ignored.
+- The 5th element specifies the maximum output width.
 
-default: If I<margin> is set, the initial-tab and the subsequent-tab are set to left-I<margin> and the right margin is
-set to right-I<margin>. If I<margin> is not defined, the default is undefined.
+Allowed values:
+
+- For the first four elements: 0 or greater
+
+- For the fifth element: 2 or greater
+
+If I<tabs-bottom-text> is not defined:
+
+- If I<margin> is defined, its values are used for the left and right margins.
+
+- If I<max_width> is defined, it is used as the maximum output width.
 
 =head3 tabs-info
 
-The option I<tabs-info> allows one to insert spaces at beginning  and the end of I<info> lines.
-
-I<tabs-info> expects a list with one to three elements:
-
-- the first element (initial tab) sets the number of spaces inserted at beginning of paragraphs
-
-- the second element (subsequent tab) sets the number of spaces inserted at the beginning of all broken lines apart from
-the beginning of paragraphs
-
-- the third element sets the number of spaces used as a right margin.
-
-Allowed values: 0 or greater. Elements beyond the third are ignored.
-
-default: If I<margin> is set, the initial-tab and the subsequent-tab are set to left-I<margin> and the right margin is
-set to right-I<margin>. If I<margin> is not defined, the default is undefined.
+Works the same way as L<#tabs-bottom-text>.
 
 =head3 tabs-prompt
 
-The option I<tabs-prompt> allows one to insert spaces at beginning  and the end of I<prompt> lines.
-
-I<tabs-prompt> expects a list with one to three elements:
-
-- the first element (initial tab) sets the number of spaces inserted at beginning of paragraphs
-
-- the second element (subsequent tab) sets the number of spaces inserted at the beginning of all broken lines apart from
-the beginning of paragraphs
-
-- the third element sets the number of spaces used as a right margin.
-
-Allowed values: 0 or greater. Elements beyond the third are ignored.
-
-default: If I<margin> is set, the initial-tab and the subsequent-tab are set to left-I<margin> and the right margin is
-set to right-I<margin>. If I<margin> is not defined, the default is undefined.
+Works the same way as L<#tabs-bottom-text>.
 
 =head3 undef
 
@@ -2064,6 +2217,10 @@ C<tput>.
 =head2 Monospaced font
 
 It is required a terminal that uses a monospaced font which supports the printed characters.
+
+=head2 Minimum terminal size
+
+The minimum terminal size is 4 x 2.
 
 =head2 Ambiguous width characters
 
