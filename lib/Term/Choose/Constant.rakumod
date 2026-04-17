@@ -18,5 +18,5 @@ constant ph-char is export( :DEFAULT, :ph-char ) = "\x[feff]";
 subset Positive_Int is export( :DEFAULT, :Positive_Int ) of Int where * > 0;
 subset Int_0_to_2   is export( :DEFAULT, :Int_0_to_2   ) of Int where * == 0|1|2;
 subset Int_0_or_1   is export( :DEFAULT, :Int_0_or_1   ) of Int where * == 0|1;
-subset Int_2_or_gt  is export( :DEFAULT, :Int_2_or_gt )  of Int where * >= 2; # ###
+subset Int_2_or_gt  is export( :DEFAULT, :Int_2_or_gt )  of Int where * >= 2;
 

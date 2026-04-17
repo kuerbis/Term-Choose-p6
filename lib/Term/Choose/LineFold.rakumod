@@ -77,7 +77,7 @@ sub line-fold(
         :$init-tab is copy = '',
         :$subseq-tab is copy = '',
         Int_0_or_1 :$join = 1,
-        Int_0_or_1 :$truncate-long-tabs = 1, # ###
+        Int_0_or_1 :$truncate-long-tabs = 1,
         Int_0_to_2 :$color = 0,
         Int_0_to_2 :$binary-filter = 0
     ) is export( :DEFAULT, :line-fold ) {
@@ -90,12 +90,11 @@ sub line-fold(
             if / ^ <[0..9]>+ $ / {
                 $_ = ' ' x $_;
             }
-            elsif $truncate-long-tabs { # ###
-                $_ = to-printwidth(
-                        $_.=subst( / \t /,  ' ', :g ).=subst( / \v+ /,  '  ', :g ).=subst( &rx-invalid-char, '', :g ),
-                        $width div 2,
-                        False
-                ).[0];
+            else {
+                $_.=subst( / \t /,  ' ', :g ).=subst( / \v+ /,  '  ', :g ).=subst( &rx-invalid-char, '', :g ),
+            }
+            if $truncate-long-tabs && print-columns( $_ ) > $width div 2 {
+                $_ = to-printwidth( $_, $width div 2, False ).[0];
             }
         }
     }
