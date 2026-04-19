@@ -1,6 +1,6 @@
 use v6;
 
-unit class Term::Choose:ver<2.0.5>;
+unit class Term::Choose:ver<2.0.6>;
 
 use Term::termios;
 
@@ -1194,7 +1194,7 @@ method !_wr_first_screen ( Int $multiselect ) {
     @trailing_lines.push: |( '' xx $!temp<margin-bottom> ) if $!temp<margin-bottom>;
     if @trailing_lines {
         my Int $line-feed;
-        if $!page_count > 1 {
+        if $!page_count > 1 || %!o<page> == 2 {
             $line-feed = $!avail_h + ( $!pp_row_fmt ?? 1 !! 0 );
         }
         else {

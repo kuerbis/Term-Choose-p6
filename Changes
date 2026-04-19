@@ -1,6 +1,9 @@
 Revision history for Term::Choose
 
 
+2.0.6   2026-04-19
+    - Bugfix bottom-text.
+
 2.0.5   2026-04-17
     - Updates and bugfixes available height and available width.
     - Bugfix option mark: wrong mapping.
