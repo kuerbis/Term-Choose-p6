@@ -52,8 +52,8 @@ my Date $today = Date.today;
 ok( $choose-pm.defined,          'Choose version defined  OK' );
 ok( $linefold-pm.defined,        'LineFold version defined  OK' );
 
-is( $version-meta, $choose-pm,   'Choose version eq version "META6"  OK' );
-is( $version-meta, $linefold-pm, 'LineFold version eq version in "META6"  OK' );
+is(   $choose-pm, $version-meta,   'Choose version eq version in "META6"  OK' );
+is( $linefold-pm, $version-meta, 'LineFold version eq version in "META6"  OK' );
 
 is( $version-change, $choose-pm, 'Version in "Changes"  OK' );
 is( $release-date,   $today,      'Release date in Changes is date from today  OK' );

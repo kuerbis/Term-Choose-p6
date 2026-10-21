@@ -1,6 +1,9 @@
 Revision history for Term::Choose
 
 
+2.0.7   2026-10-21
+    - Unicode 18.
+
 2.0.6   2026-04-19
     - Bugfix bottom-text.
 

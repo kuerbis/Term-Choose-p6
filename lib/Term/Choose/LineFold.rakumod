@@ -1,5 +1,5 @@
 use v6;
-unit module Term::Choose::LineFold:ver<2.0.6>;
+unit module Term::Choose::LineFold:ver<2.0.7>;
 
 use Term::Choose::Constant;
 use Term::Choose::Screen;
